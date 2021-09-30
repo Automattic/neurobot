@@ -9,6 +9,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const latestDBVersion = 1
+
 type dbAssist struct {
 	debug bool
 	db    *sql.DB
@@ -89,16 +91,20 @@ func (dbA *dbAssist) manageDBSchema() (err error) {
 	}
 	dbVer, err := dbA.getOption("db_ver")
 	ver, _ := strconv.ParseInt(dbVer, 10, 64)
-	return dbA.runDBSchema(ver)
+	if ver < latestDBVersion {
+		return dbA.runDBSchema(ver)
+	}
+
+	return
 }
 
 func (dbA *dbAssist) runDBSchema(dbVer int64) (err error) {
 	if dbA.debug {
-		fmt.Printf("Running DB Schema upgrades based on version:%d\n", dbVer)
+		fmt.Printf("Running DB Schema upgrades based on version:%d LatestVersion:%d\n", dbVer, latestDBVersion)
 	}
 
 	if dbVer == 0 {
-		err = dbA.updateOption("db_ver", "1")
+		err = dbA.updateOption("db_ver", "1") // insert
 		if err != nil {
 			fmt.Printf("DBSchema upgrade failed. dbVer:%d", dbVer)
 			return err
@@ -136,7 +142,7 @@ func (dbA *dbAssist) getOption(key string) (value string, err error) {
 			return
 		}
 		if dbA.debug {
-			fmt.Printf("getOption() key: %s\n", value)
+			fmt.Printf("getOption() %s : %s\n", key, value)
 		}
 	}
 	err = rows.Err()
