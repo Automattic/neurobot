@@ -2,7 +2,6 @@ package engine
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,15 +9,13 @@ import (
 	"time"
 )
 
-var errNeedDatabase = errors.New("need database to function")
-
 type Engine struct {
 	debug               bool
 	portWebhookListener string
 	// portMatrixClient    string
 
-	db *sql.DB
-	// dbA dbAssist
+	db  *sql.DB
+	dbA dbAssist
 
 	workflows map[uint64]workflow
 	triggers  map[string]map[string]Trigger
@@ -40,7 +37,10 @@ func (e *Engine) Startup() {
 	e.triggers["poller"] = make(map[string]Trigger)
 
 	// Establish database connection
-	e.loadDB()
+	err := e.loadDB()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.loadWorkflows()
@@ -71,13 +71,14 @@ func (e *Engine) log(m string) {
 func (e *Engine) loadDB() (err error) {
 	e.db, err = sql.Open("sqlite3", "./wfb.db")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
+	e.dbA = *NewDBAssist(e.db, e.debug)
+
 	// Handle schema
-	// return e.dbA.createTable()
-	// return e.dbA.manageDBSchema()
-	return nil
+	return e.dbA.manageDBSchema()
 }
 
 func (e *Engine) registerWebhookTrigger(name string, description string, urlSuffix string) *webhookt {
@@ -214,10 +215,6 @@ func (e *Engine) runPoller() {
 }
 
 func (e *Engine) initMatrixClient() error {
-	if e.db == nil {
-		return errNeedDatabase
-	}
-
 	// matrixClients := clients.New(e.db, e.client)
 	// if err := matrixClients.Start(); err != nil {
 	// 	log.WithError(err).Panic("Failed to start up clients")
