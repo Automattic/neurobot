@@ -123,7 +123,7 @@ func (dbA *dbAssist) runDBSchema(dbVer int64) (err error) {
 }
 
 func (dbA *dbAssist) getOption(key string) (value string, err error) {
-	q := fmt.Sprintf("select * from options where key = '%s';", key)
+	q := fmt.Sprintf("select value from options where key = '%s';", key)
 	rows, err := dbA.db.Query(q)
 	if err != nil {
 		return
