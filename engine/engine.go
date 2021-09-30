@@ -7,12 +7,19 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/event"
 )
 
 type Engine struct {
 	debug               bool
 	portWebhookListener string
-	// portMatrixClient    string
+	portMatrixClient    string
+
+	matrixhomeserver string
+	matrixusername   string
+	matrixpassword   string
 
 	db  *sql.DB
 	dbA dbAssist
@@ -21,12 +28,15 @@ type Engine struct {
 	triggers  map[string]map[string]Trigger
 	// steps     map[string]map[string]WorkflowStep
 
-	// client mautrix.Client
+	client *mautrix.Client
 }
 
 type RunParams struct {
 	Debug               bool
 	PortWebhookListener string
+	MatrixHomeServer    string
+	MatrixUsername      string
+	MatrixPassword      string
 }
 
 func (e *Engine) Startup() {
@@ -45,7 +55,17 @@ func (e *Engine) Startup() {
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.loadWorkflows()
 
-	e.initMatrixClient()
+	// Start Matrix client
+	go func() {
+		err = e.initMatrixClient()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// allow the matrix client to sync and be ready,
+	// before we invoke run() on Engine
+	time.Sleep(time.Second * 5)
 }
 
 func (e *Engine) ShutDown() {
@@ -86,7 +106,6 @@ func (e *Engine) registerWebhookTrigger(name string, description string, urlSuff
 	e.triggers["webhook"][urlSuffix] = t
 
 	return t
-
 }
 func (e *Engine) registerRSSPollTrigger(name string, description string, url string, pollingInterval time.Duration) *pollt {
 	t := NewRSSPollTrigger(name, description, url, pollingInterval, e)
@@ -120,13 +139,12 @@ func (e *Engine) loadWorkflows() {
 	}
 
 	// register steps
-	var x1, x2 WorkflowStep
+	var x1, x2, x3 WorkflowStep
 	x1 = sendEmailWorkflowStep{
 		workflowStep: workflowStep{
 			variety:     "sendEmail",
 			name:        "Email HR",
 			description: "Email HR about a new hire",
-			payload:     "",
 		},
 		sendEmailWorkflowStepMeta: sendEmailWorkflowStepMeta{
 			emailAddr: "hr@example.org",
@@ -137,16 +155,27 @@ func (e *Engine) loadWorkflows() {
 			variety:     "sendEmail",
 			name:        "Email Subscribers of WP.org news blog",
 			description: "Email folks about a new blog post on WP.org news blog",
-			payload:     "",
 		},
 		sendEmailWorkflowStepMeta: sendEmailWorkflowStepMeta{
 			emailAddr: "folks1@example.org,folks2@example.org,folks3@example.org",
+		},
+	}
+	x3 = postMessageMatrixWorkflowStep{
+		workflowStep: workflowStep{
+			variety:     "postMatrixMessage",
+			name:        "Inform Neso",
+			description: "Let the team know about this event by posting to team's matrix room",
+		},
+		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
+			message: "Alert!",
+			room:    "!tnmILBRzpgkBkwSyDY:matrix.test",
 		},
 	}
 
 	// attach registered steps to sample workflows
 	workflows[0].addWorkflowStep(x1)
 	workflows[1].addWorkflowStep(x2)
+	workflows[0].addWorkflowStep(x3)
 
 	// register triggers and attach them to workflow
 	e.registerWebhookTrigger("matticspace webhook", "", "mcsp").attachWorkflow(0)
@@ -214,24 +243,49 @@ func (e *Engine) runPoller() {
 	}
 }
 
-func (e *Engine) initMatrixClient() error {
-	// matrixClients := clients.New(e.db, e.client)
-	// if err := matrixClients.Start(); err != nil {
-	// 	log.WithError(err).Panic("Failed to start up clients")
-	// }
+func (e *Engine) initMatrixClient() (err error) {
+	if e.debug {
+		fmt.Println("Logging into", e.matrixhomeserver, "as", e.matrixusername)
+	}
 
-	// setup(e, http.DefaultServeMux, http.DefaultClient)
-	// log.Fatal(http.ListenAndServe(e.BindAddress, nil))
+	e.client, err = mautrix.NewClient(e.matrixhomeserver, "", "")
+	if err != nil {
+		return
+	}
+	_, err = e.client.Login(&mautrix.ReqLogin{
+		Type:             "m.login.password",
+		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: e.matrixusername},
+		Password:         e.matrixpassword,
+		StoreCredentials: true,
+	})
+	if err != nil {
+		return
+	}
 
-	return nil // @TODO tmp fix
+	fmt.Println("Matrix: Login successful!")
+
+	syncer := e.client.Syncer.(*mautrix.DefaultSyncer)
+	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+		fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
+	})
+
+	err = e.client.Sync()
+	if err != nil {
+		return
+	}
+
+	return
 }
 
-func NewEngine(defaults RunParams) *Engine {
+func NewEngine(p RunParams) *Engine {
 	e := Engine{}
 
 	// setting run parameters
-	e.debug = defaults.Debug
-	e.portWebhookListener = defaults.PortWebhookListener
+	e.debug = p.Debug
+	e.portWebhookListener = p.PortWebhookListener
+	e.matrixhomeserver = p.MatrixHomeServer
+	e.matrixusername = p.MatrixUsername
+	e.matrixpassword = p.MatrixPassword
 
 	return &e
 }

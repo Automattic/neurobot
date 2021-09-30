@@ -11,16 +11,16 @@ type sendEmailWorkflowStep struct {
 	sendEmailWorkflowStepMeta
 }
 
-func (s sendEmailWorkflowStep) run(m string) string {
+func (s sendEmailWorkflowStep) run(payload string, e *Engine) string {
 	// send email
 
 	// hack: only show decorated log for now
 	fmt.Println("====================")
 	fmt.Printf("To: %s\n", s.emailAddr)
-	fmt.Println(m)
+	fmt.Println(payload)
 	fmt.Println("====================")
 
-	return m
+	return payload
 }
 
 func NewSendEmailWorkFlowStep(name string, description string, payload string, email string) *sendEmailWorkflowStep {
