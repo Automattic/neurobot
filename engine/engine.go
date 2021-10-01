@@ -15,7 +15,6 @@ import (
 type Engine struct {
 	debug               bool
 	portWebhookListener string
-	portMatrixClient    string
 
 	matrixhomeserver string
 	matrixusername   string
