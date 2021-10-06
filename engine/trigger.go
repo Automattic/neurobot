@@ -8,6 +8,7 @@ type Trigger interface {
 }
 
 type trigger struct {
+	id          uint64
 	variety     string
 	name        string
 	description string

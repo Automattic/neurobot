@@ -8,9 +8,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/sqlite"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+
+	// SQLite3 DB Driver
+	_ "github.com/mattn/go-sqlite3"
 )
+
+const sqliteDBFile = "./wfb.db"
 
 type Engine struct {
 	debug               bool
@@ -20,8 +31,7 @@ type Engine struct {
 	matrixusername   string
 	matrixpassword   string
 
-	db  *sql.DB
-	dbA dbAssist
+	db db.Session
 
 	workflows map[uint64]workflow
 	triggers  map[string]map[string]Trigger
@@ -88,16 +98,42 @@ func (e *Engine) log(m string) {
 }
 
 func (e *Engine) loadDB() (err error) {
-	e.db, err = sql.Open("sqlite3", "./wfb.db")
+	database, err := sql.Open("sqlite3", sqliteDBFile)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalf("db.Open(): %q\n", err)
+	}
+	defer database.Close()
+
+	// Run DB migration
+	driver, err := sqlite3.WithInstance(database, &sqlite3.Config{})
+	if err != nil {
+		return fmt.Errorf("creating sqlite3 db driver failed %s", err)
 	}
 
-	e.dbA = *NewDBAssist(e.db, e.debug)
+	m, err := migrate.NewWithDatabaseInstance("file://migration/", "sqlite3", driver)
+	if err != nil {
+		return fmt.Errorf("initializing db migration failed %s", err)
+	}
 
-	// Handle schema
-	return e.dbA.manageDBSchema()
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("migrating database failed %s", err)
+	}
+
+	// Use upper.io ORM now
+	e.db, err = sqlite.Open(sqlite.ConnectionURL{
+		Database: sqliteDBFile,
+	})
+	if err != nil {
+		log.Fatalf("db.Open(): %q\n", err)
+	}
+
+	// Set database logging to Errors only when debug:false
+	if !e.debug {
+		db.LC().SetLevel(db.LogLevelError)
+	}
+
+	return
 }
 
 func (e *Engine) registerWebhookTrigger(name string, description string, urlSuffix string) *webhookt {
