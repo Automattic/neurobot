@@ -2,7 +2,7 @@ CREATE TABLE "workflows" (
 "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 "name" TEXT,
 "description" TEXT,
-"active" integer
+"active" integer DEFAULT 1
 );
 
 CREATE TABLE "triggers" (
@@ -19,7 +19,7 @@ CREATE TABLE "workflow_steps" (
 "name" TEXT,
 "description" TEXT,
 "variety" TEXT,
-"workflow" integer,
+"workflow_id" integer,
 "sort_order" integer
 );
 
