@@ -1,7 +1,6 @@
 package engine
 
 type Trigger interface {
-	attachWorkflow(uint64)
 	setup()
 	process(interface{})
 	finish(string)
@@ -16,13 +15,11 @@ type trigger struct {
 	workflows   []uint64 // a trigger can start multiple workflows
 }
 
-func (t *trigger) attachWorkflow(id uint64) {
-	t.workflows = append(t.workflows, id)
-}
 func (t *trigger) finish(payload string) {
 	// loop through all workflows meant for this trigger and run them
-	for _, workflow := range t.workflows {
-		w := t.engine.workflows[workflow]
+	for _, workflowID := range t.workflows {
+		// Get workflow instance and run() it
+		w := t.engine.workflows[workflowID]
 		w.run(payload, t.engine)
 	}
 }

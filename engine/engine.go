@@ -33,7 +33,7 @@ type Engine struct {
 
 	db db.Session
 
-	workflows map[uint64]workflow
+	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
 	// steps     map[string]map[string]WorkflowStep
 
@@ -49,32 +49,41 @@ type RunParams struct {
 }
 
 func (e *Engine) Startup() {
+	e.log("Starting up engine..")
+
 	// Initialize maps
-	e.workflows = make(map[uint64]workflow)
+	e.workflows = make(map[uint64]*workflow)
 	e.triggers = make(map[string]map[string]Trigger)
 	e.triggers["webhook"] = make(map[string]Trigger)
-	e.triggers["poller"] = make(map[string]Trigger)
+	e.triggers["poll"] = make(map[string]Trigger)
 
 	// Establish database connection
+	e.log("Attempting to establish database connection..")
 	err := e.loadDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Load registered workflows from the database and initialize the right triggers for them
-	e.loadWorkflows()
+	e.log("Loading data...")
+	e.loadData()
 
 	// Start Matrix client
+	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
+	e.log("Starting up Matrix client..")
 	go func() {
 		err = e.initMatrixClient()
 		if err != nil {
 			log.Fatal(err)
 		}
+		e.log("Finished loading Matrix client..")
 	}()
 
 	// allow the matrix client to sync and be ready,
 	// before we invoke run() on Engine
 	time.Sleep(time.Second * 5)
+
+	e.log("Finished starting up engine.")
 }
 
 func (e *Engine) ShutDown() {
@@ -83,8 +92,7 @@ func (e *Engine) ShutDown() {
 }
 
 func (e *Engine) Run() {
-	// Matrix client needs to be initialized first as any webhooks and/or scheduler
-	// can try to run Matrix related tasks
+	e.log("\nAt last, running the engine now..")
 
 	go e.runPoller()
 
@@ -136,89 +144,49 @@ func (e *Engine) loadDB() (err error) {
 	return
 }
 
-func (e *Engine) registerWebhookTrigger(name string, description string, urlSuffix string) *webhookt {
-	t := NewWebhookTrigger(name, description, urlSuffix, e)
-	e.triggers["webhook"][urlSuffix] = t
+func (e *Engine) registerWebhookTrigger(t *webhookt) {
+	// Add engine instance to inside of trigger, required for starting workflows
+	t.engine = e
 
-	return t
-}
-func (e *Engine) registerRSSPollTrigger(name string, description string, url string, pollingInterval time.Duration) *pollt {
-	t := NewRSSPollTrigger(name, description, url, pollingInterval, e)
-	e.triggers["poller"][name] = t
+	// Let the engine know what urlSuffix are associated with this particular instance of trigger
+	e.triggers["webhook"][t.urlSuffix] = t
 
-	return t
-}
-func (e *Engine) registerHTTPPollTrigger(name string, description string, url string, pollingInterval time.Duration) *pollt {
-	t := NewHTTPPollTrigger(name, description, url, pollingInterval, e)
-	e.triggers["poller"][name] = t
-
-	return t
+	e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.urlSuffix))
 }
 
-func (e *Engine) loadWorkflows() {
-	// @TODO: Read workflows from database and creates instances for triggers
-	// Currently hardcoded
+func (e *Engine) registerPollTrigger(t *pollt) {
+	// Add engine instance to inside of trigger, required for starting workflows
+	t.engine = e
 
-	// sample workflows
-	workflows := []workflow{
-		{
-			id:          1,
-			name:        "CURL Webhook",
-			description: "Simple Curl based webhook listener",
-		},
-		{
-			id:          2,
-			name:        "WP.org News Blog RSS Feed Emailer",
-			description: "Email workflow for RSS Feed of WP.org news blog",
-		},
+	e.log(fmt.Sprintf("> Registered poll trigger: %s (pollingInterval: %s)", t.name, t.pollingInterval))
+}
+
+func (e *Engine) loadData() {
+	// load triggers & registers them first
+	for _, t := range getConfiguredTriggers(e.db) {
+		switch t := t.(type) {
+		case *webhookt:
+			e.registerWebhookTrigger(t)
+		case *pollt:
+			e.registerPollTrigger(t)
+		}
 	}
 
-	// register steps
-	var x1, x2, x3 WorkflowStep
-	x1 = sendEmailWorkflowStep{
-		workflowStep: workflowStep{
-			variety:     "sendEmail",
-			name:        "Email HR",
-			description: "Email HR about a new hire",
-		},
-		sendEmailWorkflowStepMeta: sendEmailWorkflowStepMeta{
-			emailAddr: "hr@example.org",
-		},
-	}
-	x2 = sendEmailWorkflowStep{
-		workflowStep: workflowStep{
-			variety:     "sendEmail",
-			name:        "Email Subscribers of WP.org news blog",
-			description: "Email folks about a new blog post on WP.org news blog",
-		},
-		sendEmailWorkflowStepMeta: sendEmailWorkflowStepMeta{
-			emailAddr: "folks1@example.org,folks2@example.org,folks3@example.org",
-		},
-	}
-	x3 = postMessageMatrixWorkflowStep{
-		workflowStep: workflowStep{
-			variety:     "postMatrixMessage",
-			name:        "Inform Neso",
-			description: "Let the team know about this event by posting to team's matrix room",
-		},
-		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-			message: "Alert!",
-			room:    "!tnmILBRzpgkBkwSyDY:matrix.test",
-		},
+	// load workflows
+	for _, w := range getConfiguredWorkflows(e.db) {
+		// copy over the value in a separate variable because we need to store a pointer
+		// w gets assigned a different value with every iteration, which modifies all values if address of w is taken directly
+		instance := w
+		e.workflows[w.id] = &instance
 	}
 
-	// attach registered steps to sample workflows
-	workflows[0].addWorkflowStep(x1)
-	workflows[1].addWorkflowStep(x2)
-	workflows[0].addWorkflowStep(x3)
-
-	// register triggers and attach them to workflow
-	e.registerWebhookTrigger("matticspace webhook", "", "mcsp").attachWorkflow(0)
-	e.registerRSSPollTrigger("wp.org news rss", "", "https://wordpress.org/news/feed/", time.Hour).attachWorkflow(1)
-
-	// load workflows in engine
-	e.workflows[0] = workflows[0]
-	e.workflows[1] = workflows[1]
+	// load workflow steps
+	for _, ws := range getConfiguredWFSteps(e.db) {
+		switch ws := ws.(type) {
+		case *postMessageMatrixWorkflowStep:
+			e.workflows[ws.workflow_id].addWorkflowStep(ws)
+		}
+	}
 }
 
 func (e *Engine) runWebhookListener() {
@@ -263,15 +231,15 @@ func (e *Engine) runWebhookListener() {
 		}
 	})
 
-	e.log(fmt.Sprintf("Starting webhook listener at port %s\n", e.portWebhookListener))
+	e.log(fmt.Sprintf("> Starting webhook listener at port %s...", e.portWebhookListener))
 	if err := http.ListenAndServe(":"+e.portWebhookListener, nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (e *Engine) runPoller() {
-	e.log("Running pollers")
-	for _, t := range e.triggers["poller"] {
+	e.log("> Running polls...")
+	for _, t := range e.triggers["poll"] {
 		go func(t Trigger) {
 			t.setup()
 		}(t)

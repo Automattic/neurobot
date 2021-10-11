@@ -15,17 +15,3 @@ func (t *webhookt) setup() {
 func (t *webhookt) process(payload interface{}) {
 	t.finish("Hello " + payload.(string))
 }
-
-func NewWebhookTrigger(name string, description string, urlSuffix string, engine *Engine) *webhookt {
-	return &webhookt{
-		trigger: trigger{
-			variety:     "webhook",
-			name:        name,
-			description: description,
-			engine:      engine,
-		},
-		webhooktMeta: webhooktMeta{
-			urlSuffix: urlSuffix,
-		},
-	}
-}

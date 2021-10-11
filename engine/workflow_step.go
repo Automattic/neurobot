@@ -5,8 +5,10 @@ type WorkflowStep interface {
 }
 
 type workflowStep struct {
-	variety     string
+	id          uint64
 	name        string
 	description string
+	variety     string
+	workflow_id uint64
 	payload     string
 }
