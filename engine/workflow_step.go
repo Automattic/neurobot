@@ -10,5 +10,4 @@ type workflowStep struct {
 	description string
 	variety     string
 	workflow_id uint64
-	payload     string
 }
