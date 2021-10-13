@@ -8,7 +8,7 @@ type workflow struct {
 	id          uint64
 	name        string
 	description string
-	payload     interface{}
+	payload     string
 	steps       []WorkflowStep
 }
 
