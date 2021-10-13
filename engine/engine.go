@@ -21,10 +21,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const sqliteDBFile = "./wfb.db"
-
 type Engine struct {
 	debug               bool
+	database            string
 	portWebhookListener string
 
 	matrixhomeserver string
@@ -41,6 +40,7 @@ type Engine struct {
 
 type RunParams struct {
 	Debug               bool
+	Database            string
 	PortWebhookListener string
 	MatrixHomeServer    string
 	MatrixUsername      string
@@ -105,7 +105,7 @@ func (e *Engine) log(m string) {
 }
 
 func (e *Engine) loadDB() (err error) {
-	database, err := sql.Open("sqlite3", sqliteDBFile)
+	database, err := sql.Open("sqlite3", e.database)
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
@@ -129,7 +129,7 @@ func (e *Engine) loadDB() (err error) {
 
 	// Use upper.io ORM now
 	e.db, err = sqlite.Open(sqlite.ConnectionURL{
-		Database: sqliteDBFile,
+		Database: e.database,
 	})
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
@@ -286,6 +286,7 @@ func NewEngine(p RunParams) *Engine {
 
 	// setting run parameters
 	e.debug = p.Debug
+	e.database = p.Database
 	e.portWebhookListener = p.PortWebhookListener
 	e.matrixhomeserver = p.MatrixHomeServer
 	e.matrixusername = p.MatrixUsername

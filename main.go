@@ -11,7 +11,8 @@ import (
 var homeserver = flag.String("homeserver", "", "Matrix Homeserver URL")
 var username = flag.String("username", "", "Matrix username localpart")
 var password = flag.String("password", "", "Matrix password")
-var debug = flag.String("debug", "", "Debug mode")
+var debug = flag.String("debug", "false", "Debug mode")
+var dbFile = flag.String("dbfile", "./wfb.db", "Database file")
 var webhookListenerPort = flag.String("webhooklistenerport", "8080", "Webhook Listener Port")
 
 func main() {
@@ -31,6 +32,7 @@ func main() {
 
 	p := engine.RunParams{
 		Debug:               debug,
+		Database:            *dbFile,
 		PortWebhookListener: *webhookListenerPort,
 		MatrixHomeServer:    *homeserver,
 		MatrixUsername:      *username,
