@@ -35,7 +35,6 @@ type Engine struct {
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
-	// steps     map[string]map[string]WorkflowStep
 
 	client *mautrix.Client
 }
