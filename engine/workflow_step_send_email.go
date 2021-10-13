@@ -22,17 +22,3 @@ func (s sendEmailWorkflowStep) run(payload string, e *Engine) string {
 
 	return payload
 }
-
-func NewSendEmailWorkFlowStep(name string, description string, payload string, email string) *sendEmailWorkflowStep {
-	return &sendEmailWorkflowStep{
-		workflowStep: workflowStep{
-			variety:     "sendEmail",
-			name:        name,
-			description: description,
-			payload:     payload,
-		},
-		sendEmailWorkflowStepMeta: sendEmailWorkflowStepMeta{
-			emailAddr: email,
-		},
-	}
-}

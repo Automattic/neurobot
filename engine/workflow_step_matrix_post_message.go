@@ -26,18 +26,3 @@ func (s postMessageMatrixWorkflowStep) run(payload string, e *Engine) string {
 
 	return payload
 }
-
-func NewPostMessageMatrixWorkflowStep(name string, description string, payload string, message string, room string) *postMessageMatrixWorkflowStep {
-	return &postMessageMatrixWorkflowStep{
-		workflowStep: workflowStep{
-			variety:     "postMessageMatrix",
-			name:        name,
-			description: description,
-			payload:     payload,
-		},
-		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-			message: message,
-			room:    room,
-		},
-	}
-}
