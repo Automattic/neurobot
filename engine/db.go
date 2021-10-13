@@ -52,7 +52,7 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger) {
 					variety:     row.Variety,
 					name:        row.Name,
 					description: row.Description,
-					workflows:   splitStringIntoArrayOfInts(row.Workflows, ","),
+					workflows:   splitStringIntoSliceOfInts(row.Workflows, ","),
 				},
 				webhooktMeta: webhooktMeta{
 					urlSuffix: getTriggerMeta(dbs, row.ID, "urlSuffix"),
@@ -67,7 +67,7 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger) {
 					variety:     row.Variety,
 					name:        row.Name,
 					description: row.Description,
-					workflows:   splitStringIntoArrayOfInts(row.Workflows, ","),
+					workflows:   splitStringIntoSliceOfInts(row.Workflows, ","),
 				},
 				polltMeta: polltMeta{
 					url:             getTriggerMeta(dbs, row.ID, "url"),
@@ -154,10 +154,17 @@ func getWFStepMeta(dbs db.Session, step_id uint64, key string) string {
 	return row["value"]
 }
 
-func splitStringIntoArrayOfInts(s string, sep string) []uint64 {
+func splitStringIntoSliceOfInts(s string, sep string) []uint64 {
 	var i []uint64
 	for _, piece := range strings.Split(s, sep) {
-		convert, _ := strconv.ParseInt(piece, 10, 64)
+		if piece == "" {
+			continue
+		}
+		convert, _ := strconv.ParseInt(
+			strings.Trim(piece, " "),
+			10,
+			64,
+		)
 		i = append(i, uint64(convert))
 	}
 
