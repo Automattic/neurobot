@@ -48,7 +48,7 @@ type RunParams struct {
 	MatrixPassword      string
 }
 
-func (e *Engine) Startup() {
+func (e *Engine) StartUp() {
 	e.log("Starting up engine..")
 
 	// Initialize maps

@@ -39,7 +39,7 @@ func main() {
 
 	e := engine.NewEngine(p)
 
-	e.Startup()
+	e.StartUp()
 	defer e.ShutDown()
 
 	e.Run()
