@@ -184,6 +184,8 @@ func (e *Engine) loadData() {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
 			e.workflows[ws.workflow_id].addWorkflowStep(ws)
+		case *sendEmailWorkflowStep:
+			e.workflows[ws.workflow_id].addWorkflowStep(ws)
 		}
 	}
 }
