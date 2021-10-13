@@ -2,18 +2,6 @@ package engine
 
 import "testing"
 
-type mockWorkflowStep struct {
-	impact string
-}
-
-func (m *mockWorkflowStep) run(payload string, e *Engine) string {
-	return payload + m.impact
-}
-
-func NewMockWorkflowStep(impact string) *mockWorkflowStep {
-	return &mockWorkflowStep{impact: impact}
-}
-
 func TestAddWorkflowStep(t *testing.T) {
 	w := &workflow{steps: []WorkflowStep{}}
 	w.addWorkflowStep(NewMockWorkflowStep("g"))
