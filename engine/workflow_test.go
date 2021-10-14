@@ -25,14 +25,19 @@ func TestRun(t *testing.T) {
 		impacts         []string // change in payload as a proof of that workflowstep's execution
 	}{
 		{
-			triggerPayload:  "lets ",
-			impacts:         []string{"g", "o"},
-			expectedPayload: "lets go",
-		},
-		{
 			triggerPayload:  "love",
 			impacts:         []string{" ", "m", "a", "t", "r", "i", "x"},
 			expectedPayload: "love matrix",
+		},
+		{
+			triggerPayload:  "",
+			impacts:         []string{"g", "o"},
+			expectedPayload: "go",
+		},
+		{
+			triggerPayload:  "love",
+			impacts:         []string{},
+			expectedPayload: "love",
 		},
 	}
 	for _, table := range tables {
