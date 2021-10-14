@@ -11,17 +11,27 @@ import (
 func TestTriggerFinish(t *testing.T) {
 	tables := []struct {
 		initialPayload   string
-		impact           string
+		impact           []string
 		processedPayload string
 	}{
 		{
 			initialPayload:   "thor, son of ",
-			impact:           "odin",
+			impact:           []string{"odin"},
 			processedPayload: "thor, son of odin",
 		},
 		{
 			initialPayload:   "thor, son of",
-			impact:           " odin",
+			impact:           []string{" ", "odin"},
+			processedPayload: "thor, son of odin",
+		},
+		{
+			initialPayload:   "thor, son of odin",
+			impact:           []string{},
+			processedPayload: "thor, son of odin",
+		},
+		{
+			initialPayload:   "",
+			impact:           []string{"thor, ", "son of odin"},
 			processedPayload: "thor, son of odin",
 		},
 	}
@@ -36,9 +46,9 @@ func TestTriggerFinish(t *testing.T) {
 		}
 
 		w := &workflow{id: 1, steps: []WorkflowStep{}}
-		w.addWorkflowStep(NewMockWorkflowStep(
-			table.impact,
-		))
+		for _, i := range table.impact {
+			w.addWorkflowStep(NewMockWorkflowStep(i))
+		}
 		e.workflows[1] = w
 
 		tg.finish(table.initialPayload)
