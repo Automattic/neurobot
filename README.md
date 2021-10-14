@@ -18,7 +18,7 @@ You can run it using this command, and have to supply Matrix credentials for the
 
 ## Architecture
 
-![matrix workflow builder architecture](https://github.com/Automattic/matrix-workflow-builder/blob/master/matrix-workflow-builder.png?raw=true)
+![matrix workflow builder architecture](https://github.com/Automattic/matrix-workflow-builder/blob/master/matrix-workflow-builder-visual.png?raw=true)
 
 Engine is built to react on the basis of events. Workflows are defined as an ordered list of workflow steps that are to be executed when the workflow is started. And workflows' execution start when the chosen event for its execution is triggered.
 
