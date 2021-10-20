@@ -37,7 +37,7 @@ func TestTriggerFinish(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		e := Engine{}
+		e := engine{}
 		e.workflows = make(map[uint64]*workflow)
 
 		tg := trigger{

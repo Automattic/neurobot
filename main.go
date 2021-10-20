@@ -3,9 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"matrix-workflow-builder/engine"
 	"os"
 	"strconv"
+
+	"maunium.net/go/mautrix"
 )
 
 var homeserver = flag.String("homeserver", "", "Matrix Homeserver URL")
@@ -41,7 +44,12 @@ func main() {
 
 	e := engine.NewEngine(p)
 
-	e.StartUp()
+	mc, err := mautrix.NewClient(*homeserver, "", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
 	defer e.ShutDown()
 
 	e.Run()

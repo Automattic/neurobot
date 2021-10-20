@@ -11,7 +11,7 @@ type sendEmailWorkflowStep struct {
 	sendEmailWorkflowStepMeta
 }
 
-func (s sendEmailWorkflowStep) run(payload string, e *Engine) string {
+func (s sendEmailWorkflowStep) run(payload string, e *engine) string {
 	// send email
 
 	// hack: only show decorated log for now

@@ -4,7 +4,7 @@ type mockWorkflowStep struct {
 	impact string
 }
 
-func (m *mockWorkflowStep) run(payload string, e *Engine) string {
+func (m *mockWorkflowStep) run(payload string, e *engine) string {
 	return payload + m.impact
 }
 

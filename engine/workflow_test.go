@@ -46,7 +46,7 @@ func TestRun(t *testing.T) {
 			w.addWorkflowStep(NewMockWorkflowStep(i))
 		}
 
-		w.run(w.payload, &Engine{})
+		w.run(w.payload, &engine{})
 
 		if w.payload != table.expectedPayload {
 			t.Errorf("workflow ran workflow steps but final payload was '%s', expected: '%s'", w.payload, table.expectedPayload)

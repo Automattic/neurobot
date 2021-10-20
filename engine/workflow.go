@@ -16,7 +16,7 @@ func (w *workflow) addWorkflowStep(s WorkflowStep) {
 	w.steps = append(w.steps, s)
 }
 
-func (w *workflow) run(payload string, e *Engine) {
+func (w *workflow) run(payload string, e *engine) {
 	fmt.Printf("\nRunning workflow #%d\n", w.id)
 	w.payload = payload
 	// loop through all the steps inside of this workflow

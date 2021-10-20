@@ -12,6 +12,7 @@ import (
 	"github.com/upper/db/v4/adapter/sqlite"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/id"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
@@ -21,7 +22,19 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Engine struct {
+type Engine interface {
+	StartUp()
+	ShutDown()
+	Run()
+}
+
+type MatrixClient interface {
+	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
+	Sync() error
+	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
+}
+
+type engine struct {
 	debug               bool
 	database            string
 	portWebhookListener string
@@ -35,7 +48,7 @@ type Engine struct {
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
 
-	client *mautrix.Client
+	client MatrixClient
 }
 
 type RunParams struct {
@@ -47,7 +60,7 @@ type RunParams struct {
 	MatrixPassword      string
 }
 
-func (e *Engine) StartUp() {
+func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	e.log("Starting up engine..")
 
 	// Initialize maps
@@ -71,7 +84,7 @@ func (e *Engine) StartUp() {
 	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
 	e.log("Starting up Matrix client..")
 	go func() {
-		err = e.initMatrixClient()
+		err = e.initMatrixClient(mc, s)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -85,12 +98,12 @@ func (e *Engine) StartUp() {
 	e.log("Finished starting up engine.")
 }
 
-func (e *Engine) ShutDown() {
+func (e *engine) ShutDown() {
 	// Close database connection
 	e.db.Close()
 }
 
-func (e *Engine) Run() {
+func (e *engine) Run() {
 	e.log("\nAt last, running the engine now..")
 
 	go e.runPoller()
@@ -98,13 +111,13 @@ func (e *Engine) Run() {
 	e.runWebhookListener()
 }
 
-func (e *Engine) log(m string) {
+func (e *engine) log(m string) {
 	if e.debug {
 		fmt.Println(m)
 	}
 }
 
-func (e *Engine) loadDB() (err error) {
+func (e *engine) loadDB() (err error) {
 	database, err := sql.Open("sqlite3", e.database)
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
@@ -143,7 +156,7 @@ func (e *Engine) loadDB() (err error) {
 	return
 }
 
-func (e *Engine) registerWebhookTrigger(t *webhookt) {
+func (e *engine) registerWebhookTrigger(t *webhookt) {
 	// Add engine instance to inside of trigger, required for starting workflows
 	t.engine = e
 
@@ -153,14 +166,14 @@ func (e *Engine) registerWebhookTrigger(t *webhookt) {
 	e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.urlSuffix))
 }
 
-func (e *Engine) registerPollTrigger(t *pollt) {
+func (e *engine) registerPollTrigger(t *pollt) {
 	// Add engine instance to inside of trigger, required for starting workflows
 	t.engine = e
 
 	e.log(fmt.Sprintf("> Registered poll trigger: %s (pollingInterval: %s)", t.name, t.pollingInterval))
 }
 
-func (e *Engine) loadData() {
+func (e *engine) loadData() {
 	// load triggers & registers them first
 	for _, t := range getConfiguredTriggers(e.db) {
 		switch t := t.(type) {
@@ -190,7 +203,7 @@ func (e *Engine) loadData() {
 	}
 }
 
-func (e *Engine) runWebhookListener() {
+func (e *engine) runWebhookListener() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		e.log(fmt.Sprintf("Request received on webhook listener! %s", r.URL.Path))
 
@@ -238,7 +251,7 @@ func (e *Engine) runWebhookListener() {
 	}
 }
 
-func (e *Engine) runPoller() {
+func (e *engine) runPoller() {
 	e.log("> Running polls...")
 	for _, t := range e.triggers["poll"] {
 		go func(t Trigger) {
@@ -247,14 +260,11 @@ func (e *Engine) runPoller() {
 	}
 }
 
-func (e *Engine) initMatrixClient() (err error) {
+func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
+	e.client = c
+
 	if e.debug {
 		fmt.Println("Logging into", e.matrixhomeserver, "as", e.matrixusername)
-	}
-
-	e.client, err = mautrix.NewClient(e.matrixhomeserver, "", "")
-	if err != nil {
-		return
 	}
 	_, err = e.client.Login(&mautrix.ReqLogin{
 		Type:             "m.login.password",
@@ -268,7 +278,7 @@ func (e *Engine) initMatrixClient() (err error) {
 
 	fmt.Println("Matrix: Login successful!")
 
-	syncer := e.client.Syncer.(*mautrix.DefaultSyncer)
+	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
 		fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
 	})
@@ -281,8 +291,8 @@ func (e *Engine) initMatrixClient() (err error) {
 	return
 }
 
-func NewEngine(p RunParams) *Engine {
-	e := Engine{}
+func NewEngine(p RunParams) *engine {
+	e := engine{}
 
 	// setting run parameters
 	e.debug = p.Debug

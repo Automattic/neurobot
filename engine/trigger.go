@@ -11,7 +11,7 @@ type trigger struct {
 	variety     string
 	name        string
 	description string
-	engine      *Engine
+	engine      *engine
 	workflows   []uint64 // a trigger can start multiple workflows
 }
 
