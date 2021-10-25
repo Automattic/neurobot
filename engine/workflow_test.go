@@ -39,6 +39,16 @@ func TestRun(t *testing.T) {
 			impacts:         []string{},
 			expectedPayload: "love",
 		},
+		{
+			triggerPayload:  "throwerr",
+			impacts:         []string{},
+			expectedPayload: "throwerr",
+		},
+		{
+			triggerPayload:  "throwerr",
+			impacts:         []string{"vanish", "dont", "mind", "errors"},
+			expectedPayload: "dontminderrors",
+		},
 	}
 	for _, table := range tables {
 		w := &workflow{payload: table.triggerPayload, steps: []WorkflowStep{}}

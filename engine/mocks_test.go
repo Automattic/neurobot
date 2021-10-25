@@ -12,6 +12,11 @@ type mockWorkflowStep struct {
 }
 
 func (m *mockWorkflowStep) run(payload string, e *engine) (string, error) {
+	// a specific payload is designed to return error
+	if payload == "throwerr" {
+		return "", errors.New("whatever")
+	}
+
 	return payload + m.impact, nil
 }
 
