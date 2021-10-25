@@ -15,6 +15,8 @@ type trigger struct {
 	workflows   []uint64 // a trigger can start multiple workflows
 }
 
+func (t *trigger) setup() {}
+
 func (t *trigger) finish(payload string) {
 	// loop through all workflows meant for this trigger and run them
 	for _, workflowID := range t.workflows {

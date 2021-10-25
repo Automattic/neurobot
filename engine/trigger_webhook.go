@@ -9,9 +9,6 @@ type webhookt struct {
 	webhooktMeta
 }
 
-func (t *webhookt) setup() {
-	// no setup required for webhook triggers
-}
 func (t *webhookt) process(payload interface{}) {
 	t.finish(payload.(string))
 }
