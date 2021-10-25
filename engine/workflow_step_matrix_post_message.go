@@ -28,7 +28,7 @@ func (s postMessageMatrixWorkflowStep) run(payload string, e *engine) (string, e
 	}
 	_, err := e.client.SendText(id.RoomID(s.room), msg)
 	if err != nil {
-		fmt.Println(err)
+		e.log(err.Error())
 	}
 
 	return payload, err
