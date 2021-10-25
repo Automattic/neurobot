@@ -18,6 +18,7 @@ func NewMockWorkflowStep(impact string) *mockWorkflowStep {
 }
 
 type mockMatrixClient struct {
+	msgs []string
 }
 
 func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
@@ -37,9 +38,20 @@ func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) 
 }
 
 func (m *mockMatrixClient) SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error) {
+	m.msgs = append(m.msgs, text) // store internally for checking, whether this function was called or not
 	return &mautrix.RespSendEvent{
 		EventID: "AAAA",
 	}, nil
+}
+
+func (m *mockMatrixClient) WasMessageSent(text string) bool {
+	for _, v := range m.msgs {
+		if v == text {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (m *mockMatrixClient) Sync() error {
