@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"errors"
+
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 )
@@ -38,7 +40,13 @@ func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) 
 }
 
 func (m *mockMatrixClient) SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error) {
+	// a specific message is designed to return error
+	if text == "throwerr" {
+		return nil, errors.New("whatever")
+	}
+
 	m.msgs = append(m.msgs, text) // store internally for checking, whether this function was called or not
+
 	return &mautrix.RespSendEvent{
 		EventID: "AAAA",
 	}, nil
