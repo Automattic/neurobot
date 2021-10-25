@@ -17,7 +17,7 @@ func (w *workflow) addWorkflowStep(s WorkflowStep) {
 }
 
 func (w *workflow) run(payload string, e *engine) {
-	fmt.Printf("\nRunning workflow #%d\n", w.id)
+	e.log(fmt.Sprintf("\nRunning workflow #%d\n", w.id))
 	w.payload = payload
 	var err error
 	// loop through all the steps inside of this workflow
