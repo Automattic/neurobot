@@ -11,7 +11,7 @@ type sendEmailWorkflowStep struct {
 	sendEmailWorkflowStepMeta
 }
 
-func (s sendEmailWorkflowStep) run(payload string, e *engine) string {
+func (s sendEmailWorkflowStep) run(payload string, e *engine) (string, error) {
 	// send email
 
 	// hack: only show decorated log for now
@@ -20,5 +20,5 @@ func (s sendEmailWorkflowStep) run(payload string, e *engine) string {
 	fmt.Println(payload)
 	fmt.Println("====================")
 
-	return payload
+	return payload, nil
 }

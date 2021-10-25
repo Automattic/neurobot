@@ -16,7 +16,7 @@ type postMessageMatrixWorkflowStep struct {
 	postMessageMatrixWorkflowStepMeta
 }
 
-func (s postMessageMatrixWorkflowStep) run(payload string, e *engine) string {
+func (s postMessageMatrixWorkflowStep) run(payload string, e *engine) (string, error) {
 	// Append message specified in definition of this step as a prefix to the payload
 	msg := fmt.Sprintf("%s\n%s", s.message, payload)
 	_, err := e.client.SendText(id.RoomID(s.room), msg)
@@ -24,5 +24,5 @@ func (s postMessageMatrixWorkflowStep) run(payload string, e *engine) string {
 		fmt.Println(err)
 	}
 
-	return payload
+	return payload, err
 }

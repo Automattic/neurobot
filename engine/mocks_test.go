@@ -9,8 +9,8 @@ type mockWorkflowStep struct {
 	impact string
 }
 
-func (m *mockWorkflowStep) run(payload string, e *engine) string {
-	return payload + m.impact
+func (m *mockWorkflowStep) run(payload string, e *engine) (string, error) {
+	return payload + m.impact, nil
 }
 
 func NewMockWorkflowStep(impact string) *mockWorkflowStep {
