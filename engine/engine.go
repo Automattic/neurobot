@@ -263,9 +263,8 @@ func (e *engine) runPoller() {
 func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
 	e.client = c
 
-	if e.debug {
-		fmt.Println("Logging into", e.matrixhomeserver, "as", e.matrixusername)
-	}
+	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixhomeserver, e.matrixusername))
+
 	_, err = e.client.Login(&mautrix.ReqLogin{
 		Type:             "m.login.password",
 		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: e.matrixusername},
@@ -276,7 +275,7 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 		return
 	}
 
-	fmt.Println("Matrix: Login successful!")
+	e.log("Matrix: Login successful!")
 
 	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
