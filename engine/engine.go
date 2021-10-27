@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -83,17 +82,21 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	// Start Matrix client
 	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
 	e.log("Starting up Matrix client..")
+
+	// Create a channel to signal Matrix client has finished initializing before we wrap up StartUp()
+	matrixInitDone := make(chan bool, 1)
+
 	go func() {
 		err = e.initMatrixClient(mc, s)
 		if err != nil {
 			log.Fatal(err)
 		}
 		e.log("Finished loading Matrix client..")
+		matrixInitDone <- true
 	}()
 
 	// allow the matrix client to sync and be ready,
-	// before we invoke run() on Engine
-	time.Sleep(time.Second * 5)
+	<-matrixInitDone
 
 	e.log("Finished starting up engine.")
 }
