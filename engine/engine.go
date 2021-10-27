@@ -87,12 +87,11 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	matrixInitDone := make(chan bool, 1)
 
 	go func() {
-		err = e.initMatrixClient(mc, s)
+		err = e.initMatrixClient(mc, s, matrixInitDone)
 		if err != nil {
 			log.Fatal(err)
 		}
 		e.log("Finished loading Matrix client..")
-		matrixInitDone <- true
 	}()
 
 	// allow the matrix client to sync and be ready,
@@ -263,7 +262,7 @@ func (e *engine) runPoller() {
 	}
 }
 
-func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
+func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDone chan<- bool) (err error) {
 	e.client = c
 
 	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixhomeserver, e.matrixusername))
@@ -279,6 +278,8 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 	}
 
 	e.log("Matrix: Login successful!")
+
+	matrixInitDone <- true
 
 	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
