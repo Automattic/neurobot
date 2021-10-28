@@ -182,47 +182,17 @@ func setUp() (db.Session, db.Session) {
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
-
-	// read all db schema up files & loop through them to setup the db schema
-	sqlFiles, err := ioutil.ReadDir("../migration/")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var sqls []string
-	for _, file := range sqlFiles {
-		if strings.HasSuffix(file.Name(), ".up.sql") {
-			fileBytes, err := ioutil.ReadFile("../migration/" + file.Name())
-			if err != nil {
-				panic(err)
-			}
-			sqls = append(sqls, string(fileBytes))
-		}
-	}
-
-	for _, sql := range sqls {
+	for _, sql := range *getDBSchemaSQL() {
 		_, err = dbs.SQL().Exec(sql)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-
-	// insert some test data with which we can test db interaction code
-	_, err = dbs.SQL().Exec(`
-	INSERT INTO "workflows" ("id","name","description","active") VALUES (1,'MVP','',1);
-	INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (1,'Matticspace CURL','','webhook','1',1);
-	INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (2,'Blog RSS Feed Poller','','poll','2',1);
-	INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (3,'Disabled Trigger','','webhook','99',0);
-	INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order") VALUES (1,'Post message to Matrix room','','postMatrixMessage',1,0);
-	INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (1,1,'urlSuffix','mcsp');
-	INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (2,2,'url','https://wordpress.org/news/feed/');
-	INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (3,2,'endpointType','rss');
-	INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (4,2,'pollingInterval','1h');
-	INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (1,1,'room','!tnmILBRzpgkBkwSyDY:matrix.test');
-	INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (2,1,'message','Alert!');
-	`)
-	if err != nil {
-		log.Fatal(err)
+	for _, sql := range *getDataInsertsSQL() {
+		_, err = dbs.SQL().Exec(sql)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Setup empty database now
@@ -243,4 +213,42 @@ func tearDown(dbs db.Session, dbs2 db.Session) {
 	// Delete sqlite db files
 	os.Remove("./db_unit_tests.db")
 	os.Remove("./db_empty.db")
+}
+
+func getDBSchemaSQL() *[]string {
+	// read all db schema up files & loop through them to setup the db schema
+	sqlFiles, err := ioutil.ReadDir("../migration/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var sqls []string
+	for _, file := range sqlFiles {
+		if strings.HasSuffix(file.Name(), ".up.sql") {
+			fileBytes, err := ioutil.ReadFile("../migration/" + file.Name())
+			if err != nil {
+				panic(err)
+			}
+			sqls = append(sqls, string(fileBytes))
+		}
+	}
+
+	return &sqls
+}
+
+func getDataInsertsSQL() *[]string {
+	// @TODO add comments and more entries to better cover different set of possibilities
+	return &[]string{
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (1,'MVP','',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (1,'Matticspace CURL','','webhook','1',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (2,'Blog RSS Feed Poller','','poll','2',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (3,'Disabled Trigger','','webhook','99',0);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order") VALUES (1,'Post message to Matrix room','','postMatrixMessage',1,0);`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (1,1,'urlSuffix','mcsp');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (2,2,'url','https://wordpress.org/news/feed/');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (3,2,'endpointType','rss');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (4,2,'pollingInterval','1h');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (1,1,'room','!tnmILBRzpgkBkwSyDY:matrix.test');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (2,1,'message','Alert!');`,
+	}
 }
