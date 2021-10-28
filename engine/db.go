@@ -30,6 +30,7 @@ type WFStepRow struct {
 	Variety     string `db:"variety"`
 	WorkflowID  uint64 `db:"workflow_id"`
 	SortOrder   uint64 `db:"sort_order"`
+	Active      int    `db:"active"`
 }
 
 func getConfiguredTriggers(dbs db.Session) (t []Trigger) {
