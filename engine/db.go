@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -33,13 +32,13 @@ type WFStepRow struct {
 	Active      int    `db:"active"`
 }
 
-func getConfiguredTriggers(dbs db.Session) (t []Trigger) {
+func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 	// get all active triggers out of the database
 	var configuredTriggers []TriggerRow
 	res := dbs.Collection("triggers").Find(db.Cond{"active": "1"})
-	err := res.All(&configuredTriggers)
+	err = res.All(&configuredTriggers)
 	if err != nil {
-		log.Fatalf("res.All(): %q\n", err)
+		return
 	}
 
 	// range over all active triggers, collecting meta for each trigger and appending that to collect basket
@@ -79,16 +78,16 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger) {
 		}
 	}
 
-	return t
+	return
 }
 
-func getConfiguredWorkflows(dbs db.Session) (w []workflow) {
+func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
 	// get all active workflows out of the database
 	var savedWorkflows []WorkflowRow
 	res := dbs.Collection("workflows").Find(db.Cond{"active": "1"})
-	err := res.All(&savedWorkflows)
+	err = res.All(&savedWorkflows)
 	if err != nil {
-		log.Fatalf("res.All(): %q\n", err)
+		return
 	}
 
 	// range over all active triggers, collecting meta for each trigger and appending that to collect basket
@@ -100,16 +99,16 @@ func getConfiguredWorkflows(dbs db.Session) (w []workflow) {
 		})
 	}
 
-	return w
+	return
 }
 
-func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep) {
+func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 	// get all active triggers out of the database
 	var configuredSteps []WFStepRow
 	res := dbs.Collection("workflow_steps").Find()
-	err := res.All(&configuredSteps)
+	err = res.All(&configuredSteps)
 	if err != nil {
-		log.Fatalf("res.All(): %q\n", err)
+		return
 	}
 
 	// range over all active triggers, collecting meta for each trigger and appending that to collect basket
@@ -132,7 +131,7 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep) {
 		}
 	}
 
-	return s
+	return
 }
 
 func getTriggerMeta(dbs db.Session, trigger_id uint64, key string) string {
