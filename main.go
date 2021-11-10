@@ -8,23 +8,16 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/joho/godotenv"
 	"maunium.net/go/mautrix"
 )
 
-var homeserver = flag.String("homeserver", "", "Matrix Homeserver URL")
-var username = flag.String("username", "", "Matrix username localpart")
-var password = flag.String("password", "", "Matrix password")
 var debug = flag.String("debug", "false", "Debug mode")
+var envFile = flag.String("env", "./.env", ".env file")
 var dbFile = flag.String("dbfile", "./wfb.db", "Database file")
-var webhookListenerPort = flag.String("webhooklistenerport", "8080", "Webhook Listener Port")
 
 func main() {
 	flag.Parse()
-	if *username == "" || *password == "" || *homeserver == "" {
-		_, _ = fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
 
 	debug, err := strconv.ParseBool(*debug)
 	if err != nil {
@@ -33,18 +26,40 @@ func main() {
 
 	fmt.Println("debug:", debug)
 
+	err = godotenv.Load(*envFile)
+	if err != nil {
+		log.Fatalf("Error loading .env file at %s. Err: %s\n", *envFile, err)
+	}
+
+	homeserver := os.Getenv("MATRIX_HOMESERVER")
+	username := os.Getenv("MATRIX_USERNAME")
+	password := os.Getenv("MATRIX_PASSWORD")
+	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
+
+	// if either one matrix related env var is specified, make sure all of them are specified
+	if homeserver != "" || username != "" || password != "" {
+		if homeserver == "" || username == "" || password == "" {
+			log.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
+		}
+	}
+
+	// set default port for running webhook listener server
+	if webhookListenerPort == "" {
+		webhookListenerPort = "8080"
+	}
+
 	p := engine.RunParams{
 		Debug:               debug,
 		Database:            *dbFile,
-		PortWebhookListener: *webhookListenerPort,
-		MatrixHomeServer:    *homeserver,
-		MatrixUsername:      *username,
-		MatrixPassword:      *password,
+		PortWebhookListener: webhookListenerPort,
+		MatrixHomeServer:    homeserver,
+		MatrixUsername:      username,
+		MatrixPassword:      password,
 	}
 
 	e := engine.NewEngine(p)
 
-	mc, err := mautrix.NewClient(*homeserver, "", "")
+	mc, err := mautrix.NewClient(homeserver, "", "")
 	if err != nil {
 		log.Fatal(err)
 	}
