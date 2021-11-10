@@ -4,15 +4,22 @@ It is an engine in which you can define workflows to be triggered by certain eve
 
 Currently supported event triggers:
 
-- External webhook request
+- External webhook request with payload `?message=X`
 
 Currently supported workflow step:
 
+- Show message on `stdout`
 - Post message to a Matrix room
 
 ## Instructions to run it
 
-You can run it using this command, and have to supply Matrix credentials for the bot account you intend to use for posting messages:
+For a quick demonstration, just run the program using this command:
+
+`go run main.go -debug=true`
+
+First run, inserts some data into the sqlite database `wfb.db` which will enable you to send it a HTTP request with payload `?message=hello` which will trigger the workflow that makes it log to `stdout`.
+
+To run the workflow builder with Matrix, you can run it using this command, and have to supply Matrix credentials for the bot account you intend to use for posting messages in the `.env` file:
 
 `go run main.go -homeserver="http://localhost:8008" -username="morpheus" -password="redpill" -debug=true`
 
