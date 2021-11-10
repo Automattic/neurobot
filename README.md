@@ -23,7 +23,18 @@ First run, inserts some data into the sqlite database `wfb.db` which will enable
 
 After running the program, you can send a HTTP request using CURL like this:
 
-`curl localhost:8080/webhooks-listener/quick?message=Hello`
+`curl localhost:8080/webhooks-listener/quickstart?message=Hello`
+
+You should see these lines in output:
+
+```
+Request received on webhook listener! /webhooks-listener/quickstart
+suffix: quickstart registered: true
+
+Running workflow #1 payload:Hello
+
+>>Hello
+```
 
 ### Matrix HomeServer
 
