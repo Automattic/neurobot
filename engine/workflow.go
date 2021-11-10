@@ -17,7 +17,7 @@ func (w *workflow) addWorkflowStep(s WorkflowStep) {
 }
 
 func (w *workflow) run(payload string, e *engine) {
-	e.log(fmt.Sprintf("\nRunning workflow #%d\n", w.id))
+	e.log(fmt.Sprintf("\nRunning workflow #%d payload:%s\n", w.id, payload))
 
 	// save payload inside of workflow, as we rinse-repeat it within the loop below
 	w.payload = payload

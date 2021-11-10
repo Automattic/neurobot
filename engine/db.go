@@ -128,6 +128,16 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep) {
 					room:    getWFStepMeta(dbs, row.ID, "room"),
 				},
 			})
+		case "stdout":
+			s = append(s, &stdoutWorkflowStep{
+				workflowStep: workflowStep{
+					id:          row.ID,
+					name:        row.Name,
+					description: row.Description,
+					variety:     row.Variety,
+					workflow_id: row.WorkflowID,
+				},
+			})
 		}
 	}
 
