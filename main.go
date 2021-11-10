@@ -37,9 +37,12 @@ func main() {
 	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
 
 	// if either one matrix related env var is specified, make sure all of them are specified
+	isMatrix := false
 	if homeserver != "" || username != "" || password != "" {
 		if homeserver == "" || username == "" || password == "" {
 			log.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
+		} else {
+			isMatrix = true
 		}
 	}
 
@@ -52,6 +55,7 @@ func main() {
 		Debug:               debug,
 		Database:            *dbFile,
 		PortWebhookListener: webhookListenerPort,
+		IsMatrix:            isMatrix,
 		MatrixHomeServer:    homeserver,
 		MatrixUsername:      username,
 		MatrixPassword:      password,
@@ -59,12 +63,16 @@ func main() {
 
 	e := engine.NewEngine(p)
 
-	mc, err := mautrix.NewClient(homeserver, "", "")
-	if err != nil {
-		log.Fatal(err)
+	if isMatrix {
+		mc, err := mautrix.NewClient(homeserver, "", "")
+		if err != nil {
+			log.Fatal(err)
+		}
+		e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
+	} else {
+		fmt.Println("engine:", "Lite mode")
+		e.StartUpLite()
 	}
-
-	e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
 	defer e.ShutDown()
 
 	e.Run()

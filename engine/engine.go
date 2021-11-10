@@ -38,6 +38,7 @@ type engine struct {
 	database            string
 	portWebhookListener string
 
+	isMatrix         bool // Do we mean to run a matrix client?
 	matrixhomeserver string
 	matrixusername   string
 	matrixpassword   string
@@ -54,12 +55,13 @@ type RunParams struct {
 	Debug               bool
 	Database            string
 	PortWebhookListener string
+	IsMatrix            bool
 	MatrixHomeServer    string
 	MatrixUsername      string
 	MatrixPassword      string
 }
 
-func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
+func (e *engine) StartUpLite() {
 	e.log("Starting up engine..")
 
 	// Initialize maps
@@ -79,25 +81,31 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	e.log("Loading data...")
 	e.loadData()
 
-	// Start Matrix client
-	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
-	e.log("Starting up Matrix client..")
-
-	// Create a channel to signal Matrix client has finished initializing before we wrap up StartUp()
-	matrixInitDone := make(chan bool, 1)
-
-	go func() {
-		err = e.initMatrixClient(mc, s, matrixInitDone)
-		if err != nil {
-			log.Fatal(err)
-		}
-		e.log("Finished loading Matrix client..")
-	}()
-
-	// allow the matrix client to sync and be ready,
-	<-matrixInitDone
-
 	e.log("Finished starting up engine.")
+}
+
+func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
+	e.StartUpLite()
+
+	// Start Matrix client, if desired
+	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
+	if e.isMatrix {
+		e.log("Starting up Matrix client..")
+
+		// Create a channel to signal Matrix client has finished initializing before we wrap up StartUp()
+		matrixInitDone := make(chan bool, 1)
+
+		go func() {
+			err := e.initMatrixClient(mc, s, matrixInitDone)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.log("Finished loading Matrix client.")
+		}()
+
+		// allow the matrix client to sync and be ready,
+		<-matrixInitDone
+	}
 }
 
 func (e *engine) ShutDown() {
@@ -301,6 +309,7 @@ func NewEngine(p RunParams) *engine {
 	e.debug = p.Debug
 	e.database = p.Database
 	e.portWebhookListener = p.PortWebhookListener
+	e.isMatrix = p.IsMatrix
 	e.matrixhomeserver = p.MatrixHomeServer
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
