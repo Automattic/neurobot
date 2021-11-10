@@ -13,13 +13,21 @@ Currently supported workflow step:
 
 ## Instructions to run it
 
+### Quick Demo
+
 For a quick demonstration, just run the program using this command:
 
 `go run main.go -debug=true`
 
 First run, inserts some data into the sqlite database `wfb.db` which will enable you to send it a HTTP request with payload `?message=hello` which will trigger the workflow that makes it log to `stdout`.
 
-To run the workflow builder with Matrix, you can run it using this command, and have to supply Matrix credentials for the bot account you intend to use for posting messages in the `.env` file:
+After running the program, you can send a HTTP request using CURL like this:
+
+`curl localhost:8080/webhooks-listener/quick?message=Hello`
+
+### Matrix HomeServer
+
+To run the workflow builder with Matrix homeserver, you can run it using this command, and have to supply Matrix credentials for the bot account you intend to use for posting messages in the `.env` file:
 
 `go run main.go -homeserver="http://localhost:8008" -username="morpheus" -password="redpill" -debug=true`
 
