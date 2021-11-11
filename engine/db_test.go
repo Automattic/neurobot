@@ -22,19 +22,29 @@ func TestGetConfiguredTriggers(t *testing.T) {
 		trigger: trigger{
 			id:          1,
 			variety:     "webhook",
+			name:        "CURL Request Catcher",
+			description: "This webhook trigger will receive your webhook request while showcasing the demo",
+			workflows:   []uint64{1},
+		},
+		webhooktMeta: webhooktMeta{urlSuffix: "quickstart"},
+	})
+	expected = append(expected, &webhookt{
+		trigger: trigger{
+			id:          11,
+			variety:     "webhook",
 			name:        "Matticspace CURL",
 			description: "",
-			workflows:   []uint64{1},
+			workflows:   []uint64{11},
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
 	})
 	expected = append(expected, &pollt{
 		trigger: trigger{
-			id:          2,
+			id:          12,
 			variety:     "poll",
 			name:        "Blog RSS Feed Poller",
 			description: "",
-			workflows:   []uint64{2},
+			workflows:   []uint64{12},
 		},
 		polltMeta: polltMeta{
 			url:             "https://wordpress.org/news/feed/",
@@ -65,6 +75,11 @@ func TestGetConfiguredWorkflows(t *testing.T) {
 	var expected []workflow
 	expected = append(expected, workflow{
 		id:          1,
+		name:        "QuickStart Demo",
+		description: "This workflow is meant to show a quick demo",
+	})
+	expected = append(expected, workflow{
+		id:          11,
 		name:        "MVP",
 		description: "",
 	})
@@ -89,13 +104,22 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 	defer tearDown(dbs, dbs2)
 
 	var expected []WorkflowStep
-	expected = append(expected, &postMessageMatrixWorkflowStep{
+	expected = append(expected, &stdoutWorkflowStep{
 		workflowStep: workflowStep{
 			id:          1,
+			name:        "Log to stdout",
+			description: "This workflow step will show the payload to stdout while showcasing the demo",
+			variety:     "stdout",
+			workflow_id: 1,
+		},
+	})
+	expected = append(expected, &postMessageMatrixWorkflowStep{
+		workflowStep: workflowStep{
+			id:          11,
 			name:        "Post message to Matrix room",
 			description: "",
 			variety:     "postMatrixMessage",
-			workflow_id: 1,
+			workflow_id: 11,
 		},
 		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
 			message: "Alert!",
@@ -239,18 +263,18 @@ func getDBSchemaSQL() *[]string {
 func getDataInsertsSQL() *[]string {
 	// @TODO add comments and more entries to better cover different set of possibilities
 	return &[]string{
-		`INSERT INTO "workflows" ("id","name","description","active") VALUES (1,'MVP','',1);`,
-		`INSERT INTO "workflows" ("id","name","description","active") VALUES (2,'Deactivated Workflow','',0);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (1,'Matticspace CURL','','webhook','1',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (2,'Blog RSS Feed Poller','','poll','2',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (3,'Disabled Trigger','','webhook','99',0);`,
-		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (1,'Post message to Matrix room','','postMatrixMessage',1,0,1);`,
-		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (2,'Deactivated workflow step for matrix room posting','','postMatrixMessage',1,0,0);`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (1,1,'urlSuffix','mcsp');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (2,2,'url','https://wordpress.org/news/feed/');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (3,2,'endpointType','rss');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (4,2,'pollingInterval','1h');`,
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (1,1,'room','!tnmILBRzpgkBkwSyDY:matrix.test');`,
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (2,1,'message','Alert!');`,
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (11,'MVP','',1);`,
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (12,'Deactivated Workflow','',0);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (11,'Matticspace CURL','','webhook','11',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (12,'Blog RSS Feed Poller','','poll','12',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (13,'Disabled Trigger','','webhook','99',0);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (11,'Post message to Matrix room','','postMatrixMessage',11,0,1);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (12,'Deactivated workflow step for matrix room posting','','postMatrixMessage',99,0,0);`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (12,12,'url','https://wordpress.org/news/feed/');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (13,12,'endpointType','rss');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (14,12,'pollingInterval','1h');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (11,11,'room','!tnmILBRzpgkBkwSyDY:matrix.test');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (12,11,'message','Alert!');`,
 	}
 }
