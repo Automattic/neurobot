@@ -105,7 +105,7 @@ func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
 func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 	// get all active triggers out of the database
 	var configuredSteps []WFStepRow
-	res := dbs.Collection("workflow_steps").Find()
+	res := dbs.Collection("workflow_steps").Find(db.Cond{"active": "1"})
 	err = res.All(&configuredSteps)
 	if err != nil {
 		return
