@@ -240,10 +240,12 @@ func getDataInsertsSQL() *[]string {
 	// @TODO add comments and more entries to better cover different set of possibilities
 	return &[]string{
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (1,'MVP','',1);`,
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (2,'Deactivated Workflow','',0);`,
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (1,'Matticspace CURL','','webhook','1',1);`,
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (2,'Blog RSS Feed Poller','','poll','2',1);`,
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (3,'Disabled Trigger','','webhook','99',0);`,
-		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order") VALUES (1,'Post message to Matrix room','','postMatrixMessage',1,0);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (1,'Post message to Matrix room','','postMatrixMessage',1,0,1);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (2,'Deactivated workflow step for matrix room posting','','postMatrixMessage',1,0,0);`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (1,1,'urlSuffix','mcsp');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (2,2,'url','https://wordpress.org/news/feed/');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (3,2,'endpointType','rss');`,
