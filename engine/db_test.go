@@ -197,6 +197,9 @@ func sliceEquals(a []uint64, b []uint64) bool {
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass
 // and second one of an empty database with no tables, meant to test errors
 func setUp() (db.Session, db.Session) {
+	// bump DB log level to fatal errors as triggering an error condition is part of the test
+	db.LC().SetLevel(db.LogLevelFatal)
+
 	// Remove sqlite db files, if they exist
 	os.Remove("./db_unit_tests.db")
 	os.Remove("./db_empty.db")
