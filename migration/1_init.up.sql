@@ -20,7 +20,8 @@ CREATE TABLE "workflow_steps" (
 "description" TEXT,
 "variety" TEXT,
 "workflow_id" integer,
-"sort_order" integer
+"sort_order" integer,
+"active" INTEGER DEFAULT 1
 );
 
 CREATE TABLE "trigger_meta" (

@@ -185,7 +185,11 @@ func (e *engine) registerPollTrigger(t *pollt) {
 
 func (e *engine) loadData() {
 	// load triggers & registers them first
-	for _, t := range getConfiguredTriggers(e.db) {
+	triggers, err := getConfiguredTriggers(e.db)
+	if err != nil {
+		log.Fatalf("Error loading triggers from database: %s", err)
+	}
+	for _, t := range triggers {
 		switch t := t.(type) {
 		case *webhookt:
 			e.registerWebhookTrigger(t)
@@ -195,7 +199,11 @@ func (e *engine) loadData() {
 	}
 
 	// load workflows
-	for _, w := range getConfiguredWorkflows(e.db) {
+	workflows, err := getConfiguredWorkflows(e.db)
+	if err != nil {
+		log.Fatalf("Error loading workflows from database: %s", err)
+	}
+	for _, w := range workflows {
 		// copy over the value in a separate variable because we need to store a pointer
 		// w gets assigned a different value with every iteration, which modifies all values if address of w is taken directly
 		instance := w
@@ -203,7 +211,11 @@ func (e *engine) loadData() {
 	}
 
 	// load workflow steps
-	for _, ws := range getConfiguredWFSteps(e.db) {
+	steps, err := getConfiguredWFSteps(e.db)
+	if err != nil {
+		log.Fatalf("Error loading workflow steps from database: %s", err)
+	}
+	for _, ws := range steps {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
 			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
