@@ -26,7 +26,7 @@ func main() {
 		debug = false
 	}
 
-	fmt.Println("debug:", debug)
+	log.Println("debug:", debug)
 
 	err = godotenv.Load(*envFile)
 	if err != nil {
@@ -95,7 +95,7 @@ func main() {
 			}
 			e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
 		} else {
-			fmt.Println("engine:", "Lite mode")
+			log.Println("engine:", "[mode:lite]")
 			e.StartUpLite()
 		}
 		defer e.ShutDown()

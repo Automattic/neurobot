@@ -62,7 +62,7 @@ type RunParams struct {
 }
 
 func (e *engine) StartUpLite() {
-	e.log("Starting up engine..")
+	e.log("Starting up engine")
 
 	// Initialize maps
 	e.workflows = make(map[uint64]*workflow)
@@ -78,10 +78,10 @@ func (e *engine) StartUpLite() {
 	}
 
 	// Load registered workflows from the database and initialize the right triggers for them
-	e.log("Loading data...")
+	e.log("Initializing engine [Loading data]")
 	e.loadData()
 
-	e.log("Finished starting up engine.")
+	e.log("Finished starting up engine")
 }
 
 func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
@@ -114,7 +114,7 @@ func (e *engine) ShutDown() {
 }
 
 func (e *engine) Run() {
-	e.log("\nAt last, running the engine now..")
+	e.log("Running engine")
 
 	go e.runPoller()
 
@@ -123,7 +123,7 @@ func (e *engine) Run() {
 
 func (e *engine) log(m string) {
 	if e.debug {
-		fmt.Println(m)
+		log.Println(m)
 	}
 }
 
@@ -218,13 +218,13 @@ func (e *engine) loadData() {
 	for _, ws := range steps {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
+			log.Printf("> Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
 			e.workflows[ws.workflow_id].addWorkflowStep(ws)
 		case *stdoutWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
+			log.Printf("> Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
 			e.workflows[ws.workflow_id].addWorkflowStep(ws)
 		case *sendEmailWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
+			log.Printf("> Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
 			e.workflows[ws.workflow_id].addWorkflowStep(ws)
 		}
 	}
@@ -272,14 +272,14 @@ func (e *engine) runWebhookListener() {
 		}
 	})
 
-	e.log(fmt.Sprintf("> Starting webhook listener at port %s...", e.portWebhookListener))
+	e.log(fmt.Sprintf("> Starting webhook listener at port %s ...", e.portWebhookListener))
 	if err := http.ListenAndServe(":"+e.portWebhookListener, nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (e *engine) runPoller() {
-	e.log("> Running polls...")
+	e.log("> Running polls ...")
 	for _, t := range e.triggers["poll"] {
 		go func(t Trigger) {
 			t.setup()
