@@ -38,6 +38,7 @@ func main() {
 	password := os.Getenv("MATRIX_PASSWORD")
 	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
 	staticServerPort := os.Getenv("STATIC_SERVER_PORT")
+	adminAPIServerPort := os.Getenv("ADMIN_API_SERVER_PORT")
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
@@ -56,9 +57,12 @@ func main() {
 	if staticServerPort == "" {
 		staticServerPort = "8181"
 	}
+	if adminAPIServerPort == "" {
+		adminAPIServerPort = "8282"
+	}
 
 	wg := new(sync.WaitGroup)
-	wg.Add(2)
+	wg.Add(3)
 
 	// Run static server for UI
 	go func() {
@@ -71,6 +75,22 @@ func main() {
 			Handler: mux,
 		}
 		log.Fatal(staticServer.ListenAndServe())
+		wg.Done()
+	}()
+
+	// Run admin api for UI
+	go func() {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			log.Println(fmt.Sprintf("Request received on admin api! %s %s", r.Method, r.URL.Path))
+		})
+
+		log.Println("Starting api server on :" + adminAPIServerPort)
+		apiServer := http.Server{
+			Addr:    fmt.Sprintf(":%v", adminAPIServerPort),
+			Handler: mux,
+		}
+		log.Fatal(apiServer.ListenAndServe())
 		wg.Done()
 	}()
 
