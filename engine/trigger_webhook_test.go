@@ -44,10 +44,10 @@ func TestWebhookTriggerProcess(t *testing.T) {
 		))
 		e.workflows[1] = w
 
-		tg.process(table.initialPayload)
+		tg.process(mockWorkflowPayload{message: table.initialPayload})
 
-		if w.payload != table.processedPayload {
-			t.Errorf("trigger finish didn't generate the right processed payload. expected: '%s' got: '%s'", table.processedPayload, w.payload)
+		if w.payload.(mockWorkflowPayload).message != table.processedPayload {
+			t.Errorf("trigger finish didn't generate the right processed payload. expected: '%s' got: '%s'", table.processedPayload, w.payload.(mockWorkflowPayload).message)
 		}
 	}
 }

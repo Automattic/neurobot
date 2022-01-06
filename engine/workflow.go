@@ -8,7 +8,7 @@ type workflow struct {
 	id          uint64
 	name        string
 	description string
-	payload     string
+	payload     interface{}
 	steps       []WorkflowStep
 }
 
@@ -16,7 +16,7 @@ func (w *workflow) addWorkflowStep(s WorkflowStep) {
 	w.steps = append(w.steps, s)
 }
 
-func (w *workflow) run(payload string, e *engine) {
+func (w *workflow) run(payload interface{}, e *engine) {
 	e.log(fmt.Sprintf("\nRunning workflow #%d payload:%s\n", w.id, payload))
 
 	// save payload inside of workflow, as we rinse-repeat it within the loop below

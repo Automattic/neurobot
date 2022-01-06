@@ -3,7 +3,7 @@ package engine
 type Trigger interface {
 	setup()
 	process(interface{})
-	finish(string)
+	finish(interface{})
 }
 
 type trigger struct {
@@ -17,7 +17,7 @@ type trigger struct {
 
 func (t *trigger) setup() {}
 
-func (t *trigger) finish(payload string) {
+func (t *trigger) finish(payload interface{}) {
 	// loop through all workflows meant for this trigger and run them
 	for _, workflowID := range t.workflows {
 		// Get workflow instance and run() it

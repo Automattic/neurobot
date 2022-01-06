@@ -2,6 +2,7 @@ package engine
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -59,6 +60,11 @@ type RunParams struct {
 	MatrixHomeServer    string
 	MatrixUsername      string
 	MatrixPassword      string
+}
+
+type webhookListenerData struct {
+	Message string
+	Room    string
 }
 
 func (e *engine) StartUpLite() {
@@ -250,22 +256,62 @@ func (e *engine) runWebhookListener() {
 		t, exists := e.triggers["webhook"][suffix]
 		e.log(fmt.Sprintf("suffix: %s registered: %t", suffix, exists))
 		if exists {
-			// @TODO:
-			// figure out what data do we have here
-			// check in this order:
-			// GET request
-			// 		message param unless specified param=m, in which case read 'm' param
-			// POST request
-			//		data param
 
-			keys, ok := r.URL.Query()["message"]
-			if !ok || len(keys[0]) < 1 {
+			var message string
+			var room string
+
+			switch r.Method {
+			case "GET":
+				messageSlice, ok := r.URL.Query()["message"]
+				log.Println(messageSlice, len(messageSlice), messageSlice[0])
+				if !ok || len(messageSlice) < 1 {
+					http.Error(w, "400 bad request.", http.StatusBadRequest)
+					return
+				}
+				message = messageSlice[0]
+				roomSlice, ok := r.URL.Query()["room"]
+				if !ok || len(roomSlice) < 1 {
+					http.Error(w, "400 bad request.", http.StatusBadRequest)
+					return
+				}
+				room = roomSlice[0]
+			case "POST":
+				switch r.Header.Values("Content-Type")[0] {
+				case "application/json":
+					decoder := json.NewDecoder(r.Body)
+					var data webhookListenerData
+					err := decoder.Decode(&data)
+					if err != nil {
+						panic(err)
+					}
+
+					message = data.Message
+					room = data.Room
+				case "application/x-www-form-urlencoded":
+					err := r.ParseForm()
+					if err != nil {
+						panic(err)
+					}
+					message = r.Form.Get("message")
+					room = r.Form.Get("room")
+				}
+			}
+
+			if message == "" {
+				http.Error(w, "400 bad request.", http.StatusBadRequest)
+				return
+			}
+			if message != "" && room == "" {
 				http.Error(w, "400 bad request.", http.StatusBadRequest)
 				return
 			}
 
-			t.process(keys[0])
-			// t.process()
+			e.log(fmt.Sprintf(">> %s [%s]", message, room))
+
+			t.process(webhookListenerData{
+				Message: message,
+				Room:    room,
+			})
 		} else {
 			http.Error(w, "404 not found.", http.StatusNotFound)
 			return

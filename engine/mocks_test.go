@@ -7,17 +7,25 @@ import (
 	"maunium.net/go/mautrix/id"
 )
 
+type mockWorkflowPayload struct {
+	message string
+}
+
 type mockWorkflowStep struct {
 	impact string
 }
 
-func (m *mockWorkflowStep) run(payload string, e *engine) (string, error) {
+func (m *mockWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
+	p := payload.(mockWorkflowPayload)
+
 	// a specific payload is designed to return error
-	if payload == "throwerr" {
-		return "", errors.New("whatever")
+	if p.message == "throwerr" {
+		return mockWorkflowPayload{message: ""}, errors.New("whatever")
 	}
 
-	return payload + m.impact, nil
+	return mockWorkflowPayload{
+		message: p.message + m.impact,
+	}, nil
 }
 
 func NewMockWorkflowStep(impact string) *mockWorkflowStep {

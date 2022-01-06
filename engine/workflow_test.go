@@ -51,15 +51,20 @@ func TestRun(t *testing.T) {
 		},
 	}
 	for _, table := range tables {
-		w := &workflow{payload: table.triggerPayload, steps: []WorkflowStep{}}
+		w := &workflow{
+			payload: mockWorkflowPayload{
+				message: table.triggerPayload,
+			},
+			steps: []WorkflowStep{},
+		}
 		for _, i := range table.impacts {
 			w.addWorkflowStep(NewMockWorkflowStep(i))
 		}
 
 		w.run(w.payload, &engine{})
 
-		if w.payload != table.expectedPayload {
-			t.Errorf("workflow ran workflow steps but final payload was '%s', expected: '%s'", w.payload, table.expectedPayload)
+		if w.payload.(mockWorkflowPayload).message != table.expectedPayload {
+			t.Errorf("workflow ran workflow steps but final payload was '%s', expected: '%s'", w.payload.(mockWorkflowPayload).message, table.expectedPayload)
 		}
 	}
 }

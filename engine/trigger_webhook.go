@@ -10,5 +10,5 @@ type webhookt struct {
 }
 
 func (t *webhookt) process(payload interface{}) {
-	t.finish(payload.(string))
+	t.finish(payload)
 }

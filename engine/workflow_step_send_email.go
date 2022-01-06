@@ -2,6 +2,10 @@ package engine
 
 import "fmt"
 
+type sendEmailWorkflowPayload struct {
+	message string
+}
+
 type sendEmailWorkflowStepMeta struct {
 	emailAddr string
 }
@@ -11,13 +15,14 @@ type sendEmailWorkflowStep struct {
 	sendEmailWorkflowStepMeta
 }
 
-func (s sendEmailWorkflowStep) run(payload string, e *engine) (string, error) {
+func (s sendEmailWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
+	p := payload.(sendEmailWorkflowPayload)
 	// send email
 
 	// hack: only show decorated log for now
 	fmt.Println("====================")
 	fmt.Printf("To: %s\n", s.emailAddr)
-	fmt.Println(payload)
+	fmt.Println(p.message)
 	fmt.Println("====================")
 
 	return payload, nil
