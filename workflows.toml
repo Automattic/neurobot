@@ -2,7 +2,7 @@
 
 [[workflow]]
 id = 1
-active = 1
+active = true
 
 name = "Demo Workflow"
 description = "Send a HTTP request with a message and watch that gets logged to standard out"
@@ -12,7 +12,7 @@ variety = "webhook"
 urlSuffix = "quickstart"
 
 [workflow.steps.1]
-active = 1
+active = true
 variety = "stdout"
 name = "Log to Standard Out"
 description = "This workflow step will show the payload to stdout while showcasing the demo"
@@ -21,7 +21,7 @@ description = "This workflow step will show the payload to stdout while showcasi
 
 [[workflow]]
 id = 2
-active = 1
+active = true
 
 name = "AFK Bot Workflow"
 description = "AFK Bot receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
@@ -31,7 +31,7 @@ variety = "webhook"
 urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
 
 [workflow.steps.1]
-active = 1
+active = true
 variety = "postMatrixMessage"
 name = "post message to Matrix room"
 description = "Post message to a matrix room"
