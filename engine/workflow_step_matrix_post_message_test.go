@@ -12,7 +12,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		{
 			stepPrefixMessage: "Test!",
 			payload:           "Message!",
-			messageSent:       "Test! Message!",
+			messageSent:       "Test!\nMessage!",
 			isError:           false,
 		},
 		{
@@ -52,8 +52,8 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 				variety: "postMatrixMessage",
 			},
 			postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-				message: table.stepPrefixMessage,
-				room:    "RRRR",
+				messagePrefix: table.stepPrefixMessage,
+				room:          "RRRR",
 			},
 		}
 

@@ -122,8 +122,8 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			workflow_id: 11,
 		},
 		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-			message: "Alert!",
-			room:    "!tnmILBRzpgkBkwSyDY:matrix.test",
+			messagePrefix: "Alert!",
+			room:          "!tnmILBRzpgkBkwSyDY:matrix.test",
 		},
 	})
 

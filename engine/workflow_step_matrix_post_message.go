@@ -12,8 +12,8 @@ type postMessageMatrixWorkflowPayload struct {
 }
 
 type postMessageMatrixWorkflowStepMeta struct {
-	message string // message prefix
-	room    string // Matrix room
+	messagePrefix string // message prefix
+	room          string // Matrix room
 }
 
 type postMessageMatrixWorkflowStep struct {
@@ -26,11 +26,11 @@ func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (inte
 	msg := p.message
 
 	// Append message specified in definition of this step as a prefix to the payload
-	if s.message != "" {
+	if s.messagePrefix != "" {
 		if p.message != "" {
-			msg = fmt.Sprintf("%s %s", s.message, p.message)
+			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p.message)
 		} else {
-			msg = s.message
+			msg = s.messagePrefix
 		}
 	}
 	_, err := e.client.SendText(id.RoomID(p.room), msg)
