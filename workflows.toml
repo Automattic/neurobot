@@ -7,8 +7,9 @@ active = true
 name = "Demo Workflow"
 description = "Send a HTTP request with a message and watch that gets logged to standard out"
 
-[workflow.trigger]
-variety = "webhook"
+triggerType = "webhook"
+
+[workflow.triggermeta]
 urlSuffix = "quickstart"
 
 [workflow.steps.1]
@@ -26,8 +27,9 @@ active = true
 name = "AFK Bot Workflow"
 description = "AFK Bot receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
 
-[workflow.trigger]
-variety = "webhook"
+triggerType = "webhook"
+
+[workflow.triggermeta]
 urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
 
 [workflow.steps.1]
