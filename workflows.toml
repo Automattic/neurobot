@@ -8,13 +8,12 @@ name = "Demo Workflow"
 description = "Send a HTTP request with a message and watch that gets logged to standard out"
 
 triggerType = "webhook"
+    [workflow.triggermeta]
+    urlSuffix = "quickstart"
 
-[workflow.triggermeta]
-urlSuffix = "quickstart"
-
-[workflow.steps.1]
+[[workflow.steps]]
 active = true
-variety = "stdout"
+type = "stdout"
 name = "Log to Standard Out"
 description = "This workflow step will show the payload to stdout while showcasing the demo"
 
@@ -28,18 +27,27 @@ name = "AFK Bot Workflow"
 description = "AFK Bot receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
 
 triggerType = "webhook"
+    [workflow.triggermeta]
+    urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
 
-[workflow.triggermeta]
-urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
-
-[workflow.steps.1]
+[[workflow.steps]]
 active = true
-variety = "postMatrixMessage"
 name = "post message to Matrix room"
 description = "Post message to a matrix room"
 
-[workflow.steps.1.meta]
-messagePrefix = "[AFK Alert]"
-matrixRoom = "" # Optional but would be overridden if specified in payload
+type = "postMatrixMessage"
+    [workflow.steps.meta]
+    messagePrefix = "[AFK Alert]"
+    matrixRoom = "" # Optional but would be overridden if specified in payload
+
+[[workflow.steps]]
+active = true
+name = "post message to Matrix room 2"
+description = "Post message to a matrix room 2"
+
+type = "postMatrixMessage"
+    [workflow.steps.meta]
+    messagePrefix = "[AFK Log]"
+    matrixRoom = "" # Optional but would be overridden if specified in payload
 
 #################################################################

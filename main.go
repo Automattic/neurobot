@@ -35,6 +35,7 @@ func main() {
 	username := os.Getenv("MATRIX_USERNAME")
 	password := os.Getenv("MATRIX_PASSWORD")
 	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
+	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
@@ -52,13 +53,14 @@ func main() {
 	}
 
 	p := engine.RunParams{
-		Debug:               debug,
-		Database:            *dbFile,
-		PortWebhookListener: webhookListenerPort,
-		IsMatrix:            isMatrix,
-		MatrixHomeServer:    homeserver,
-		MatrixUsername:      username,
-		MatrixPassword:      password,
+		Debug:                debug,
+		Database:             *dbFile,
+		PortWebhookListener:  webhookListenerPort,
+		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
+		IsMatrix:             isMatrix,
+		MatrixHomeServer:     homeserver,
+		MatrixUsername:       username,
+		MatrixPassword:       password,
 	}
 
 	e := engine.NewEngine(p)

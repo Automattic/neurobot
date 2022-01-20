@@ -35,9 +35,10 @@ type MatrixClient interface {
 }
 
 type engine struct {
-	debug               bool
-	database            string
-	portWebhookListener string
+	debug                bool
+	database             string
+	portWebhookListener  string
+	workflowsDefTOMLFile string
 
 	isMatrix         bool // Do we mean to run a matrix client?
 	matrixhomeserver string
@@ -53,13 +54,14 @@ type engine struct {
 }
 
 type RunParams struct {
-	Debug               bool
-	Database            string
-	PortWebhookListener string
-	IsMatrix            bool
-	MatrixHomeServer    string
-	MatrixUsername      string
-	MatrixPassword      string
+	Debug                bool
+	Database             string
+	PortWebhookListener  string
+	WorkflowsDefTOMLFile string
+	IsMatrix             bool
+	MatrixHomeServer     string
+	MatrixUsername       string
+	MatrixPassword       string
 }
 
 type webhookListenerData struct {
@@ -82,6 +84,9 @@ func (e *engine) StartUpLite() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Check for workflows defined in TOML
+	e.handleTOMLDefinitions()
 
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.log("Loading data...")
@@ -236,6 +241,10 @@ func (e *engine) loadData() {
 	}
 }
 
+func (e *engine) handleTOMLDefinitions() {
+	parseTOMLDefs(e)
+}
+
 func (e *engine) runWebhookListener() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		e.log(fmt.Sprintf("Request received on webhook listener! %s", r.URL.Path))
@@ -372,6 +381,7 @@ func NewEngine(p RunParams) *engine {
 	e.debug = p.Debug
 	e.database = p.Database
 	e.portWebhookListener = p.PortWebhookListener
+	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
 	e.matrixhomeserver = p.MatrixHomeServer
 	e.matrixusername = p.MatrixUsername
