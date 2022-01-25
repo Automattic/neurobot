@@ -1,32 +1,36 @@
 #################################################################
 
 [[workflow]]
-id = 1
+identifier = "demo-workflow" # needs a unique value for each workflow & its value should never change
 active = true
 
 name = "Demo Workflow"
 description = "Send a HTTP request with a message and watch that gets logged to standard out"
 
-triggerType = "webhook"
+triggerName = "CURL Request Catcher"
+triggerDescription = "This webhook trigger will receive your webhook request while showcasing the demo"
+triggerVariety = "webhook"
     [workflow.triggermeta]
     urlSuffix = "quickstart"
 
 [[workflow.steps]]
 active = true
-type = "stdout"
+variety = "stdout"
 name = "Log to Standard Out"
 description = "This workflow step will show the payload to stdout while showcasing the demo"
 
 #################################################################
 
 [[workflow]]
-id = 2
+identifier = "A8C-AFK"
 active = true
 
 name = "AFK Bot Workflow"
 description = "AFK Bot receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
 
-triggerType = "webhook"
+triggerName = "AFK pings from Matticspace"
+triggerDescription = "Matticspace pings this endpoint for AFK status updates"
+triggerVariety = "webhook"
     [workflow.triggermeta]
     urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
 
@@ -35,7 +39,7 @@ active = true
 name = "post message to Matrix room"
 description = "Post message to a matrix room"
 
-type = "postMatrixMessage"
+variety = "postMatrixMessage"
     [workflow.steps.meta]
     messagePrefix = "[AFK Alert]"
     matrixRoom = "" # Optional but would be overridden if specified in payload
@@ -45,7 +49,7 @@ active = true
 name = "post message to Matrix room 2"
 description = "Post message to a matrix room 2"
 
-type = "postMatrixMessage"
+variety = "postMatrixMessage"
     [workflow.steps.meta]
     messagePrefix = "[AFK Log]"
     matrixRoom = "" # Optional but would be overridden if specified in payload

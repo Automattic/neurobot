@@ -1,8 +1,7 @@
 package engine
 
 import (
-	"strconv"
-	"strings"
+	"log"
 	"time"
 
 	"github.com/upper/db/v4"
@@ -16,11 +15,23 @@ type TriggerRow struct {
 	WorkflowID  uint64 `db:"workflow_id"`
 	Active      int    `db:"active"`
 }
+type TriggerMetaRow struct {
+	ID        uint64 `db:"id,omitempty"`
+	TriggerID uint64 `db:"trigger_id"`
+	Key       string `db:"key"`
+	Value     string `db:"value"`
+}
 type WorkflowRow struct {
 	ID          uint64 `db:"id,omitempty"`
 	Name        string `db:"name"`
 	Description string `db:"description"`
 	Active      int    `db:"active"`
+}
+type WorkflowMetaRow struct {
+	ID         uint64 `db:"id,omitempty"`
+	WorkflowID uint64 `db:"workflow_id"`
+	Key        string `db:"key"`
+	Value      string `db:"value"`
 }
 type WFStepRow struct {
 	ID          uint64 `db:"id,omitempty"`
@@ -30,6 +41,12 @@ type WFStepRow struct {
 	WorkflowID  uint64 `db:"workflow_id"`
 	SortOrder   uint64 `db:"sort_order"`
 	Active      int    `db:"active"`
+}
+type WFStepMetaRow struct {
+	ID     uint64 `db:"id,omitempty"`
+	StepID uint64 `db:"step_id"`
+	Key    string `db:"key"`
+	Value  string `db:"value"`
 }
 
 func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
@@ -144,6 +161,109 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 	return
 }
 
+func insertWorkflowMeta(dbs db.Session, id uint64, key string, value string) {
+	dbs.Collection("workflow_meta").Insert(WorkflowMetaRow{
+		WorkflowID: id,
+		Key:        key,
+		Value:      value,
+	})
+}
+
+func insertTriggerMeta(dbs db.Session, id uint64, key string, value string) {
+	dbs.Collection("trigger_meta").Insert(TriggerMetaRow{
+		TriggerID: id,
+		Key:       key,
+		Value:     value,
+	})
+}
+
+func insertWFStepMeta(dbs db.Session, id uint64, key string, value string) {
+	dbs.Collection("workflow_step_meta").Insert(WFStepMetaRow{
+		StepID: id,
+		Key:    key,
+		Value:  value,
+	})
+}
+
+func updateWorkflowMeta(dbs db.Session, workflow_id uint64, key string, value string) {
+	res := dbs.Collection("workflow_meta").Find(db.Cond{"workflow_id": workflow_id, "key": key})
+	row := make(map[string]string)
+
+	exists, err := res.Exists()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !exists {
+		insertWorkflowMeta(dbs, workflow_id, key, value)
+		return
+	}
+
+	res.One(&row)
+	if row["value"] == value {
+		return
+	}
+
+	row["value"] = value
+	res.Update(row)
+}
+
+func updateTriggerMeta(dbs db.Session, trigger_id uint64, key string, value string) {
+	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": trigger_id, "key": key})
+	row := make(map[string]string)
+
+	exists, err := res.Exists()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !exists {
+		insertTriggerMeta(dbs, trigger_id, key, value)
+		return
+	}
+
+	res.One(&row)
+	if row["value"] == value {
+		return
+	}
+
+	row["value"] = value
+	res.Update(row)
+}
+
+func updateWFStepMeta(dbs db.Session, step_id uint64, key string, value string) {
+	res := dbs.Collection("workflow_step_meta").Find(db.Cond{"step_id": step_id, "key": key})
+	row := make(map[string]string)
+
+	exists, err := res.Exists()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !exists {
+		insertWFStepMeta(dbs, step_id, key, value)
+		return
+	}
+
+	res.One(&row)
+	if row["value"] == value {
+		return
+	}
+
+	row["value"] = value
+	res.Update(row)
+}
+
+func getWorkflowMeta(dbs db.Session, workflow_id uint64, key string) string {
+	res := dbs.Collection("workflow_meta").Find(db.Cond{"workflow_id": workflow_id, "key": key})
+	row := make(map[string]string)
+	res.One(&row)
+
+	// log.Printf("getWorkflowMeta(): id:%d key:%s value:%s\n", workflow_id, key, row["value"])
+
+	return row["value"]
+}
+
 func getTriggerMeta(dbs db.Session, trigger_id uint64, key string) string {
 	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": trigger_id, "key": key})
 	row := make(map[string]string)
@@ -159,24 +279,14 @@ func getWFStepMeta(dbs db.Session, step_id uint64, key string) string {
 	row := make(map[string]string)
 	res.One(&row)
 
-	// log.Printf("getTriggerMeta(): id:%d key:%s value:%s\n", trigger_id, key, row["value"])
+	// log.Printf("getWFStepMeta(): id:%d key:%s value:%s\n", step_id, key, row["value"])
 
 	return row["value"]
 }
 
-func splitStringIntoSliceOfInts(s string, sep string) []uint64 {
-	var i []uint64
-	for _, piece := range strings.Split(s, sep) {
-		if piece == "" {
-			continue
-		}
-		convert, _ := strconv.ParseInt(
-			strings.Trim(piece, " "),
-			10,
-			64,
-		)
-		i = append(i, uint64(convert))
-	}
-
-	return i
+func getWorkflowTrigger(dbs db.Session, id uint64) TriggerRow {
+	r := TriggerRow{}
+	res := dbs.Collection("triggers").Find(db.Cond{"workflow_id": id})
+	res.One(&r)
+	return r
 }
