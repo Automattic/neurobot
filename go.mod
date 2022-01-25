@@ -9,7 +9,7 @@ require (
 	maunium.net/go/mautrix v0.9.27
 )
 
-require github.com/BurntSushi/toml v1.0.0 // indirect
+require github.com/BurntSushi/toml v1.0.0
 
 require (
 	github.com/btcsuite/btcutil v1.0.2 // indirect
