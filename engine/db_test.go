@@ -24,7 +24,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "CURL Request Catcher",
 			description: "This webhook trigger will receive your webhook request while showcasing the demo",
-			workflows:   []uint64{1},
+			workflow_id: 1,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "quickstart"},
 	})
@@ -34,7 +34,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "Matticspace CURL",
 			description: "",
-			workflows:   []uint64{11},
+			workflow_id: 11,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
 	})
@@ -44,7 +44,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "poll",
 			name:        "Blog RSS Feed Poller",
 			description: "",
-			workflows:   []uint64{12},
+			workflow_id: 12,
 		},
 		polltMeta: polltMeta{
 			url:             "https://wordpress.org/news/feed/",
@@ -142,58 +142,6 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 	}
 }
 
-func TestSplitStringIntoSliceOfInts(t *testing.T) {
-	tables := []struct {
-		stringToSplit string
-		sep           string
-		res           []uint64
-	}{
-		// test basic functionality
-		{
-			"100,200",
-			",",
-			[]uint64{100, 200},
-		},
-		// test a different separator
-		{
-			"11-22-33",
-			"-",
-			[]uint64{11, 22, 33},
-		},
-		// test with unwanted empty spaces
-		{
-			" 1 ,2, 3,4 ",
-			",",
-			[]uint64{1, 2, 3, 4},
-		},
-		// test invalid input
-		{
-			"91,92,",
-			",",
-			[]uint64{91, 92},
-		},
-	}
-
-	for _, table := range tables {
-		got := splitStringIntoSliceOfInts(table.stringToSplit, table.sep)
-		if !sliceEquals(table.res, got) {
-			t.Errorf("slice of Ints didn't match. got:%v expected:%v", got, table.res)
-		}
-	}
-}
-
-func sliceEquals(a []uint64, b []uint64) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass
 // and second one of an empty database with no tables, meant to test errors
 func setUp() (db.Session, db.Session) {
@@ -268,9 +216,9 @@ func getDataInsertsSQL() *[]string {
 	return &[]string{
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (11,'MVP','',1);`,
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (12,'Deactivated Workflow','',0);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (11,'Matticspace CURL','','webhook','11',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (12,'Blog RSS Feed Poller','','poll','12',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (13,'Disabled Trigger','','webhook','99',0);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook','11',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (12,'Blog RSS Feed Poller','','poll','12',1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook','99',0);`,
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (11,'Post message to Matrix room','','postMatrixMessage',11,0,1);`,
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (12,'Deactivated workflow step for matrix room posting','','postMatrixMessage',99,0,0);`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,

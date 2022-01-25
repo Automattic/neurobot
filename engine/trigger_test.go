@@ -41,8 +41,8 @@ func TestTriggerFinish(t *testing.T) {
 		e.workflows = make(map[uint64]*workflow)
 
 		tg := trigger{
-			engine:    &e,
-			workflows: []uint64{1},
+			engine:      &e,
+			workflow_id: 1,
 		}
 
 		w := &workflow{id: 1, steps: []WorkflowStep{}}

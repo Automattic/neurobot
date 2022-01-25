@@ -13,7 +13,7 @@ type TriggerRow struct {
 	Name        string `db:"name"`
 	Description string `db:"description"`
 	Variety     string `db:"variety"`
-	Workflows   string `db:"workflow_ids"` // CSV of IDs
+	WorkflowID  uint64 `db:"workflow_id"`
 	Active      int    `db:"active"`
 }
 type WorkflowRow struct {
@@ -52,7 +52,7 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 					variety:     row.Variety,
 					name:        row.Name,
 					description: row.Description,
-					workflows:   splitStringIntoSliceOfInts(row.Workflows, ","),
+					workflow_id: row.WorkflowID,
 				},
 				webhooktMeta: webhooktMeta{
 					urlSuffix: getTriggerMeta(dbs, row.ID, "urlSuffix"),
@@ -67,7 +67,7 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 					variety:     row.Variety,
 					name:        row.Name,
 					description: row.Description,
-					workflows:   splitStringIntoSliceOfInts(row.Workflows, ","),
+					workflow_id: row.WorkflowID,
 				},
 				polltMeta: polltMeta{
 					url:             getTriggerMeta(dbs, row.ID, "url"),
