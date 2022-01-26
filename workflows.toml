@@ -7,13 +7,15 @@ active = true
 name = "Demo Workflow"
 description = "Send a HTTP request with a message and watch that gets logged to standard out"
 
-triggerName = "CURL Request Catcher"
-triggerDescription = "This webhook trigger will receive your webhook request while showcasing the demo"
-triggerVariety = "webhook"
-    [workflow.triggermeta]
-    urlSuffix = "quickstart"
+[workflow.trigger]
+name = "CURL Request Catcher"
+description = "This webhook trigger will receive your webhook request while showcasing the demo"
+variety = "webhook"
 
-[[workflow.steps]]
+[workflow.trigger.meta]
+urlSuffix = "quickstart"
+
+[[workflow.step]]
 active = true
 variety = "stdout"
 name = "Log to Standard Out"
@@ -28,30 +30,34 @@ active = true
 name = "AFK Bot Workflow"
 description = "AFK Bot receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
 
-triggerName = "AFK pings from Matticspace"
-triggerDescription = "Matticspace pings this endpoint for AFK status updates"
-triggerVariety = "webhook"
-    [workflow.triggermeta]
-    urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
+[workflow.trigger]
+name = "AFK pings from Matticspace"
+description = "Matticspace pings this endpoint for AFK status updates"
+variety = "webhook"
 
-[[workflow.steps]]
+[workflow.trigger.meta]
+urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
+
+[[workflow.step]]
 active = true
 name = "post message to Matrix room"
 description = "Post message to a matrix room"
 
 variety = "postMatrixMessage"
-    [workflow.steps.meta]
-    messagePrefix = "[AFK Alert]"
-    matrixRoom = "" # Optional but would be overridden if specified in payload
 
-[[workflow.steps]]
+[workflow.step.meta]
+messagePrefix = "[AFK Alert]"
+matrixRoom = "" # Optional but would be overridden if specified in payload
+
+[[workflow.step]]
 active = true
 name = "post message to Matrix room 2"
 description = "Post message to a matrix room 2"
 
 variety = "postMatrixMessage"
-    [workflow.steps.meta]
-    messagePrefix = "[AFK Log]"
-    matrixRoom = "" # Optional but would be overridden if specified in payload
+
+[workflow.step.meta]
+messagePrefix = "[AFK Log]"
+matrixRoom = "" # Optional but would be overridden if specified in payload
 
 #################################################################

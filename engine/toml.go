@@ -13,21 +13,23 @@ import (
 
 type WorkflowDefintionTOML struct {
 	Workflows []struct {
-		Identifier         string
-		Active             bool
-		Name               string
-		Description        string
-		TriggerName        string
-		TriggerDescription string
-		TriggerVariety     string
-		TriggerMeta        map[string]string
-		Steps              []struct {
-			Active      bool
+		Identifier  string
+		Active      bool
+		Name        string
+		Description string
+		Trigger     struct {
 			Name        string
 			Description string
 			Variety     string
 			Meta        map[string]string
 		}
+		Steps []struct {
+			Active      bool
+			Name        string
+			Description string
+			Variety     string
+			Meta        map[string]string
+		} `toml:"Step"`
 	} `toml:"Workflow"`
 }
 
@@ -46,7 +48,7 @@ func parseTOMLDefs(e *engine) error {
 		e.log("\nTOML Defs:")
 		for _, w := range def.Workflows {
 			fmt.Printf("\n[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active)
-			fmt.Printf("\n >> %s %T %+v", w.TriggerVariety, w.TriggerMeta, w.TriggerMeta)
+			fmt.Printf("\n >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta)
 			for ws, s := range w.Steps {
 				fmt.Printf("\n\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active)
 				fmt.Printf("\n\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta)
@@ -93,13 +95,13 @@ func parseTOMLDefs(e *engine) error {
 			res.One(&tr)
 
 			hasTriggerVarietyChanged := false
-			if tr.Variety != w.TriggerVariety {
+			if tr.Variety != w.Trigger.Variety {
 				hasTriggerVarietyChanged = true
 			}
 
-			tr.Name = w.TriggerName
-			tr.Description = w.TriggerDescription
-			tr.Variety = w.TriggerVariety
+			tr.Name = w.Trigger.Name
+			tr.Description = w.Trigger.Description
+			tr.Variety = w.Trigger.Variety
 			err = res.Update(tr)
 			if err != nil {
 				log.Fatal(err)
@@ -110,7 +112,7 @@ func parseTOMLDefs(e *engine) error {
 			if hasTriggerVarietyChanged {
 				e.db.SQL().Exec(fmt.Sprintf("DELETE from trigger_meta WHERE trigger_id = %d", tr.ID))
 			}
-			for key, value := range w.TriggerMeta {
+			for key, value := range w.Trigger.Meta {
 				updateTriggerMeta(e.db, tr.ID, key, value)
 			}
 
@@ -212,9 +214,9 @@ func parseTOMLDefs(e *engine) error {
 
 			// insert trigger
 			itr, err := e.db.Collection("triggers").Insert(TriggerRow{
-				Name:        w.TriggerName,
-				Description: w.TriggerDescription,
-				Variety:     w.TriggerVariety,
+				Name:        w.Trigger.Name,
+				Description: w.Trigger.Description,
+				Variety:     w.Trigger.Variety,
 				WorkflowID:  wid,
 				Active:      boolToInt(w.Active),
 			})
@@ -226,7 +228,7 @@ func parseTOMLDefs(e *engine) error {
 			tid := uint64(itr.ID().(int64))
 
 			// insert trigger meta
-			for key, value := range w.TriggerMeta {
+			for key, value := range w.Trigger.Meta {
 				insertTriggerMeta(e.db, tid, key, value)
 			}
 
