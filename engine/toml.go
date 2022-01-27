@@ -3,34 +3,38 @@ package engine
 import (
 	"crypto/sha256"
 	"fmt"
-	"log"
 	"strconv"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/upper/db/v4"
 )
 
 type WorkflowDefintionTOML struct {
-	Workflows []struct {
-		Identifier  string
-		Active      bool
-		Name        string
-		Description string
-		Trigger     struct {
-			Name        string
-			Description string
-			Variety     string
-			Meta        map[string]string
-		}
-		Steps []struct {
-			Active      bool
-			Name        string
-			Description string
-			Variety     string
-			Meta        map[string]string
-		} `toml:"Step"`
-	} `toml:"Workflow"`
+	Workflows []WorkflowTOML `toml:"Workflow"`
+}
+
+type WorkflowTOML struct {
+	Identifier  string
+	Active      bool
+	Name        string
+	Description string
+	Trigger     WorkflowTriggerTOML
+	Steps       []WorkflowStepTOML `toml:"Step"`
+}
+
+type WorkflowTriggerTOML struct {
+	Name        string
+	Description string
+	Variety     string
+	Meta        map[string]string
+}
+
+type WorkflowStepTOML struct {
+	Active      bool
+	Name        string
+	Description string
+	Variety     string
+	Meta        map[string]string
 }
 
 type tomlMapping map[string]uint64
@@ -58,204 +62,37 @@ func parseTOMLDefs(e *engine) error {
 	}
 
 	// Semantic check on data
-	// > make sure ID is unique for each workflow and based on that realize what inserts/update needs to happen
-	uniqueIDs := make(map[string]bool)
-	for _, w := range def.Workflows {
-		if _, exist := uniqueIDs[w.Identifier]; exist {
-			log.Fatalf("Duplicate workflows defined with ID:%s", w.Identifier)
-		}
-		uniqueIDs[w.Identifier] = true // value is irrelevant for us
+	if err = runSemanticCheckOnTOML(def); err != nil {
+		return err
+	}
+
+	// Fetch all DB IDs for workflows that we already have in database
+	m, err := getTOMLMapping(e.db)
+	if err != nil {
+		return err
 	}
 
 	// Import data
-	// > Fetch all DB IDs for workflows that we have here
-	m, err := getTOMLMapping(e.db)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	for _, w := range def.Workflows {
 		id, exist := m[w.Identifier]
 		if exist {
-			// update workflow basic details
-			r := WorkflowRow{}
-			res := e.db.Collection("workflows").Find(id)
-			res.One(&r)
-			r.Name = w.Name
-			r.Active = boolToInt(w.Active)
-			r.Description = w.Description
-			err = res.Update(r)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// update trigger basic details
-			tr := TriggerRow{}
-			res = e.db.Collection("triggers").Find(db.Cond{"workflow_id": id})
-			res.One(&tr)
-
-			hasTriggerVarietyChanged := false
-			if tr.Variety != w.Trigger.Variety {
-				hasTriggerVarietyChanged = true
-			}
-
-			tr.Name = w.Trigger.Name
-			tr.Description = w.Trigger.Description
-			tr.Variety = w.Trigger.Variety
-			err = res.Update(tr)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// update trigger meta
-			// delete all trigger meta rows first, if variety has changed
-			if hasTriggerVarietyChanged {
-				e.db.SQL().Exec(fmt.Sprintf("DELETE from trigger_meta WHERE trigger_id = %d", tr.ID))
-			}
-			for key, value := range w.Trigger.Meta {
-				updateTriggerMeta(e.db, tr.ID, key, value)
-			}
-
-			// updating workflow steps is a little complicated, allow me to explain
-			//
-			// first we identify are there any updates to make
-			// if not, simply skip
-			//
-			// if there are updates, are number of steps still same?
-			// if there are more steps now, that requires overwrite + insert
-			// if there are less steps now, that requires overwrite + delete
-			// if there are same steps, that just requires overwrite
-			//
-			// in addition to that, when a step is changed, their meta needs to be changed as well
-			// detecting if just a order has changed, is even more code
-			//
-			// OR
-			//
-			// a simpler approach is to just purge all workflow step and step meta rows when there is an update and just insert them fresh
-			// this only happens at startup, so isn't really a performance concern, plus keeps the code quite simple
-			//
-			// code below is of latter approach
-			//
-			// has workflow steps changed since last time?
-			if asSha256(w.Steps) != getWorkflowMeta(e.db, id, "workflow_steps_hash") {
-				// delete old data
-				rows := []WFStepRow{}
-				res = e.db.Collection("workflow_steps").Find(db.Cond{"workflow_id": id})
-				res.All(&rows)
-
-				// find all ids for workflow steps, required to delete meta rows
-				var collect []uint64
-				for _, row := range rows {
-					collect = append(collect, row.ID)
-				}
-
-				// delete all workfow step rows
-				if err := res.Delete(); err != nil {
-					log.Fatal(err)
-				}
-
-				// delete all workflow step meta rows
-				e.db.SQL().Exec(
-					fmt.Sprintf(
-						"DELETE from workflow_step_meta WHERE step_id IN (%s)",
-						strings.Join(
-							intSliceToStringSlice(collect),
-							",",
-						),
-					),
-				)
-
-				// insert fresh data
-				for i, ws := range w.Steps {
-					// insert workflow step
-					isr, err := e.db.Collection("workflow_steps").Insert(WFStepRow{
-						Name:        ws.Name,
-						Description: ws.Description,
-						Variety:     ws.Variety,
-						WorkflowID:  id,
-						SortOrder:   uint64(i),
-						Active:      boolToInt(ws.Active),
-					})
-					if err != nil {
-						return err
-					}
-
-					// inserted step ID
-					sid := uint64(isr.ID().(int64))
-
-					// insert step meta
-					for key, value := range ws.Meta {
-						insertWFStepMeta(e.db, sid, key, value)
-					}
-				}
-
-				// update workflow meta
-				// Note: "toml_identifier" meta should never be updated
-				updateWorkflowMeta(e.db, id, "workflow_steps_hash", asSha256(w.Steps))
-			}
-
+			updateTOMLWorkflow(e.db, id, w)
 		} else {
-			// insert workflow
-			iwr, err := e.db.Collection("workflows").Insert(WorkflowRow{
-				Name:        w.Name,
-				Description: w.Description,
-				Active:      boolToInt(w.Active),
-			})
-			if err != nil {
-				return err
-			}
-
-			// inserted workflow ID
-			wid := uint64(iwr.ID().(int64))
-
-			// insert workflow meta
-			insertWorkflowMeta(e.db, wid, "toml_identifier", w.Identifier)
-			insertWorkflowMeta(e.db, wid, "workflow_steps_hash", asSha256(w.Steps))
-
-			// insert trigger
-			itr, err := e.db.Collection("triggers").Insert(TriggerRow{
-				Name:        w.Trigger.Name,
-				Description: w.Trigger.Description,
-				Variety:     w.Trigger.Variety,
-				WorkflowID:  wid,
-				Active:      boolToInt(w.Active),
-			})
-			if err != nil {
-				return err
-			}
-
-			// inserted trigger ID
-			tid := uint64(itr.ID().(int64))
-
-			// insert trigger meta
-			for key, value := range w.Trigger.Meta {
-				insertTriggerMeta(e.db, tid, key, value)
-			}
-
-			// insert workflow steps
-			for i, ws := range w.Steps {
-				// insert workflow step
-				isr, err := e.db.Collection("workflow_steps").Insert(WFStepRow{
-					Name:        ws.Name,
-					Description: ws.Description,
-					Variety:     ws.Variety,
-					WorkflowID:  wid,
-					SortOrder:   uint64(i),
-					Active:      boolToInt(ws.Active),
-				})
-				if err != nil {
-					return err
-				}
-
-				// inserted step ID
-				sid := uint64(isr.ID().(int64))
-
-				// insert step meta
-				for key, value := range ws.Meta {
-					insertWFStepMeta(e.db, sid, key, value)
-				}
-			}
+			insertTOMLWorkflow(e.db, w)
 		}
+	}
+
+	return nil
+}
+
+func runSemanticCheckOnTOML(def WorkflowDefintionTOML) error {
+	// > make sure Identifier is unique for each workflow and based on that realize what inserts/update needs to happen
+	uniqueIDs := make(map[string]bool)
+	for _, w := range def.Workflows {
+		if _, exist := uniqueIDs[w.Identifier]; exist {
+			return fmt.Errorf("duplicate workflows defined in TOML with ID:%s", w.Identifier)
+		}
+		uniqueIDs[w.Identifier] = true // value is irrelevant for us
 	}
 
 	return nil
@@ -276,6 +113,106 @@ func getTOMLMapping(dbs db.Session) (m tomlMapping, err error) {
 	}
 
 	return m, nil
+}
+
+func insertTOMLWorkflow(dbs db.Session, w WorkflowTOML) error {
+	// insert workflow
+	iwr, err := dbs.Collection("workflows").Insert(WorkflowRow{
+		Name:        w.Name,
+		Description: w.Description,
+		Active:      boolToInt(w.Active),
+	})
+	if err != nil {
+		return err
+	}
+
+	// inserted workflow ID
+	wid := uint64(iwr.ID().(int64))
+
+	// insert workflow meta
+	insertWorkflowMeta(dbs, wid, "toml_identifier", w.Identifier)
+	insertWorkflowMeta(dbs, wid, "workflow_steps_hash", asSha256(w.Steps))
+
+	// insert trigger
+	itr, err := dbs.Collection("triggers").Insert(TriggerRow{
+		Name:        w.Trigger.Name,
+		Description: w.Trigger.Description,
+		Variety:     w.Trigger.Variety,
+		WorkflowID:  wid,
+		Active:      boolToInt(w.Active),
+	})
+	if err != nil {
+		return err
+	}
+
+	// inserted trigger ID
+	tid := uint64(itr.ID().(int64))
+
+	// insert trigger meta
+	for key, value := range w.Trigger.Meta {
+		insertTriggerMeta(dbs, tid, key, value)
+	}
+
+	// lastly, insert workflow steps
+	return insertWFSteps(dbs, wid, w.Steps)
+}
+
+func updateTOMLWorkflow(dbs db.Session, id uint64, w WorkflowTOML) error {
+	// update workflow basic details
+	r := WorkflowRow{}
+	res := dbs.Collection("workflows").Find(id)
+	res.One(&r)
+	r.Name = w.Name
+	r.Active = boolToInt(w.Active)
+	r.Description = w.Description
+	err := res.Update(r)
+	if err != nil {
+		return err
+	}
+
+	// update trigger
+	if err := updateTrigger(dbs, id, w.Trigger); err != nil {
+		return err
+	}
+
+	// updating workflow steps is a little complicated, allow me to explain
+	//
+	// first we identify are there any updates to make
+	// if not, simply skip
+	//
+	// if there are updates, are number of steps still same?
+	// if there are more steps now, that requires overwrite + insert
+	// if there are less steps now, that requires overwrite + delete
+	// if there are same steps, that just requires overwrite
+	//
+	// in addition to that, when a step is changed, their meta needs to be changed as well
+	// detecting if just a order has changed, is even more code
+	//
+	// OR
+	//
+	// a simpler approach is to just purge all workflow step and step meta rows when there is an update and just insert them fresh
+	// this only happens at startup, so isn't really a performance concern, plus keeps the code quite simple
+	//
+	// code below is of latter approach
+	//
+	// has workflow steps changed since last time?
+	if asSha256(w.Steps) != getWorkflowMeta(dbs, id, "workflow_steps_hash") {
+		// delete old data
+		if err := deleteAllWFSteps(dbs, id); err != nil {
+			return err
+		}
+
+		// insert fresh data
+		if err := insertWFSteps(dbs, id, w.Steps); err != nil {
+			return err
+		}
+
+		// update workflow meta
+		// Note: "toml_identifier" meta should never be updated
+		updateWorkflowMeta(dbs, id, "workflow_steps_hash", asSha256(w.Steps))
+	}
+
+	return nil
 }
 
 func boolToInt(b bool) int {

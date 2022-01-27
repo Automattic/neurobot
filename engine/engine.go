@@ -242,7 +242,9 @@ func (e *engine) loadData() {
 }
 
 func (e *engine) handleTOMLDefinitions() {
-	parseTOMLDefs(e)
+	if err := parseTOMLDefs(e); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (e *engine) runWebhookListener() {
