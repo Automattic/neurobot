@@ -202,22 +202,22 @@ func TestUpdateWorkflowMeta(t *testing.T) {
 	value := "matrix"
 
 	// issue insert
-	updateWorkflowMeta(dbs, uint64(wid), key, value)
-	if value != getWorkflowMeta(dbs, uint64(wid), key) {
+	updateWorkflowMeta(dbs, wid, key, value)
+	if value != getWorkflowMeta(dbs, wid, key) {
 		t.Error("insert failed")
 	}
 
 	value = value + fmt.Sprintf("%d", rand.Intn(100))
 
 	// issue update
-	updateWorkflowMeta(dbs, uint64(wid), key, value)
-	if value != getWorkflowMeta(dbs, uint64(wid), key) {
+	updateWorkflowMeta(dbs, wid, key, value)
+	if value != getWorkflowMeta(dbs, wid, key) {
 		t.Error("update failed")
 	}
 
 	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWorkflowMeta(dbs, uint64(wid), key, value)
-	if value != getWorkflowMeta(dbs, uint64(wid), key) {
+	updateWorkflowMeta(dbs, wid, key, value)
+	if value != getWorkflowMeta(dbs, wid, key) {
 		t.Error("update with same value failed")
 	}
 
@@ -236,22 +236,22 @@ func TestUpdateTriggerMeta(t *testing.T) {
 	value := "matrix"
 
 	// issue insert
-	updateTriggerMeta(dbs, uint64(trigger_id), key, value)
-	if value != getTriggerMeta(dbs, uint64(trigger_id), key) {
+	updateTriggerMeta(dbs, trigger_id, key, value)
+	if value != getTriggerMeta(dbs, trigger_id, key) {
 		t.Error("insert failed")
 	}
 
 	value = value + fmt.Sprintf("%d", rand.Intn(100))
 
 	// issue update
-	updateTriggerMeta(dbs, uint64(trigger_id), key, value)
-	if value != getTriggerMeta(dbs, uint64(trigger_id), key) {
+	updateTriggerMeta(dbs, trigger_id, key, value)
+	if value != getTriggerMeta(dbs, trigger_id, key) {
 		t.Error("update failed")
 	}
 
 	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateTriggerMeta(dbs, uint64(trigger_id), key, value)
-	if value != getTriggerMeta(dbs, uint64(trigger_id), key) {
+	updateTriggerMeta(dbs, trigger_id, key, value)
+	if value != getTriggerMeta(dbs, trigger_id, key) {
 		t.Error("update with same value failed")
 	}
 
@@ -270,22 +270,22 @@ func TestUpdateWFStepMeta(t *testing.T) {
 	value := "matrix"
 
 	// issue insert
-	updateWFStepMeta(dbs, uint64(step_id), key, value)
-	if value != getWFStepMeta(dbs, uint64(step_id), key) {
+	updateWFStepMeta(dbs, step_id, key, value)
+	if value != getWFStepMeta(dbs, step_id, key) {
 		t.Error("insert failed")
 	}
 
 	value = value + fmt.Sprintf("%d", rand.Intn(100))
 
 	// issue update
-	updateWFStepMeta(dbs, uint64(step_id), key, value)
-	if value != getWFStepMeta(dbs, uint64(step_id), key) {
+	updateWFStepMeta(dbs, step_id, key, value)
+	if value != getWFStepMeta(dbs, step_id, key) {
 		t.Error("update failed")
 	}
 
 	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWFStepMeta(dbs, uint64(step_id), key, value)
-	if value != getWFStepMeta(dbs, uint64(step_id), key) {
+	updateWFStepMeta(dbs, step_id, key, value)
+	if value != getWFStepMeta(dbs, step_id, key) {
 		t.Error("update with same value failed")
 	}
 
