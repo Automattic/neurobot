@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}",
-            "args": ["--homeserver", "http://localhost:8008", "--username", "morpheus", "--password", "redpill", "debug", "true"]
+            "args": ["debug", "true"]
         }
     ]
 }

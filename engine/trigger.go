@@ -12,16 +12,12 @@ type trigger struct {
 	name        string
 	description string
 	engine      *engine
-	workflows   []uint64 // a trigger can start multiple workflows
+	workflow_id uint64
 }
 
 func (t *trigger) setup() {}
 
 func (t *trigger) finish(payload interface{}) {
-	// loop through all workflows meant for this trigger and run them
-	for _, workflowID := range t.workflows {
-		// Get workflow instance and run() it
-		w := t.engine.workflows[workflowID]
-		w.run(payload, t.engine)
-	}
+	w := t.engine.workflows[t.workflow_id]
+	w.run(payload, t.engine)
 }

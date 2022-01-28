@@ -1,8 +1,10 @@
 package engine
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"reflect"
 	"strings"
@@ -24,7 +26,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "CURL Request Catcher",
 			description: "This webhook trigger will receive your webhook request while showcasing the demo",
-			workflows:   []uint64{1},
+			workflow_id: 1,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "quickstart"},
 	})
@@ -34,7 +36,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "Matticspace CURL",
 			description: "",
-			workflows:   []uint64{11},
+			workflow_id: 11,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
 	})
@@ -44,13 +46,23 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "poll",
 			name:        "Blog RSS Feed Poller",
 			description: "",
-			workflows:   []uint64{12},
+			workflow_id: 12,
 		},
 		polltMeta: polltMeta{
 			url:             "https://wordpress.org/news/feed/",
 			endpointType:    "rss",
 			pollingInterval: time.Hour,
 		},
+	})
+	expected = append(expected, &webhookt{
+		trigger: trigger{
+			id:          14,
+			variety:     "webhook",
+			name:        "Regular webhook trigger",
+			description: "regular description",
+			workflow_id: 13,
+		},
+		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
 	})
 
 	got, err := getConfiguredTriggers(dbs)
@@ -81,6 +93,11 @@ func TestGetConfiguredWorkflows(t *testing.T) {
 	expected = append(expected, workflow{
 		id:          11,
 		name:        "MVP",
+		description: "",
+	})
+	expected = append(expected, workflow{
+		id:          13,
+		name:        "Toml imported Workflow",
 		description: "",
 	})
 
@@ -126,6 +143,34 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			room:          "!tnmILBRzpgkBkwSyDY:matrix.test",
 		},
 	})
+	expected = append(expected, &postMessageMatrixWorkflowStep{
+		workflowStep: workflowStep{
+			id:          13,
+			name:        "Post message in room 1",
+			description: "description here",
+			variety:     "postMatrixMessage",
+			workflow_id: 13,
+		},
+		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
+			messagePrefix: "[Alert]",
+			room:          "",
+		},
+	})
+	expected = append(expected, &postMessageMatrixWorkflowStep{
+		workflowStep: workflowStep{
+			id:          14,
+			name:        "Post message in room 2",
+			description: "description there",
+			variety:     "postMatrixMessage",
+			workflow_id: 13,
+		},
+		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
+			messagePrefix: "[Announcement]",
+			room:          "",
+		},
+	})
+	//13,'Post message in room 1','description here','postMatrixMessage',13,0,1);`,
+	//14,'Post message in room 2','description there','postMatrixMessage',13,1,1);`,
 
 	got, err := getConfiguredWFSteps(dbs)
 	if err != nil {
@@ -133,6 +178,9 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 	} else {
 		if !reflect.DeepEqual(got, expected) {
 			t.Errorf("configured workflow steps did not match")
+			for _, pp := range got {
+				t.Log(pp)
+			}
 		}
 	}
 
@@ -142,56 +190,124 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 	}
 }
 
-func TestSplitStringIntoSliceOfInts(t *testing.T) {
-	tables := []struct {
-		stringToSplit string
-		sep           string
-		res           []uint64
-	}{
-		// test basic functionality
-		{
-			"100,200",
-			",",
-			[]uint64{100, 200},
-		},
-		// test a different separator
-		{
-			"11-22-33",
-			"-",
-			[]uint64{11, 22, 33},
-		},
-		// test with unwanted empty spaces
-		{
-			" 1 ,2, 3,4 ",
-			",",
-			[]uint64{1, 2, 3, 4},
-		},
-		// test invalid input
-		{
-			"91,92,",
-			",",
-			[]uint64{91, 92},
-		},
+func TestUpdateWorkflowMeta(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	wid := uint64(11)
+
+	// insert a meta value that doesn't exist, testing insert
+	// then update the same meta value, testing update
+
+	key := fmt.Sprintf("neo%d", rand.Intn(100))
+	value := "matrix"
+
+	// issue insert
+	updateWorkflowMeta(dbs, wid, key, value)
+	if value != getWorkflowMeta(dbs, wid, key) {
+		t.Error("insert failed")
 	}
 
-	for _, table := range tables {
-		got := splitStringIntoSliceOfInts(table.stringToSplit, table.sep)
-		if !sliceEquals(table.res, got) {
-			t.Errorf("slice of Ints didn't match. got:%v expected:%v", got, table.res)
-		}
+	value = value + fmt.Sprintf("%d", rand.Intn(100))
+
+	// issue update
+	updateWorkflowMeta(dbs, wid, key, value)
+	if value != getWorkflowMeta(dbs, wid, key) {
+		t.Error("update failed")
 	}
+
+	// issue update with same value, which would bail out early (this step slightly increases test coverage)
+	updateWorkflowMeta(dbs, wid, key, value)
+	if value != getWorkflowMeta(dbs, wid, key) {
+		t.Error("update with same value failed")
+	}
+
+	// execute once with an empty database to cover returning error for absolute full coverage statistically
+	err := updateWorkflowMeta(dbs2, wid, key, value)
+	if err == nil {
+		t.Error("no error was returned with an empty database with no tables")
+	}
+
+	tearDown(dbs, dbs2)
 }
 
-func sliceEquals(a []uint64, b []uint64) bool {
-	if len(a) != len(b) {
-		return false
+func TestUpdateTriggerMeta(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	trigger_id := uint64(11)
+
+	// insert a meta value that doesn't exist, testing insert
+	// then update the same meta value, testing update
+
+	key := fmt.Sprintf("neo%d", rand.Intn(100))
+	value := "matrix"
+
+	// issue insert
+	updateTriggerMeta(dbs, trigger_id, key, value)
+	if value != getTriggerMeta(dbs, trigger_id, key) {
+		t.Error("insert failed")
 	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
+
+	value = value + fmt.Sprintf("%d", rand.Intn(100))
+
+	// issue update
+	updateTriggerMeta(dbs, trigger_id, key, value)
+	if value != getTriggerMeta(dbs, trigger_id, key) {
+		t.Error("update failed")
 	}
-	return true
+
+	// issue update with same value, which would bail out early (this step slightly increases test coverage)
+	updateTriggerMeta(dbs, trigger_id, key, value)
+	if value != getTriggerMeta(dbs, trigger_id, key) {
+		t.Error("update with same value failed")
+	}
+
+	// execute once with an empty database to cover returning error for absolute full coverage statistically
+	err := updateTriggerMeta(dbs2, trigger_id, key, value)
+	if err == nil {
+		t.Error("no error was returned with an empty database with no tables")
+	}
+
+	tearDown(dbs, dbs2)
+}
+
+func TestUpdateWFStepMeta(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	step_id := uint64(11)
+
+	// insert a meta value that doesn't exist, testing insert
+	// then update the same meta value, testing update
+
+	key := fmt.Sprintf("neo%d", rand.Intn(100))
+	value := "matrix"
+
+	// issue insert
+	updateWFStepMeta(dbs, step_id, key, value)
+	if value != getWFStepMeta(dbs, step_id, key) {
+		t.Error("insert failed")
+	}
+
+	value = value + fmt.Sprintf("%d", rand.Intn(100))
+
+	// issue update
+	updateWFStepMeta(dbs, step_id, key, value)
+	if value != getWFStepMeta(dbs, step_id, key) {
+		t.Error("update failed")
+	}
+
+	// issue update with same value, which would bail out early (this step slightly increases test coverage)
+	updateWFStepMeta(dbs, step_id, key, value)
+	if value != getWFStepMeta(dbs, step_id, key) {
+		t.Error("update with same value failed")
+	}
+
+	// execute once with an empty database to cover returning error for absolute full coverage statistically
+	err := updateWFStepMeta(dbs2, step_id, key, value)
+	if err == nil {
+		t.Error("no error was returned with an empty database with no tables")
+	}
+
+	tearDown(dbs, dbs2)
 }
 
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass
@@ -264,20 +380,58 @@ func getDBSchemaSQL() *[]string {
 }
 
 func getDataInsertsSQL() *[]string {
-	// @TODO add comments and more entries to better cover different set of possibilities
 	return &[]string{
+
+		// Workflows
+		// Regular Workflow (Active)
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (11,'MVP','',1);`,
+		// Deactivated Workflow
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (12,'Deactivated Workflow','',0);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (11,'Matticspace CURL','','webhook','11',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (12,'Blog RSS Feed Poller','','poll','12',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_ids","active") VALUES (13,'Disabled Trigger','','webhook','99',0);`,
+		// Workflow imported via TOML (Active)
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (13,'Toml imported Workflow','',1);`,
+		// Workflow imported via TOML (InActive)
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (14,'Toml imported Workflow 2','',0);`,
+
+		// Workflow meta for TOML identifier
+		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (11,13,'toml_identifier','TOMLTEST1');`,
+		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (12,14,'toml_identifier','TOMLTEST2');`,
+
+		// Triggers
+		// 'webhook' variety (Active)
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
+		// 'poll' variety (Active)
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (12,'Blog RSS Feed Poller','','poll',12,1);`,
+		// InActive Trigger (soon to be removed)
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook',99,0);`,
+		// TOML imported workflow's trigger - 'webhook' variety
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (14,'Regular webhook trigger','regular description','webhook',13,1);`,
+
+		// Workflow Steps
+		// 'postMatrixMessage' variety (Active)
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (11,'Post message to Matrix room','','postMatrixMessage',11,0,1);`,
+		// 'postMatrixMessage' variety (InActive)
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (12,'Deactivated workflow step for matrix room posting','','postMatrixMessage',99,0,0);`,
+		// TOML imported workflow's step - 'postMatrixMessage' variety
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (13,'Post message in room 1','description here','postMatrixMessage',13,0,1);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (14,'Post message in room 2','description there','postMatrixMessage',13,1,1);`,
+
+		// Trigger Meta
+		// For 'webhook' variety trigger
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,
+		// For 'poll' variety trigger
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (12,12,'url','https://wordpress.org/news/feed/');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (13,12,'endpointType','rss');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (14,12,'pollingInterval','1h');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (15,14,'urlSuffix','unittest');`,
+
+		// Workflow Step Meta
+		// For 'webhook' variety workflow step
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (11,11,'room','!tnmILBRzpgkBkwSyDY:matrix.test');`,
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (12,11,'message','Alert!');`,
+		// TOML imported workflow's step - 'postMatrixMessage' variety
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (13,13,'room','');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (14,13,'message','[Alert]');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (15,14,'room','');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (16,14,'message','[Announcement]');`,
 	}
 }
