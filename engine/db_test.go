@@ -221,6 +221,12 @@ func TestUpdateWorkflowMeta(t *testing.T) {
 		t.Error("update with same value failed")
 	}
 
+	// execute once with an empty database to cover returning error for absolute full coverage statistically
+	err := updateWorkflowMeta(dbs2, wid, key, value)
+	if err == nil {
+		t.Error("no error was returned with an empty database with no tables")
+	}
+
 	tearDown(dbs, dbs2)
 }
 
@@ -255,6 +261,12 @@ func TestUpdateTriggerMeta(t *testing.T) {
 		t.Error("update with same value failed")
 	}
 
+	// execute once with an empty database to cover returning error for absolute full coverage statistically
+	err := updateTriggerMeta(dbs2, trigger_id, key, value)
+	if err == nil {
+		t.Error("no error was returned with an empty database with no tables")
+	}
+
 	tearDown(dbs, dbs2)
 }
 
@@ -287,6 +299,12 @@ func TestUpdateWFStepMeta(t *testing.T) {
 	updateWFStepMeta(dbs, step_id, key, value)
 	if value != getWFStepMeta(dbs, step_id, key) {
 		t.Error("update with same value failed")
+	}
+
+	// execute once with an empty database to cover returning error for absolute full coverage statistically
+	err := updateWFStepMeta(dbs2, step_id, key, value)
+	if err == nil {
+		t.Error("no error was returned with an empty database with no tables")
 	}
 
 	tearDown(dbs, dbs2)
