@@ -13,15 +13,32 @@ func TestParseTOMLDefs(t *testing.T) {
 
 	// parseTOMLDefs(e)
 	tables := []struct {
-		toml    string
-		mapping tomlMapping
+		toml        string // toml file content
+		validToml   bool
+		semanticErr bool
 	}{
 		// Empty toml file
 		{
-			toml:    "",
-			mapping: tomlMapping{},
+			toml:        "",
+			validToml:   true,
+			semanticErr: false,
 		},
-		// Toml file with 2 changed workflows
+		// Invalid toml file
+		{
+			toml:        ">",
+			validToml:   false,
+			semanticErr: false,
+		},
+		// Semantic error in TOML file - duplicate identifiers
+		{
+			toml: `[[workflow]]
+			identifier = "TOMLTEST1"
+			[[workflow]]
+			identifier = "TOMLTEST1"`,
+			validToml:   true,
+			semanticErr: true,
+		},
+		// Valid and semantically correct Toml file with 2 changed workflows
 		// First one, no change
 		// Second one, update
 		// Third one, insert
@@ -45,14 +62,12 @@ func TestParseTOMLDefs(t *testing.T) {
 			identifier = "TOMLTEST3"
 			active = true
 			name = "Toml imported Workflow 3"`,
-			mapping: tomlMapping{
-				"TOMLTEST1": 13,
-				"TOMLTEST2": 14,
-			},
+			validToml:   true,
+			semanticErr: false,
 		},
 	}
 
-	for _, table := range tables {
+	for index, table := range tables {
 		os.WriteFile(tomlFilePath, []byte(table.toml), 0644)
 
 		dbs, dbs2 := setUp()
@@ -63,36 +78,61 @@ func TestParseTOMLDefs(t *testing.T) {
 		}
 
 		e.db = dbs
-		parseTOMLDefs(e)
+		err = parseTOMLDefs(e)
+		if !table.validToml || table.semanticErr {
+			if err == nil {
+				t.Errorf("didn't error with invalid or semantically errored toml")
+			}
+			continue
+		} else {
+			if err != nil {
+				t.Errorf("error while parsing valid toml - %v - %s", err, table.toml)
+			}
+		}
 
 		// check for db changes
-		workflows, _ := getConfiguredWorkflows(dbs)
-		if table.toml == "" {
-			if !reflect.DeepEqual(workflows, preParsingWorkflows) {
-				t.Errorf("empty toml file caused a change in workflows in database")
-			}
+		workflows, err := getConfiguredWorkflows(dbs)
+		if err != nil {
+			t.Error("error getting configured workflows")
 		} else {
-			// sufficient to check whether the right operation (insert/update) was trigger on the corresponding workflow
-			// actual insert/update functions have their own unit tests
+			if table.toml == "" {
+				if !reflect.DeepEqual(workflows, preParsingWorkflows) {
+					t.Errorf("empty toml file caused a change in workflows in database")
+				}
+			} else {
+				// sufficient to check whether the right operation (insert/update) was trigger on the corresponding workflow
+				// actual insert/update functions have their own unit tests
 
-			// last workflow was meant to be inserted
-			lastWorkflow := workflows[len(workflows)-1]
-			if lastWorkflow.name != "Toml imported Workflow 3" {
-				t.Error("toml insert didn't work")
-			}
+				// last workflow was meant to be inserted
+				lastWorkflow := workflows[len(workflows)-1]
+				if lastWorkflow.name != "Toml imported Workflow 3" {
+					t.Errorf("toml insert didn't work for toml(index:%d)", index)
+					t.Log(lastWorkflow)
+				}
 
-			// second last workflow was meant to be an update
-			secondLastWorkflow := workflows[len(workflows)-2]
-			// if update (active=true) failed, it won't even be present in the workflows list, as it only picks up active workflows
-			if secondLastWorkflow.name != "Toml imported Workflow 2" {
-				t.Error("toml update didn't work")
+				// second last workflow was meant to be an update
+				secondLastWorkflow := workflows[len(workflows)-2]
+				// if update (active=true) failed, it won't even be present in the workflows list, as it only picks up active workflows
+				if secondLastWorkflow.name != "Toml imported Workflow 2" {
+					t.Errorf("toml update didn't work for toml(index:%d)", index)
+				}
 			}
 		}
 
 		tearDown(dbs, dbs2)
-
-		os.Remove(tomlFilePath)
 	}
+
+	// one run with empty database to cover code path where existing toml mapping can't be figured out
+	dbs, dbs2 := setUp()
+	e.db = dbs2
+	os.WriteFile(tomlFilePath, []byte(""), 0644)
+	err := parseTOMLDefs(e)
+	if err == nil {
+		t.Errorf("no error returned when toml mapping is unavailable for whatever database issue")
+	}
+	tearDown(dbs, dbs2)
+
+	os.Remove(tomlFilePath)
 }
 
 func TestInsertTOMLWorkflow(t *testing.T) {
