@@ -1,8 +1,10 @@
 package engine
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"reflect"
 	"strings"
@@ -186,6 +188,108 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 	if err == nil {
 		t.Errorf("configured workflow steps did not return an error with empty database")
 	}
+}
+
+func TestUpdateWorkflowMeta(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	wid := uint64(11)
+
+	// insert a meta value that doesn't exist, testing insert
+	// then update the same meta value, testing update
+
+	key := fmt.Sprintf("neo%d", rand.Intn(100))
+	value := "matrix"
+
+	// issue insert
+	updateWorkflowMeta(dbs, uint64(wid), key, value)
+	if value != getWorkflowMeta(dbs, uint64(wid), key) {
+		t.Error("insert failed")
+	}
+
+	value = value + fmt.Sprintf("%d", rand.Intn(100))
+
+	// issue update
+	updateWorkflowMeta(dbs, uint64(wid), key, value)
+	if value != getWorkflowMeta(dbs, uint64(wid), key) {
+		t.Error("update failed")
+	}
+
+	// issue update with same value, which would bail out early (this step slightly increases test coverage)
+	updateWorkflowMeta(dbs, uint64(wid), key, value)
+	if value != getWorkflowMeta(dbs, uint64(wid), key) {
+		t.Error("update with same value failed")
+	}
+
+	tearDown(dbs, dbs2)
+}
+
+func TestUpdateTriggerMeta(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	trigger_id := uint64(11)
+
+	// insert a meta value that doesn't exist, testing insert
+	// then update the same meta value, testing update
+
+	key := fmt.Sprintf("neo%d", rand.Intn(100))
+	value := "matrix"
+
+	// issue insert
+	updateTriggerMeta(dbs, uint64(trigger_id), key, value)
+	if value != getTriggerMeta(dbs, uint64(trigger_id), key) {
+		t.Error("insert failed")
+	}
+
+	value = value + fmt.Sprintf("%d", rand.Intn(100))
+
+	// issue update
+	updateTriggerMeta(dbs, uint64(trigger_id), key, value)
+	if value != getTriggerMeta(dbs, uint64(trigger_id), key) {
+		t.Error("update failed")
+	}
+
+	// issue update with same value, which would bail out early (this step slightly increases test coverage)
+	updateTriggerMeta(dbs, uint64(trigger_id), key, value)
+	if value != getTriggerMeta(dbs, uint64(trigger_id), key) {
+		t.Error("update with same value failed")
+	}
+
+	tearDown(dbs, dbs2)
+}
+
+func TestUpdateWFStepMeta(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	step_id := uint64(11)
+
+	// insert a meta value that doesn't exist, testing insert
+	// then update the same meta value, testing update
+
+	key := fmt.Sprintf("neo%d", rand.Intn(100))
+	value := "matrix"
+
+	// issue insert
+	updateWFStepMeta(dbs, uint64(step_id), key, value)
+	if value != getWFStepMeta(dbs, uint64(step_id), key) {
+		t.Error("insert failed")
+	}
+
+	value = value + fmt.Sprintf("%d", rand.Intn(100))
+
+	// issue update
+	updateWFStepMeta(dbs, uint64(step_id), key, value)
+	if value != getWFStepMeta(dbs, uint64(step_id), key) {
+		t.Error("update failed")
+	}
+
+	// issue update with same value, which would bail out early (this step slightly increases test coverage)
+	updateWFStepMeta(dbs, uint64(step_id), key, value)
+	if value != getWFStepMeta(dbs, uint64(step_id), key) {
+		t.Error("update with same value failed")
+	}
+
+	tearDown(dbs, dbs2)
 }
 
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass
