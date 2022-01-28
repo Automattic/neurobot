@@ -48,18 +48,16 @@ func parseTOMLDefs(e *engine) error {
 		return err
 	}
 
-	if e.debug {
-		e.log("\nTOML Defs:")
-		for _, w := range def.Workflows {
-			fmt.Printf("\n[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active)
-			fmt.Printf("\n >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta)
-			for ws, s := range w.Steps {
-				fmt.Printf("\n\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active)
-				fmt.Printf("\n\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta)
-			}
+	e.log("\nTOML Defs:")
+	for _, w := range def.Workflows {
+		e.log(fmt.Sprintf("\n[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active))
+		e.log(fmt.Sprintf("\n >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta))
+		for ws, s := range w.Steps {
+			e.log(fmt.Sprintf("\n\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active))
+			e.log(fmt.Sprintf("\n\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta))
 		}
-		e.log("\n")
 	}
+	e.log("\n")
 
 	// Semantic check on data
 	if err = runSemanticCheckOnTOML(def); err != nil {

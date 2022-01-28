@@ -1,9 +1,99 @@
 package engine
 
 import (
+	"os"
 	"reflect"
 	"testing"
 )
+
+func TestParseTOMLDefs(t *testing.T) {
+	e := NewMockEngine()
+	tomlFilePath := "./toml_file_for_testing.toml"
+	e.workflowsDefTOMLFile = tomlFilePath
+
+	// parseTOMLDefs(e)
+	tables := []struct {
+		toml    string
+		mapping tomlMapping
+	}{
+		// Empty toml file
+		{
+			toml:    "",
+			mapping: tomlMapping{},
+		},
+		// Toml file with 2 changed workflows
+		// First one, no change
+		// Second one, update
+		// Third one, insert
+		{
+			toml: `[[workflow]]
+			identifier = "TOMLTEST1"
+			active = true
+			name = "Toml imported Workflow"
+
+			[[workflow]]
+			identifier = "TOMLTEST2"
+			active = true # this field is being updated
+			name = "Toml imported Workflow 2"
+
+			[[workflow.step]]
+			active = true
+			variety = "stdout"
+			name = "Log to Standard Out"
+
+			[[workflow]]
+			identifier = "TOMLTEST3"
+			active = true
+			name = "Toml imported Workflow 3"`,
+			mapping: tomlMapping{
+				"TOMLTEST1": 13,
+				"TOMLTEST2": 14,
+			},
+		},
+	}
+
+	for _, table := range tables {
+		os.WriteFile(tomlFilePath, []byte(table.toml), 0644)
+
+		dbs, dbs2 := setUp()
+
+		preParsingWorkflows, err := getConfiguredWorkflows(dbs)
+		if err != nil {
+			t.Error("error getting configured workflows")
+		}
+
+		e.db = dbs
+		parseTOMLDefs(e)
+
+		// check for db changes
+		workflows, _ := getConfiguredWorkflows(dbs)
+		if table.toml == "" {
+			if !reflect.DeepEqual(workflows, preParsingWorkflows) {
+				t.Errorf("empty toml file caused a change in workflows in database")
+			}
+		} else {
+			// sufficient to check whether the right operation (insert/update) was trigger on the corresponding workflow
+			// actual insert/update functions have their own unit tests
+
+			// last workflow was meant to be inserted
+			lastWorkflow := workflows[len(workflows)-1]
+			if lastWorkflow.name != "Toml imported Workflow 3" {
+				t.Error("toml insert didn't work")
+			}
+
+			// second last workflow was meant to be an update
+			secondLastWorkflow := workflows[len(workflows)-2]
+			// if update (active=true) failed, it won't even be present in the workflows list, as it only picks up active workflows
+			if secondLastWorkflow.name != "Toml imported Workflow 2" {
+				t.Error("toml update didn't work")
+			}
+		}
+
+		tearDown(dbs, dbs2)
+
+		os.Remove(tomlFilePath)
+	}
+}
 
 func TestInsertTOMLWorkflow(t *testing.T) {
 	dbs, dbs2 := setUp()
