@@ -5,6 +5,284 @@ import (
 	"testing"
 )
 
+func TestInsertTOMLWorkflow(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	w := WorkflowTOML{
+		Identifier:  "BRANDNEWWORKFLOW",
+		Active:      true,
+		Name:        "Something to test",
+		Description: "Some irregular description",
+		Trigger: WorkflowTriggerTOML{
+			Name:        "trigger wow",
+			Description: "amazing description",
+			Variety:     "webhook",
+			Meta: map[string]string{
+				"urlSuffix": "unittest",
+			},
+		},
+		Steps: []WorkflowStepTOML{
+			{
+				Active:      true,
+				Name:        "Baby Step",
+				Description: "Childhood description",
+				Variety:     "postMatrixMessage",
+				Meta: map[string]string{
+					"messagePrefix": "[Alert]",
+					"matrixRoom":    "",
+				},
+			},
+			{
+				Active:      true,
+				Name:        "Another baby Step",
+				Description: "Another description",
+				Variety:     "postMatrixMessage",
+				Meta: map[string]string{
+					"messagePrefix": "[Announcement]",
+					"matrixRoom":    "",
+				},
+			},
+		},
+	}
+
+	insertTOMLWorkflow(dbs, w)
+
+	// examine all these records got inserted at the right places, by directly quering the database
+	// check for workflow first
+	workflows, err := getConfiguredWorkflows(dbs)
+	if err != nil {
+		t.Error("couldn't get configured workflows")
+	}
+	lastWorkflow := workflows[len(workflows)-1]
+	if lastWorkflow.name != w.Name || lastWorkflow.description != w.Description {
+		t.Errorf("last inserted workflow isn't what we inserted. Got: [%s] Expected: [%s]", lastWorkflow.name, w.Name)
+	}
+
+	// check for workflow meta
+	got := getWorkflowMeta(dbs, lastWorkflow.id, "toml_identifier")
+	if w.Identifier != got {
+		t.Errorf("workflow's identifier didn't match. Got: %s Expected: %s", got, w.Identifier)
+	}
+
+	// check for trigger
+	tr := getWorkflowTrigger(dbs, lastWorkflow.id)
+	if tr.Name != w.Trigger.Name || tr.Description != w.Trigger.Description {
+		t.Errorf("trigger isn't what we expected. Got: [%s] Expected: [%s]", tr.Name, w.Trigger.Name)
+	}
+
+	// check for trigger meta
+	for key, expectedValue := range w.Trigger.Meta {
+		got := getTriggerMeta(dbs, tr.ID, key)
+		if expectedValue != got {
+			t.Errorf("trigger meta isn't what's expected. Key:%s Value:%s ExpectedValue:%s", key, got, expectedValue)
+		}
+	}
+
+	// check for workflow steps
+	steps := getWorkflowSteps(dbs, lastWorkflow.id)
+	for i, s := range steps {
+		if s.Name != w.Steps[i].Name || s.Description != w.Steps[i].Description {
+			t.Errorf("workflow step isn't what's expected. Step(%d) Got:%s Expected:%s", i, s.Name, w.Steps[i].Name)
+		}
+
+		// check for workflow step meta
+		for key, expectedValue := range w.Steps[i].Meta {
+			got := getWFStepMeta(dbs, s.ID, key)
+			if got != expectedValue {
+				t.Errorf("workflow step meta isn't what's expected. Step(%d) Key:%s Value:%s ExpectedValue:%s", i, key, got, expectedValue)
+			}
+		}
+	}
+
+	tearDown(dbs, dbs2)
+}
+
+func TestUpdateTOMLWorkflow(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	wid := uint64(13) // TOMLTEST1 identifier workflow is represented by ID 13 in test db
+	w := WorkflowTOML{
+		Identifier:  "TOMLTEST1",
+		Active:      true,
+		Name:        "Changed Name",
+		Description: "Changed Description",
+		Trigger: WorkflowTriggerTOML{
+			Name:        "trigger wow",
+			Description: "amazing description",
+			Variety:     "webhook",
+			Meta: map[string]string{
+				"urlSuffix": "unittests",
+			},
+		},
+		Steps: []WorkflowStepTOML{
+			{
+				Active:      true,
+				Name:        "Baby Step",
+				Description: "Childhood description",
+				Variety:     "postMatrixMessage",
+				Meta: map[string]string{
+					"messagePrefix": "[Alert]",
+					"matrixRoom":    "",
+				},
+			},
+			{
+				Active:      true,
+				Name:        "Another baby Step",
+				Description: "Another description",
+				Variety:     "postMatrixMessage",
+				Meta: map[string]string{
+					"messagePrefix": "[Announcement]",
+					"matrixRoom":    "",
+				},
+			},
+		},
+	}
+
+	err := updateTOMLWorkflow(dbs, wid, w)
+	if err != nil {
+		t.Errorf("error occured during updation of TOML workflow: %v", err)
+	}
+
+	// examine all these records got inserted at the right places, by directly quering the database
+	// check for workflow first
+	workflows, err := getConfiguredWorkflows(dbs)
+	if err != nil {
+		t.Error("couldn't get configured workflows")
+	}
+
+	found := false
+
+	// find the workflow, because in future, with more data inserts added it could be in between
+	for _, workflow := range workflows {
+
+		if w.Identifier != getWorkflowMeta(dbs, workflow.id, "toml_identifier") {
+			continue
+		}
+
+		found = true
+
+		if workflow.name != w.Name || workflow.description != w.Description {
+			t.Errorf("workflow didn't update. Got: [%s] Expected: [%s]", workflow.name, w.Name)
+		}
+
+		// check for workflow meta
+		got := getWorkflowMeta(dbs, workflow.id, "toml_identifier")
+		if w.Identifier != got {
+			t.Errorf("workflow's identifier didn't update. Got: %s Expected: %s", got, w.Identifier)
+		}
+
+		// check for trigger
+		tr := getWorkflowTrigger(dbs, workflow.id)
+		if tr.Name != w.Trigger.Name || tr.Description != w.Trigger.Description {
+			t.Errorf("trigger didn't update. Got: [%s] Expected: [%s]", tr.Name, w.Trigger.Name)
+		}
+
+		// check for trigger meta
+		for key, expectedValue := range w.Trigger.Meta {
+			got := getTriggerMeta(dbs, tr.ID, key)
+			if expectedValue != got {
+				t.Errorf("trigger meta didn't update. Key:%s Value:%s ExpectedValue:%s", key, got, expectedValue)
+			}
+		}
+
+		// check for workflow steps
+		steps := getWorkflowSteps(dbs, workflow.id)
+		for i, s := range steps {
+			if s.Name != w.Steps[i].Name || s.Description != w.Steps[i].Description {
+				t.Errorf("workflow step didn't update. Step(%d) Got:%s Expected:%s", i, s.Name, w.Steps[i].Name)
+			}
+
+			// check for workflow step meta
+			for key, expectedValue := range w.Steps[i].Meta {
+				got := getWFStepMeta(dbs, s.ID, key)
+				if got != expectedValue {
+					t.Errorf("workflow step meta didn't update. Step(%d) Key:%s Value:%s ExpectedValue:%s", i, key, got, expectedValue)
+				}
+			}
+		}
+	}
+
+	if !found {
+		t.Error("workflow identifier wasn't found in database")
+	}
+
+	tearDown(dbs, dbs2)
+}
+
+func TestGetTOMLMapping(t *testing.T) {
+	dbs, dbs2 := setUp()
+
+	expected := tomlMapping{"TOMLTEST1": 13, "TOMLTEST2": 14}
+	got, err := getTOMLMapping(dbs)
+	if err != nil {
+		t.Error("getTOMLMapping() failed - something wrong with test database")
+	}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("toml mapping mismatch. got: %v expected %v", got, expected)
+	}
+
+	_, err = getTOMLMapping(dbs2)
+	if err == nil {
+		t.Errorf("Error should be thrown, but wasn't.")
+	}
+
+	tearDown(dbs, dbs2)
+}
+
+func TestRunSemanticCheckOnTOML(t *testing.T) {
+	tables := []struct {
+		tomlDef   WorkflowDefintionTOML
+		shouldErr bool
+	}{
+		{
+			tomlDef:   WorkflowDefintionTOML{},
+			shouldErr: false,
+		},
+		{
+			tomlDef: WorkflowDefintionTOML{
+				Workflows: []WorkflowTOML{
+					{
+						Identifier: "Test1",
+					},
+					{
+						Identifier: "Test1",
+					},
+				},
+			},
+			shouldErr: true,
+		},
+		{
+			tomlDef: WorkflowDefintionTOML{
+				Workflows: []WorkflowTOML{
+					{
+						Identifier: "Test1",
+					},
+					{
+						Identifier: "Test2",
+					},
+				},
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, table := range tables {
+		err := runSemanticCheckOnTOML(table.tomlDef)
+		if err != nil {
+			if table.shouldErr == false {
+				t.Log(err)
+				t.Errorf("runSemanticCheckOnTOML() failed when it shouldn't have")
+			}
+		} else {
+			if table.shouldErr == true {
+				t.Log(err)
+				t.Errorf("runSemanticCheckOnTOML() didn't fail when it should have")
+			}
+		}
+	}
+}
+
 func TestBoolToInt(t *testing.T) {
 	tables := []struct {
 		input  bool

@@ -52,6 +52,16 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			pollingInterval: time.Hour,
 		},
 	})
+	expected = append(expected, &webhookt{
+		trigger: trigger{
+			id:          14,
+			variety:     "webhook",
+			name:        "Regular webhook trigger",
+			description: "regular description",
+			workflow_id: 13,
+		},
+		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
+	})
 
 	got, err := getConfiguredTriggers(dbs)
 	if err != nil {
@@ -81,6 +91,11 @@ func TestGetConfiguredWorkflows(t *testing.T) {
 	expected = append(expected, workflow{
 		id:          11,
 		name:        "MVP",
+		description: "",
+	})
+	expected = append(expected, workflow{
+		id:          13,
+		name:        "Toml imported Workflow",
 		description: "",
 	})
 
@@ -126,6 +141,34 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			room:          "!tnmILBRzpgkBkwSyDY:matrix.test",
 		},
 	})
+	expected = append(expected, &postMessageMatrixWorkflowStep{
+		workflowStep: workflowStep{
+			id:          13,
+			name:        "Post message in room 1",
+			description: "description here",
+			variety:     "postMatrixMessage",
+			workflow_id: 13,
+		},
+		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
+			messagePrefix: "[Alert]",
+			room:          "",
+		},
+	})
+	expected = append(expected, &postMessageMatrixWorkflowStep{
+		workflowStep: workflowStep{
+			id:          14,
+			name:        "Post message in room 2",
+			description: "description there",
+			variety:     "postMatrixMessage",
+			workflow_id: 13,
+		},
+		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
+			messagePrefix: "[Announcement]",
+			room:          "",
+		},
+	})
+	//13,'Post message in room 1','description here','postMatrixMessage',13,0,1);`,
+	//14,'Post message in room 2','description there','postMatrixMessage',13,1,1);`,
 
 	got, err := getConfiguredWFSteps(dbs)
 	if err != nil {
@@ -133,6 +176,9 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 	} else {
 		if !reflect.DeepEqual(got, expected) {
 			t.Errorf("configured workflow steps did not match")
+			for _, pp := range got {
+				t.Log(pp)
+			}
 		}
 	}
 
@@ -212,20 +258,58 @@ func getDBSchemaSQL() *[]string {
 }
 
 func getDataInsertsSQL() *[]string {
-	// @TODO add comments and more entries to better cover different set of possibilities
 	return &[]string{
+
+		// Workflows
+		// Regular Workflow (Active)
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (11,'MVP','',1);`,
+		// Deactivated Workflow
 		`INSERT INTO "workflows" ("id","name","description","active") VALUES (12,'Deactivated Workflow','',0);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook','11',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (12,'Blog RSS Feed Poller','','poll','12',1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook','99',0);`,
+		// Workflow imported via TOML (Active)
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (13,'Toml imported Workflow','',1);`,
+		// Workflow imported via TOML (InActive)
+		`INSERT INTO "workflows" ("id","name","description","active") VALUES (14,'Toml imported Workflow 2','',0);`,
+
+		// Workflow meta for TOML identifier
+		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (11,13,'toml_identifier','TOMLTEST1');`,
+		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (12,14,'toml_identifier','TOMLTEST2');`,
+
+		// Triggers
+		// 'webhook' variety (Active)
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
+		// 'poll' variety (Active)
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (12,'Blog RSS Feed Poller','','poll',12,1);`,
+		// InActive Trigger (soon to be removed)
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook',99,0);`,
+		// TOML imported workflow's trigger - 'webhook' variety
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (14,'Regular webhook trigger','regular description','webhook',13,1);`,
+
+		// Workflow Steps
+		// 'postMatrixMessage' variety (Active)
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (11,'Post message to Matrix room','','postMatrixMessage',11,0,1);`,
+		// 'postMatrixMessage' variety (InActive)
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (12,'Deactivated workflow step for matrix room posting','','postMatrixMessage',99,0,0);`,
+		// TOML imported workflow's step - 'postMatrixMessage' variety
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (13,'Post message in room 1','description here','postMatrixMessage',13,0,1);`,
+		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (14,'Post message in room 2','description there','postMatrixMessage',13,1,1);`,
+
+		// Trigger Meta
+		// For 'webhook' variety trigger
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,
+		// For 'poll' variety trigger
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (12,12,'url','https://wordpress.org/news/feed/');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (13,12,'endpointType','rss');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (14,12,'pollingInterval','1h');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (15,14,'urlSuffix','unittest');`,
+
+		// Workflow Step Meta
+		// For 'webhook' variety workflow step
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (11,11,'room','!tnmILBRzpgkBkwSyDY:matrix.test');`,
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (12,11,'message','Alert!');`,
+		// TOML imported workflow's step - 'postMatrixMessage' variety
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (13,13,'room','');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (14,13,'message','[Alert]');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (15,14,'room','');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (16,14,'message','[Announcement]');`,
 	}
 }

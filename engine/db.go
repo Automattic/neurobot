@@ -108,7 +108,6 @@ func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
 		return
 	}
 
-	// range over all active triggers, collecting meta for each trigger and appending that to collect basket
 	for _, row := range savedWorkflows {
 		w = append(w, workflow{
 			id:          row.ID,
@@ -121,7 +120,7 @@ func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
 }
 
 func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
-	// get all active triggers out of the database
+	// get all active workflow steps out of the database
 	var configuredSteps []WFStepRow
 	res := dbs.Collection("workflow_steps").Find(db.Cond{"active": "1"})
 	err = res.All(&configuredSteps)
@@ -129,7 +128,7 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 		return
 	}
 
-	// range over all active triggers, collecting meta for each trigger and appending that to collect basket
+	// range over all active steps, collecting meta for each step and appending that to collect basket
 	for _, row := range configuredSteps {
 		switch row.Variety {
 		case "postMatrixMessage":
@@ -415,5 +414,12 @@ func getWorkflowTrigger(dbs db.Session, id uint64) TriggerRow {
 	r := TriggerRow{}
 	res := dbs.Collection("triggers").Find(db.Cond{"workflow_id": id})
 	res.One(&r)
+	return r
+}
+
+func getWorkflowSteps(dbs db.Session, id uint64) []WFStepRow {
+	r := []WFStepRow{}
+	res := dbs.Collection("workflow_steps").Find(db.Cond{"workflow_id": id})
+	res.All(&r)
 	return r
 }
