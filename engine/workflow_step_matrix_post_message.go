@@ -1,19 +1,17 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 
+	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 )
-
-type postMessageMatrixWorkflowPayload struct {
-	message string
-	room    string
-}
 
 type postMessageMatrixWorkflowStepMeta struct {
 	messagePrefix string // message prefix
 	room          string // Matrix room
+	asBot         string // bot identifier, for matrix session
 }
 
 type postMessageMatrixWorkflowStep struct {
@@ -21,22 +19,80 @@ type postMessageMatrixWorkflowStep struct {
 	postMessageMatrixWorkflowStepMeta
 }
 
+var getMatrixClient = func(homeserver string) (MatrixClient, error) {
+	mc, err := mautrix.NewClient(homeserver, "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	return mc, nil
+}
+
+func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClient, err error) {
+	if s.asBot != "" {
+
+		b, err := getBot(e.db, s.asBot)
+		if err != nil {
+			return nil, err
+		}
+
+		mc, err := getMatrixClient(e.matrixhomeserver)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = mc.Login(&mautrix.ReqLogin{
+			Type:             "m.login.password",
+			Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: b.Username},
+			Password:         b.Password,
+			StoreCredentials: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return mc, nil
+	}
+
+	return e.client, nil
+}
+
 func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
-	p := payload.(postMessageMatrixWorkflowPayload)
-	msg := p.message
+	if payload == nil {
+		// nothing to do, let the next workflow step continue
+		return nil, nil
+	}
+	p := payload.(payloadData)
+	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
 	if s.messagePrefix != "" {
-		if p.message != "" {
-			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p.message)
+		if p.Message != "" {
+			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p.Message)
 		} else {
 			msg = s.messagePrefix
 		}
 	}
-	_, err := e.client.SendText(id.RoomID(p.room), msg)
+
+	mc, err := s.getMatrixClient(e)
 	if err != nil {
-		e.log(err.Error())
+		return nil, err
 	}
 
-	return payload, err
+	// Override room defined in meta, if provided in payload
+	room := s.room
+	if p.Room != "" {
+		room = p.Room
+	}
+
+	if room == "" {
+		return nil, errors.New("no room to post")
+	}
+
+	_, err = mc.SendText(id.RoomID(room), msg)
+	if err != nil {
+		return payload, err
+	}
+
+	return payload, nil
 }

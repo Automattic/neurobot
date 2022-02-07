@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"strings"
 
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
@@ -33,7 +34,8 @@ func NewMockWorkflowStep(impact string) *mockWorkflowStep {
 }
 
 type mockMatrixClient struct {
-	msgs []string
+	instantiatedBy string
+	msgs           []string
 }
 
 func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
@@ -79,12 +81,22 @@ func (m *mockMatrixClient) Sync() error {
 	return nil
 }
 
-func NewMockMatrixClient() MatrixClient {
-	return &mockMatrixClient{}
+func NewMockMatrixClient(creator string) MatrixClient {
+	return &mockMatrixClient{
+		instantiatedBy: creator,
+	}
+}
+
+func getMockMatrixClient(homeserver string) (MatrixClient, error) {
+	// designed to return error, when invalid url is passed (prefix with space in this case)
+	if homeserver != strings.TrimSpace(homeserver) {
+		return nil, errors.New("")
+	}
+	return NewMockMatrixClient("bot"), nil
 }
 
 func NewMockEngine() *engine {
 	return &engine{
-		client: NewMockMatrixClient(),
+		client: NewMockMatrixClient("engine"),
 	}
 }

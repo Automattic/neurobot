@@ -64,7 +64,7 @@ type RunParams struct {
 	MatrixPassword       string
 }
 
-type webhookListenerData struct {
+type payloadData struct {
 	Message string
 	Room    string
 }
@@ -274,23 +274,23 @@ func (e *engine) runWebhookListener() {
 			switch r.Method {
 			case "GET":
 				messageSlice, ok := r.URL.Query()["message"]
-				log.Println(messageSlice, len(messageSlice), messageSlice[0])
 				if !ok || len(messageSlice) < 1 {
-					http.Error(w, "400 bad request.", http.StatusBadRequest)
+					http.Error(w, "400 bad request (No message parameter provided)", http.StatusBadRequest)
 					return
 				}
 				message = messageSlice[0]
-				roomSlice, ok := r.URL.Query()["room"]
-				if !ok || len(roomSlice) < 1 {
-					http.Error(w, "400 bad request.", http.StatusBadRequest)
-					return
+				if roomSlice, ok := r.URL.Query()["room"]; ok {
+					if len(roomSlice) == 1 && roomSlice[0] == "" {
+						http.Error(w, "400 bad request (No room value specified)", http.StatusBadRequest)
+						return
+					}
+					room = roomSlice[0]
 				}
-				room = roomSlice[0]
 			case "POST":
 				switch r.Header.Values("Content-Type")[0] {
 				case "application/json":
 					decoder := json.NewDecoder(r.Body)
-					var data webhookListenerData
+					var data payloadData
 					err := decoder.Decode(&data)
 					if err != nil {
 						panic(err)
@@ -309,17 +309,13 @@ func (e *engine) runWebhookListener() {
 			}
 
 			if message == "" {
-				http.Error(w, "400 bad request.", http.StatusBadRequest)
-				return
-			}
-			if message != "" && room == "" {
-				http.Error(w, "400 bad request.", http.StatusBadRequest)
+				http.Error(w, "400 bad request (No message to post)", http.StatusBadRequest)
 				return
 			}
 
 			e.log(fmt.Sprintf(">> %s [%s]", message, room))
 
-			t.process(webhookListenerData{
+			t.process(payloadData{
 				Message: message,
 				Room:    room,
 			})

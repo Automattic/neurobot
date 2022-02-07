@@ -141,8 +141,9 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 					workflow_id: row.WorkflowID,
 				},
 				postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-					messagePrefix: getWFStepMeta(dbs, row.ID, "message"),
-					room:          getWFStepMeta(dbs, row.ID, "room"),
+					messagePrefix: getWFStepMeta(dbs, row.ID, "messagePrefix"),
+					room:          getWFStepMeta(dbs, row.ID, "matrixRoom"),
+					asBot:         getWFStepMeta(dbs, row.ID, "asBot"),
 				},
 			})
 		case "stdout":
