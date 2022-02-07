@@ -58,6 +58,10 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 }
 
 func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
+	if payload == nil {
+		// nothing to do, let the next workflow step continue
+		return nil, nil
+	}
 	p := payload.(payloadData)
 	msg := p.Message
 
