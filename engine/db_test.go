@@ -426,12 +426,12 @@ func getDataInsertsSQL() *[]string {
 
 		// Workflow Step Meta
 		// For 'webhook' variety workflow step
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (11,11,'room','!tnmILBRzpgkBkwSyDY:matrix.test');`,
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (12,11,'message','Alert!');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (11,11,'matrixRoom','!tnmILBRzpgkBkwSyDY:matrix.test');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (12,11,'messagePrefix','Alert!');`,
 		// TOML imported workflow's step - 'postMatrixMessage' variety
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (13,13,'room','');`,
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (14,13,'message','[Alert]');`,
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (15,14,'room','');`,
-		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (16,14,'message','[Announcement]');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (13,13,'matrixRoom','');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (14,13,'messagePrefix','[Alert]');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (15,14,'matrixRoom','');`,
+		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (16,14,'messagePrefix','[Announcement]');`,
 	}
 }
