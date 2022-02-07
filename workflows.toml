@@ -59,5 +59,6 @@ variety = "postMatrixMessage"
 [workflow.step.meta]
 messagePrefix = "[AFK Log]"
 matrixRoom = "" # Optional but would be overridden if specified in payload
+asBot = "bot_afk"
 
 #################################################################
