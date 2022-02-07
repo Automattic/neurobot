@@ -64,7 +64,7 @@ type RunParams struct {
 	MatrixPassword       string
 }
 
-type webhookListenerData struct {
+type payloadData struct {
 	Message string
 	Room    string
 }
@@ -290,7 +290,7 @@ func (e *engine) runWebhookListener() {
 				switch r.Header.Values("Content-Type")[0] {
 				case "application/json":
 					decoder := json.NewDecoder(r.Body)
-					var data webhookListenerData
+					var data payloadData
 					err := decoder.Decode(&data)
 					if err != nil {
 						panic(err)
@@ -315,7 +315,7 @@ func (e *engine) runWebhookListener() {
 
 			e.log(fmt.Sprintf(">> %s [%s]", message, room))
 
-			t.process(webhookListenerData{
+			t.process(payloadData{
 				Message: message,
 				Room:    room,
 			})

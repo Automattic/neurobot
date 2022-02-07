@@ -1,16 +1,12 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
 )
-
-type postMessageMatrixWorkflowPayload struct {
-	message string
-	room    string
-}
 
 type postMessageMatrixWorkflowStepMeta struct {
 	messagePrefix string // message prefix
@@ -62,13 +58,13 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 }
 
 func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
-	p := payload.(postMessageMatrixWorkflowPayload)
-	msg := p.message
+	p := payload.(payloadData)
+	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
 	if s.messagePrefix != "" {
-		if p.message != "" {
-			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p.message)
+		if p.Message != "" {
+			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p.Message)
 		} else {
 			msg = s.messagePrefix
 		}
@@ -79,7 +75,17 @@ func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (inte
 		return nil, err
 	}
 
-	_, err = mc.SendText(id.RoomID(p.room), msg)
+	// Override room defined in meta, if provided in payload
+	room := s.room
+	if p.Room != "" {
+		room = p.Room
+	}
+
+	if room == "" {
+		return nil, errors.New("no room to post")
+	}
+
+	_, err = mc.SendText(id.RoomID(room), msg)
 	if err != nil {
 		return payload, err
 	}
