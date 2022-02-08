@@ -15,6 +15,16 @@ type Bot struct {
 	Active      bool   `db:"active"`
 }
 
+func getActiveBots(dbs db.Session) (bots []Bot, err error) {
+	res := dbs.Collection("bots").Find(db.Cond{"active": 1})
+	err = res.All(&bots)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func getBot(dbs db.Session, identifier string) (b Bot, err error) {
 	res := dbs.Collection("bots").Find(db.Cond{"identifier": identifier})
 	err = res.One(&b)

@@ -114,6 +114,14 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 			e.log("Finished loading Matrix client.")
 		}()
 
+		go func() {
+			err := e.wakeUpMatrixBots()
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.log("Finished waking up all Matrix bots.")
+		}()
+
 		// allow the matrix client to sync and be ready,
 		<-matrixInitDone
 	}
@@ -367,6 +375,24 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDo
 	err = e.client.Sync()
 	if err != nil {
 		return
+	}
+
+	return
+}
+
+func (e *engine) wakeUpMatrixBots() (err error) {
+	// load all bots one by one and accept any invitations within our own homeserver
+
+	bots, err := getActiveBots(e.db)
+	if err != nil {
+		return
+	}
+
+	for _, b := range bots {
+		e.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
+
+		// @TODO handle login and sync
+
 	}
 
 	return
