@@ -388,11 +388,61 @@ func (e *engine) wakeUpMatrixBots() (err error) {
 		return
 	}
 
+	// @TODO use go routines here to do this in parallel - rate limiting might become a problem with too many bots though
 	for _, b := range bots {
 		e.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
 
 		// @TODO handle login and sync
+		client, err := mautrix.NewClient(e.matrixhomeserver, "", "")
+		if err != nil {
+			return err
+		}
+		_, err = client.Login(&mautrix.ReqLogin{
+			Type:             "m.login.password",
+			Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: b.Username},
+			Password:         b.Password,
+			StoreCredentials: true,
+		})
+		if err != nil {
+			return err
+		}
+		e.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Name, b.Identifier))
 
+		syncer := client.Syncer.(*mautrix.DefaultSyncer)
+		// syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+		// 	fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
+		// })
+
+		syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event) {
+			if membership, ok := evt.Content.Raw["membership"]; ok {
+				if membership == "invite" {
+					fmt.Printf("Invitation for %s\n", evt.RoomID)
+
+					// ensure the invitation if for a room within our homeserver only
+					matrixHSHost := strings.Split(strings.Split(e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+					if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
+						// join the room
+						_, err := client.JoinRoomByID(evt.RoomID)
+						if err != nil {
+							msg := fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s", b.Name, evt.RoomID)
+							fmt.Println(msg)
+							e.log(msg)
+						} else {
+							fmt.Println("joined?")
+						}
+					} else {
+						e.log(fmt.Sprintf("whaat? %v", strings.Split(evt.RoomID.String(), ":")))
+					}
+
+				}
+			}
+			fmt.Printf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw)
+		})
+
+		err = client.Sync()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return
