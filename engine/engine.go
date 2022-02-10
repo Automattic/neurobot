@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -103,27 +104,35 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	if e.isMatrix {
 		e.log("Starting up Matrix client..")
 
-		// Create a channel to signal Matrix client has finished initializing before we wrap up StartUp()
-		matrixInitDone := make(chan bool, 1)
+		//
+		var wg sync.WaitGroup
 
+		// This creates the matrix instance of the main/god bot
+		wg.Add(1)
 		go func() {
-			err := e.initMatrixClient(mc, s, matrixInitDone)
+			defer wg.Done()
+
+			err := e.initMatrixClient(mc, s)
 			if err != nil {
 				log.Fatal(err)
 			}
 			e.log("Finished loading Matrix client.")
 		}()
 
+		// This creates the matrix instances of all other bots
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
+
 			err := e.wakeUpMatrixBots()
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal(err) // fatal error for now
 			}
 			e.log("Finished waking up all Matrix bots.")
 		}()
 
-		// allow the matrix client to sync and be ready,
-		<-matrixInitDone
+		// allow the matrix client(s) to sync and be ready,
+		wg.Wait()
 	}
 }
 
@@ -348,7 +357,7 @@ func (e *engine) runPoller() {
 	}
 }
 
-func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDone chan<- bool) (err error) {
+func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
 	e.client = c
 
 	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixhomeserver, e.matrixusername))
@@ -365,8 +374,6 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDo
 
 	e.log("Matrix: Login successful!")
 
-	matrixInitDone <- true
-
 	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
 		fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
@@ -382,70 +389,40 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDo
 
 func (e *engine) wakeUpMatrixBots() (err error) {
 	// load all bots one by one and accept any invitations within our own homeserver
-
 	bots, err := getActiveBots(e.db)
 	if err != nil {
 		return
 	}
 
-	// @TODO use go routines here to do this in parallel - rate limiting might become a problem with too many bots though
+	// use waitgroup to wait for all bots' instances to be ready
+	var wg sync.WaitGroup
+
+	// collect bot IDs who error'd out
+	var failedWakeUps []uint64
+
+	// using go routines here to instantiate in parallel - rate limiting might become a problem with too many bots though
 	for _, b := range bots {
-		e.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
+		wg.Add(1)
 
-		// @TODO handle login and sync
-		client, err := mautrix.NewClient(e.matrixhomeserver, "", "")
-		if err != nil {
-			return err
-		}
-		_, err = client.Login(&mautrix.ReqLogin{
-			Type:             "m.login.password",
-			Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: b.Username},
-			Password:         b.Password,
-			StoreCredentials: true,
-		})
-		if err != nil {
-			return err
-		}
-		e.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Name, b.Identifier))
+		go func(b Bot) {
+			defer wg.Done()
 
-		syncer := client.Syncer.(*mautrix.DefaultSyncer)
-		// syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
-		// 	fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
-		// })
-
-		syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event) {
-			if membership, ok := evt.Content.Raw["membership"]; ok {
-				if membership == "invite" {
-					fmt.Printf("Invitation for %s\n", evt.RoomID)
-
-					// ensure the invitation if for a room within our homeserver only
-					matrixHSHost := strings.Split(strings.Split(e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
-					if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
-						// join the room
-						_, err := client.JoinRoomByID(evt.RoomID)
-						if err != nil {
-							msg := fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s", b.Name, evt.RoomID)
-							fmt.Println(msg)
-							e.log(msg)
-						} else {
-							fmt.Println("joined?")
-						}
-					} else {
-						e.log(fmt.Sprintf("whaat? %v", strings.Split(evt.RoomID.String(), ":")))
-					}
-
-				}
+			err := b.WakeUp(e)
+			if err != nil {
+				failedWakeUps = append(failedWakeUps, b.ID)
 			}
-			fmt.Printf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw)
-		})
+		}(b)
 
-		err = client.Sync()
-		if err != nil {
-			panic(err)
-		}
 	}
 
-	return
+	// wait for all bot instances to wake up
+	wg.Wait()
+
+	if len(failedWakeUps) > 0 {
+		return fmt.Errorf("one or more bots could not wake up. ids: %v", failedWakeUps)
+	}
+
+	return nil
 }
 
 func NewEngine(p RunParams) *engine {
