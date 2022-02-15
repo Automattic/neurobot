@@ -78,6 +78,7 @@ func (e *engine) StartUpLite() {
 	e.log("Starting up engine..")
 
 	// Initialize maps
+	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
 	e.triggers = make(map[string]map[string]Trigger)
 	e.triggers["webhook"] = make(map[string]Trigger)
