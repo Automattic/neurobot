@@ -412,12 +412,9 @@ func (e *engine) wakeUpMatrixBots() (err error) {
 		go func(b Bot) {
 			defer wg.Done()
 
-			c, err := b.WakeUp(e)
-			if err != nil {
+			if err := b.WakeUp(e); err != nil {
 				failedWakeUps = append(failedWakeUps, b.ID)
 			}
-
-			e.bots[b.ID] = c
 		}(b)
 
 	}

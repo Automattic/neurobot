@@ -40,13 +40,13 @@ func getBot(dbs db.Session, identifier string) (b Bot, err error) {
 	return
 }
 
-func (b Bot) WakeUp(e *engine) (client MatrixClient, err error) {
-	e.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
-
+func (b Bot) WakeUp(e *engine) (err error) {
 	// save reference
 	b.e = e
 
-	client, err = mautrix.NewClient(e.matrixhomeserver, "", "")
+	b.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
+
+	client, err := mautrix.NewClient(e.matrixhomeserver, "", "")
 	if err != nil {
 		return
 	}
@@ -59,12 +59,15 @@ func (b Bot) WakeUp(e *engine) (client MatrixClient, err error) {
 	if err != nil {
 		return
 	}
-	e.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Name, b.Identifier))
+	b.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Name, b.Identifier))
 
-	syncer := client.(*mautrix.Client).Syncer.(*mautrix.DefaultSyncer)
+	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
 
 	err = client.Sync()
+
+	// save reference
+	e.bots[b.ID] = client
 
 	return
 }
