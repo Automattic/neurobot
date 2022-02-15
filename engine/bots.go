@@ -7,6 +7,7 @@ import (
 	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/id"
 )
 
 type Bot struct {
@@ -18,6 +19,8 @@ type Bot struct {
 	Password    string `db:"password"`
 	CreatedBy   string `db:"created_by"`
 	Active      bool   `db:"active"`
+
+	e *engine
 }
 
 func getActiveBots(dbs db.Session) (bots []Bot, err error) {
@@ -37,12 +40,15 @@ func getBot(dbs db.Session, identifier string) (b Bot, err error) {
 	return
 }
 
-func (b Bot) WakeUp(e *engine) error {
+func (b Bot) WakeUp(e *engine) (client MatrixClient, err error) {
 	e.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
 
-	client, err := mautrix.NewClient(e.matrixhomeserver, "", "")
+	// save reference
+	b.e = e
+
+	client, err = mautrix.NewClient(e.matrixhomeserver, "", "")
 	if err != nil {
-		return err
+		return
 	}
 	_, err = client.Login(&mautrix.ReqLogin{
 		Type:             "m.login.password",
@@ -51,34 +57,49 @@ func (b Bot) WakeUp(e *engine) error {
 		StoreCredentials: true,
 	})
 	if err != nil {
-		return err
+		return
 	}
 	e.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Name, b.Identifier))
 
-	syncer := client.Syncer.(*mautrix.DefaultSyncer)
+	syncer := client.(*mautrix.Client).Syncer.(*mautrix.DefaultSyncer)
+	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
 
-	syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event) {
-		if membership, ok := evt.Content.Raw["membership"]; ok {
-			if membership == "invite" {
-				e.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
+	err = client.Sync()
 
-				// ensure the invitation if for a room within our homeserver only
-				matrixHSHost := strings.Split(strings.Split(e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
-				if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
-					// join the room
-					_, err := client.JoinRoomByID(evt.RoomID)
-					if err != nil {
-						e.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s", b.Name, evt.RoomID))
-					} else {
-						e.log("accepted invitation, if it wasn't accepted already")
-					}
+	return
+}
+
+func (b Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event) {
+	if membership, ok := evt.Content.Raw["membership"]; ok {
+		if membership == "invite" {
+			b.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
+
+			// ensure the invitation if for a room within our homeserver only
+			matrixHSHost := strings.Split(strings.Split(b.e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+			if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
+				// join the room
+				_, err := b.JoinRoom(evt.RoomID)
+				if err != nil {
+					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s", b.Name, evt.RoomID))
 				} else {
-					e.log(fmt.Sprintf("whaat? %v", strings.Split(evt.RoomID.String(), ":")))
+					b.log("accepted invitation, if it wasn't accepted already")
 				}
+			} else {
+				b.log(fmt.Sprintf("whaat? %v", strings.Split(evt.RoomID.String(), ":")))
 			}
 		}
-		e.log(fmt.Sprintf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw))
-	})
+	}
+	b.log(fmt.Sprintf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw))
+}
 
-	return client.Sync()
+func (b Bot) getInstance() MatrixClient {
+	return b.e.bots[b.ID]
+}
+
+func (b Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
+	return b.getInstance().JoinRoomByID(roomid)
+}
+
+func (b Bot) log(m string) {
+	b.e.log(m)
 }

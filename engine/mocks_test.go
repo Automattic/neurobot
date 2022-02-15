@@ -81,6 +81,14 @@ func (m *mockMatrixClient) Sync() error {
 	return nil
 }
 
+func (m *mockMatrixClient) JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
+	if roomID == "" {
+		return nil, errors.New("")
+	}
+
+	return
+}
+
 func NewMockMatrixClient(creator string) MatrixClient {
 	return &mockMatrixClient{
 		instantiatedBy: creator,

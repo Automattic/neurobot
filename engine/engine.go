@@ -27,12 +27,14 @@ type Engine interface {
 	StartUp()
 	ShutDown()
 	Run()
+	log(string)
 }
 
 type MatrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	Sync() error
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
+	JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error)
 }
 
 type engine struct {
@@ -50,6 +52,8 @@ type engine struct {
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
+
+	bots map[uint64]MatrixClient // All matrix client instances of bots
 
 	client MatrixClient
 }
@@ -407,10 +411,12 @@ func (e *engine) wakeUpMatrixBots() (err error) {
 		go func(b Bot) {
 			defer wg.Done()
 
-			err := b.WakeUp(e)
+			c, err := b.WakeUp(e)
 			if err != nil {
 				failedWakeUps = append(failedWakeUps, b.ID)
 			}
+
+			e.bots[b.ID] = c
 		}(b)
 
 	}
