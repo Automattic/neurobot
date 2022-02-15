@@ -50,6 +50,10 @@ func (b Bot) WakeUp(e *engine) (err error) {
 	if err != nil {
 		return
 	}
+
+	// save reference
+	e.bots[b.ID] = client
+
 	_, err = client.Login(&mautrix.ReqLogin{
 		Type:             "m.login.password",
 		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: b.Username},
@@ -65,9 +69,6 @@ func (b Bot) WakeUp(e *engine) (err error) {
 	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
 
 	err = client.Sync()
-
-	// save reference
-	e.bots[b.ID] = client
 
 	return
 }
