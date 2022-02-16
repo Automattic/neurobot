@@ -108,7 +108,11 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 }
 
 func (b *Bot) getInstance() MatrixClient {
-	return b.e.bots[b.ID]
+	if b.IsHydrated() {
+		return b.e.bots[b.ID]
+	}
+
+	return nil
 }
 
 func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
