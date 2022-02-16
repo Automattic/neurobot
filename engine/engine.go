@@ -107,13 +107,12 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	// Start Matrix client, if desired
 	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
 	if e.isMatrix {
-		e.log("Starting up Matrix client..")
+		e.log("Starting up Matrix client(s)..")
 
-		//
 		var wg sync.WaitGroup
+		wg.Add(2)
 
 		// This creates the matrix instance of the main/god bot
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
@@ -121,11 +120,10 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			e.log("Finished loading Matrix client.")
+			e.log("Finished loading up God bot.")
 		}()
 
 		// This creates the matrix instances of all other bots
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
@@ -138,6 +136,7 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 
 		// allow the matrix client(s) to sync and be ready,
 		wg.Wait()
+		e.log("Engine's matrix start up finished.")
 	}
 }
 
@@ -381,13 +380,13 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 
 	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
-		fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
+		e.log(fmt.Sprintf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body))
 	})
 
-	err = e.client.Sync()
-	if err != nil {
-		return
-	}
+	// Fire 'sync' in another go routine since its blocking
+	go func() {
+		e.log(e.client.Sync().Error())
+	}()
 
 	return
 }

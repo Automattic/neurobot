@@ -80,7 +80,10 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
 
-	err = client.Sync()
+	// Fire 'sync' in another go routine since its blocking
+	go func() {
+		e.log(client.Sync().Error())
+	}()
 
 	return
 }
