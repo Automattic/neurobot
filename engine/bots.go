@@ -20,6 +20,8 @@ type Bot struct {
 	CreatedBy   string `db:"created_by"`
 	Active      bool   `db:"active"`
 
+	hydrated bool
+
 	e *engine
 }
 
@@ -40,7 +42,16 @@ func getBot(dbs db.Session, identifier string) (b Bot, err error) {
 	return
 }
 
-func (b Bot) WakeUp(e *engine) (err error) {
+func (b *Bot) IsHydrated() bool {
+	return b.hydrated
+}
+
+func (b *Bot) Hydrate(e *engine) {
+	b.hydrated = true
+	b.e = e
+}
+
+func (b *Bot) WakeUp(e *engine) (err error) {
 	// save reference
 	b.e = e
 
@@ -73,7 +84,7 @@ func (b Bot) WakeUp(e *engine) (err error) {
 	return
 }
 
-func (b Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event) {
+func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event) {
 	if membership, ok := evt.Content.Raw["membership"]; ok {
 		if membership == "invite" {
 			b.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
@@ -96,14 +107,14 @@ func (b Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event
 	b.log(fmt.Sprintf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw))
 }
 
-func (b Bot) getInstance() MatrixClient {
+func (b *Bot) getInstance() MatrixClient {
 	return b.e.bots[b.ID]
 }
 
-func (b Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
+func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
 	return b.getInstance().JoinRoomByID(roomid)
 }
 
-func (b Bot) log(m string) {
+func (b *Bot) log(m string) {
 	b.e.log(m)
 }

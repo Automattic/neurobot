@@ -36,6 +36,10 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 			return nil, err
 		}
 
+		if !b.IsHydrated() {
+			b.Hydrate(e)
+		}
+
 		return b.getInstance(), nil
 	}
 

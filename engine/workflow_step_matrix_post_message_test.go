@@ -67,7 +67,12 @@ func TestGetMatrixClient(t *testing.T) {
 		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
 		{
 			asBot:        "bot_something",
-			clientOrigin: "bot",
+			clientOrigin: "bot1",
+		},
+		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
+		{
+			asBot:        "bot_afk",
+			clientOrigin: "bot2",
 		},
 	}
 
@@ -80,6 +85,9 @@ func TestGetMatrixClient(t *testing.T) {
 		// setup mock engine
 		e := NewMockEngine()
 		e.db = dbs
+		e.bots = make(map[uint64]MatrixClient)
+		e.bots[1] = NewMockMatrixClient("bot1")
+		e.bots[2] = NewMockMatrixClient("bot2")
 
 		// get step instance
 		s := &postMessageMatrixWorkflowStep{
