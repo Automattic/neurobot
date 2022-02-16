@@ -243,6 +243,8 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		e := NewMockEngine()
 		e.db = dbs
 		e.matrixhomeserver = table.homeserver
+		e.bots = make(map[uint64]MatrixClient)
+		e.bots[1] = botMatrixClient
 
 		s := &postMessageMatrixWorkflowStep{
 			workflowStep: workflowStep{
