@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -116,7 +117,11 @@ func (b *Bot) getMCInstance() MatrixClient {
 }
 
 func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
-	return b.getMCInstance().JoinRoomByID(roomid)
+	if c := b.getMCInstance(); c != nil {
+		return c.JoinRoomByID(roomid)
+	}
+
+	return nil, errors.New("bot instance not hydrated")
 }
 
 func (b *Bot) log(m string) {
