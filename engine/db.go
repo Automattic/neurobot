@@ -70,7 +70,7 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 					variety:     row.Variety,
 					name:        row.Name,
 					description: row.Description,
-					workflow_id: row.WorkflowID,
+					workflowID:  row.WorkflowID,
 				},
 				webhooktMeta: webhooktMeta{
 					urlSuffix: getTriggerMeta(dbs, row.ID, "urlSuffix"),
@@ -85,7 +85,7 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 					variety:     row.Variety,
 					name:        row.Name,
 					description: row.Description,
-					workflow_id: row.WorkflowID,
+					workflowID:  row.WorkflowID,
 				},
 				polltMeta: polltMeta{
 					url:             getTriggerMeta(dbs, row.ID, "url"),
@@ -138,7 +138,7 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 					name:        row.Name,
 					description: row.Description,
 					variety:     row.Variety,
-					workflow_id: row.WorkflowID,
+					workflowID:  row.WorkflowID,
 				},
 				postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
 					messagePrefix: getWFStepMeta(dbs, row.ID, "messagePrefix"),
@@ -153,7 +153,7 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 					name:        row.Name,
 					description: row.Description,
 					variety:     row.Variety,
-					workflow_id: row.WorkflowID,
+					workflowID:  row.WorkflowID,
 				},
 			})
 		}
@@ -265,8 +265,8 @@ func insertWFStepMeta(dbs db.Session, id uint64, key string, value string) error
  * Update functions for entities' meta (workflow/trigger/step)
  */
 
-func updateWorkflowMeta(dbs db.Session, workflow_id uint64, key string, value string) error {
-	res := dbs.Collection("workflow_meta").Find(db.Cond{"workflow_id": workflow_id, "key": key})
+func updateWorkflowMeta(dbs db.Session, workflowID uint64, key string, value string) error {
+	res := dbs.Collection("workflow_meta").Find(db.Cond{"workflow_id": workflowID, "key": key})
 	row := make(map[string]string)
 
 	exists, err := res.Exists()
@@ -275,7 +275,7 @@ func updateWorkflowMeta(dbs db.Session, workflow_id uint64, key string, value st
 	}
 
 	if !exists {
-		return insertWorkflowMeta(dbs, workflow_id, key, value)
+		return insertWorkflowMeta(dbs, workflowID, key, value)
 	}
 
 	res.One(&row)
@@ -289,8 +289,8 @@ func updateWorkflowMeta(dbs db.Session, workflow_id uint64, key string, value st
 	return nil
 }
 
-func updateTriggerMeta(dbs db.Session, trigger_id uint64, key string, value string) error {
-	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": trigger_id, "key": key})
+func updateTriggerMeta(dbs db.Session, triggerID uint64, key string, value string) error {
+	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": triggerID, "key": key})
 	row := make(map[string]string)
 
 	exists, err := res.Exists()
@@ -299,7 +299,7 @@ func updateTriggerMeta(dbs db.Session, trigger_id uint64, key string, value stri
 	}
 
 	if !exists {
-		insertTriggerMeta(dbs, trigger_id, key, value)
+		insertTriggerMeta(dbs, triggerID, key, value)
 		return nil
 	}
 
@@ -314,8 +314,8 @@ func updateTriggerMeta(dbs db.Session, trigger_id uint64, key string, value stri
 	return nil
 }
 
-func updateWFStepMeta(dbs db.Session, step_id uint64, key string, value string) error {
-	res := dbs.Collection("workflow_step_meta").Find(db.Cond{"step_id": step_id, "key": key})
+func updateWFStepMeta(dbs db.Session, stepID uint64, key string, value string) error {
+	res := dbs.Collection("workflow_step_meta").Find(db.Cond{"step_id": stepID, "key": key})
 	row := make(map[string]string)
 
 	exists, err := res.Exists()
@@ -324,7 +324,7 @@ func updateWFStepMeta(dbs db.Session, step_id uint64, key string, value string) 
 	}
 
 	if !exists {
-		insertWFStepMeta(dbs, step_id, key, value)
+		insertWFStepMeta(dbs, stepID, key, value)
 		return nil
 	}
 
@@ -343,8 +343,8 @@ func updateWFStepMeta(dbs db.Session, step_id uint64, key string, value string) 
  * Get functions for entities' meta (workflow/trigger/step)
  */
 
-func getWorkflowMeta(dbs db.Session, workflow_id uint64, key string) string {
-	res := dbs.Collection("workflow_meta").Find(db.Cond{"workflow_id": workflow_id, "key": key})
+func getWorkflowMeta(dbs db.Session, workflowID uint64, key string) string {
+	res := dbs.Collection("workflow_meta").Find(db.Cond{"workflow_id": workflowID, "key": key})
 	row := make(map[string]string)
 	res.One(&row)
 
@@ -353,8 +353,8 @@ func getWorkflowMeta(dbs db.Session, workflow_id uint64, key string) string {
 	return row["value"]
 }
 
-func getTriggerMeta(dbs db.Session, trigger_id uint64, key string) string {
-	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": trigger_id, "key": key})
+func getTriggerMeta(dbs db.Session, triggerID uint64, key string) string {
+	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": triggerID, "key": key})
 	row := make(map[string]string)
 	res.One(&row)
 
@@ -363,8 +363,8 @@ func getTriggerMeta(dbs db.Session, trigger_id uint64, key string) string {
 	return row["value"]
 }
 
-func getWFStepMeta(dbs db.Session, step_id uint64, key string) string {
-	res := dbs.Collection("workflow_step_meta").Find(db.Cond{"step_id": step_id, "key": key})
+func getWFStepMeta(dbs db.Session, stepID uint64, key string) string {
+	res := dbs.Collection("workflow_step_meta").Find(db.Cond{"step_id": stepID, "key": key})
 	row := make(map[string]string)
 	res.One(&row)
 
@@ -397,12 +397,12 @@ func deleteAllWFSteps(dbs db.Session, wid uint64) error {
 	return deleteAllWFStepMeta(dbs, collect)
 }
 
-func deleteAllWFStepMeta(dbs db.Session, step_ids []uint64) error {
+func deleteAllWFStepMeta(dbs db.Session, stepIDs []uint64) error {
 	_, err := dbs.SQL().Exec(
 		fmt.Sprintf(
 			"DELETE from workflow_step_meta WHERE step_id IN (%s)",
 			strings.Join(
-				intSliceToStringSlice(step_ids),
+				intSliceToStringSlice(stepIDs),
 				",",
 			),
 		),

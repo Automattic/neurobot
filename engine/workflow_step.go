@@ -9,5 +9,5 @@ type workflowStep struct {
 	name        string
 	description string
 	variety     string
-	workflow_id uint64
+	workflowID  uint64
 }

@@ -251,14 +251,14 @@ func (e *engine) loadData() {
 	for _, ws := range steps {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
-			e.workflows[ws.workflow_id].addWorkflowStep(ws)
+			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		case *stdoutWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
-			e.workflows[ws.workflow_id].addWorkflowStep(ws)
+			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		case *sendEmailWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflow_id)
-			e.workflows[ws.workflow_id].addWorkflowStep(ws)
+			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		}
 	}
 }

@@ -12,12 +12,12 @@ type trigger struct {
 	name        string
 	description string
 	engine      *engine
-	workflow_id uint64
+	workflowID  uint64
 }
 
 func (t *trigger) setup() {}
 
 func (t *trigger) finish(payload interface{}) {
-	w := t.engine.workflows[t.workflow_id]
+	w := t.engine.workflows[t.workflowID]
 	w.run(payload, t.engine)
 }

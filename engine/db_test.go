@@ -26,7 +26,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "CURL Request Catcher",
 			description: "This webhook trigger will receive your webhook request while showcasing the demo",
-			workflow_id: 1,
+			workflowID:  1,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "quickstart"},
 	})
@@ -36,7 +36,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "Matticspace CURL",
 			description: "",
-			workflow_id: 11,
+			workflowID:  11,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
 	})
@@ -46,7 +46,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "poll",
 			name:        "Blog RSS Feed Poller",
 			description: "",
-			workflow_id: 12,
+			workflowID:  12,
 		},
 		polltMeta: polltMeta{
 			url:             "https://wordpress.org/news/feed/",
@@ -60,7 +60,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			variety:     "webhook",
 			name:        "Regular webhook trigger",
 			description: "regular description",
-			workflow_id: 13,
+			workflowID:  13,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
 	})
@@ -127,7 +127,7 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			name:        "Log to stdout",
 			description: "This workflow step will show the payload to stdout while showcasing the demo",
 			variety:     "stdout",
-			workflow_id: 1,
+			workflowID:  1,
 		},
 	})
 	expected = append(expected, &postMessageMatrixWorkflowStep{
@@ -136,7 +136,7 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			name:        "Post message to Matrix room",
 			description: "",
 			variety:     "postMatrixMessage",
-			workflow_id: 11,
+			workflowID:  11,
 		},
 		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
 			messagePrefix: "Alert!",
@@ -149,7 +149,7 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			name:        "Post message in room 1",
 			description: "description here",
 			variety:     "postMatrixMessage",
-			workflow_id: 13,
+			workflowID:  13,
 		},
 		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
 			messagePrefix: "[Alert]",
@@ -162,7 +162,7 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 			name:        "Post message in room 2",
 			description: "description there",
 			variety:     "postMatrixMessage",
-			workflow_id: 13,
+			workflowID:  13,
 		},
 		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
 			messagePrefix: "[Announcement]",
@@ -233,7 +233,7 @@ func TestUpdateWorkflowMeta(t *testing.T) {
 func TestUpdateTriggerMeta(t *testing.T) {
 	dbs, dbs2 := setUp()
 
-	trigger_id := uint64(11)
+	triggerID := uint64(11)
 
 	// insert a meta value that doesn't exist, testing insert
 	// then update the same meta value, testing update
@@ -242,27 +242,27 @@ func TestUpdateTriggerMeta(t *testing.T) {
 	value := "matrix"
 
 	// issue insert
-	updateTriggerMeta(dbs, trigger_id, key, value)
-	if value != getTriggerMeta(dbs, trigger_id, key) {
+	updateTriggerMeta(dbs, triggerID, key, value)
+	if value != getTriggerMeta(dbs, triggerID, key) {
 		t.Error("insert failed")
 	}
 
 	value = value + fmt.Sprintf("%d", rand.Intn(100))
 
 	// issue update
-	updateTriggerMeta(dbs, trigger_id, key, value)
-	if value != getTriggerMeta(dbs, trigger_id, key) {
+	updateTriggerMeta(dbs, triggerID, key, value)
+	if value != getTriggerMeta(dbs, triggerID, key) {
 		t.Error("update failed")
 	}
 
 	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateTriggerMeta(dbs, trigger_id, key, value)
-	if value != getTriggerMeta(dbs, trigger_id, key) {
+	updateTriggerMeta(dbs, triggerID, key, value)
+	if value != getTriggerMeta(dbs, triggerID, key) {
 		t.Error("update with same value failed")
 	}
 
 	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateTriggerMeta(dbs2, trigger_id, key, value)
+	err := updateTriggerMeta(dbs2, triggerID, key, value)
 	if err == nil {
 		t.Error("no error was returned with an empty database with no tables")
 	}
@@ -273,7 +273,7 @@ func TestUpdateTriggerMeta(t *testing.T) {
 func TestUpdateWFStepMeta(t *testing.T) {
 	dbs, dbs2 := setUp()
 
-	step_id := uint64(11)
+	stepID := uint64(11)
 
 	// insert a meta value that doesn't exist, testing insert
 	// then update the same meta value, testing update
@@ -282,27 +282,27 @@ func TestUpdateWFStepMeta(t *testing.T) {
 	value := "matrix"
 
 	// issue insert
-	updateWFStepMeta(dbs, step_id, key, value)
-	if value != getWFStepMeta(dbs, step_id, key) {
+	updateWFStepMeta(dbs, stepID, key, value)
+	if value != getWFStepMeta(dbs, stepID, key) {
 		t.Error("insert failed")
 	}
 
 	value = value + fmt.Sprintf("%d", rand.Intn(100))
 
 	// issue update
-	updateWFStepMeta(dbs, step_id, key, value)
-	if value != getWFStepMeta(dbs, step_id, key) {
+	updateWFStepMeta(dbs, stepID, key, value)
+	if value != getWFStepMeta(dbs, stepID, key) {
 		t.Error("update failed")
 	}
 
 	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWFStepMeta(dbs, step_id, key, value)
-	if value != getWFStepMeta(dbs, step_id, key) {
+	updateWFStepMeta(dbs, stepID, key, value)
+	if value != getWFStepMeta(dbs, stepID, key) {
 		t.Error("update with same value failed")
 	}
 
 	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateWFStepMeta(dbs2, step_id, key, value)
+	err := updateWFStepMeta(dbs2, stepID, key, value)
 	if err == nil {
 		t.Error("no error was returned with an empty database with no tables")
 	}

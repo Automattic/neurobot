@@ -32,8 +32,8 @@ func TestWebhookTriggerProcess(t *testing.T) {
 
 		tg := webhookt{
 			trigger: trigger{
-				engine:      &e,
-				workflow_id: 1,
+				engine:     &e,
+				workflowID: 1,
 			},
 			webhooktMeta: webhooktMeta{},
 		}
