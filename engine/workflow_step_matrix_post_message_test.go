@@ -3,7 +3,6 @@ package engine
 import (
 	"testing"
 
-	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
 )
 
@@ -80,7 +79,6 @@ func TestGetMatrixClient(t *testing.T) {
 		// setup db row in bots table
 		dbs, dbs2 := setUp()
 		defer tearDown(dbs, dbs2)
-		insertDummyBotForTesting(dbs)
 
 		// setup mock engine
 		e := NewMockEngine()
@@ -238,7 +236,6 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 	for _, table := range tables {
 		// setup db row in bots table
 		dbs, dbs2 := setUp()
-		insertDummyBotForTesting(dbs)
 
 		e := NewMockEngine()
 		e.db = dbs
@@ -281,11 +278,4 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		tearDown(dbs, dbs2)
 	}
 
-}
-
-func insertDummyBotForTesting(db db.Session) {
-	db.Collection("bots").Insert(Bot{
-		ID:         1,
-		Identifier: "bot_something",
-	})
 }
