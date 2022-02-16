@@ -40,7 +40,7 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 			b.Hydrate(e)
 		}
 
-		return b.getInstance(), nil
+		return b.getMCInstance(), nil
 	}
 
 	return e.client, nil

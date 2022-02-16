@@ -107,7 +107,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 	b.log(fmt.Sprintf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw))
 }
 
-func (b *Bot) getInstance() MatrixClient {
+func (b *Bot) getMCInstance() MatrixClient {
 	if b.IsHydrated() {
 		return b.e.bots[b.ID]
 	}
@@ -116,7 +116,7 @@ func (b *Bot) getInstance() MatrixClient {
 }
 
 func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
-	return b.getInstance().JoinRoomByID(roomid)
+	return b.getMCInstance().JoinRoomByID(roomid)
 }
 
 func (b *Bot) log(m string) {
