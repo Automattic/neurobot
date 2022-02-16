@@ -433,5 +433,9 @@ func getDataInsertsSQL() *[]string {
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (14,13,'messagePrefix','[Alert]');`,
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (15,14,'matrixRoom','');`,
 		`INSERT INTO "workflow_step_meta" ("id","step_id","key","value") VALUES (16,14,'messagePrefix','[Announcement]');`,
+
+		// Bots
+		`INSERT INTO "bots" ("id", "identifier", "name", "description", "username", "password", "created_by", "active") VALUES ('1', 'bot_something', '', '', '', '', 'ashfame', '0');`,
+		`INSERT INTO "bots" ("id", "identifier", "name", "description", "username", "password", "created_by", "active") VALUES ('2', 'bot_afk', 'AFK Bot', 'Used to post AFK messages for team members', 'bot_afk', 'bot_afk', 'ashfame', '1');`,
 	}
 }

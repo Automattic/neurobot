@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -26,12 +27,14 @@ type Engine interface {
 	StartUp()
 	ShutDown()
 	Run()
+	log(string)
 }
 
 type MatrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	Sync() error
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
+	JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error)
 }
 
 type engine struct {
@@ -49,6 +52,8 @@ type engine struct {
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
+
+	bots map[uint64]MatrixClient // All matrix client instances of bots
 
 	client MatrixClient
 }
@@ -73,6 +78,7 @@ func (e *engine) StartUpLite() {
 	e.log("Starting up engine..")
 
 	// Initialize maps
+	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
 	e.triggers = make(map[string]map[string]Trigger)
 	e.triggers["webhook"] = make(map[string]Trigger)
@@ -103,19 +109,35 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	if e.isMatrix {
 		e.log("Starting up Matrix client..")
 
-		// Create a channel to signal Matrix client has finished initializing before we wrap up StartUp()
-		matrixInitDone := make(chan bool, 1)
+		//
+		var wg sync.WaitGroup
 
+		// This creates the matrix instance of the main/god bot
+		wg.Add(1)
 		go func() {
-			err := e.initMatrixClient(mc, s, matrixInitDone)
+			defer wg.Done()
+
+			err := e.initMatrixClient(mc, s)
 			if err != nil {
 				log.Fatal(err)
 			}
 			e.log("Finished loading Matrix client.")
 		}()
 
-		// allow the matrix client to sync and be ready,
-		<-matrixInitDone
+		// This creates the matrix instances of all other bots
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			err := e.wakeUpMatrixBots()
+			if err != nil {
+				log.Fatal(err) // fatal error for now
+			}
+			e.log("Finished waking up all Matrix bots.")
+		}()
+
+		// allow the matrix client(s) to sync and be ready,
+		wg.Wait()
 	}
 }
 
@@ -340,7 +362,7 @@ func (e *engine) runPoller() {
 	}
 }
 
-func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDone chan<- bool) (err error) {
+func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
 	e.client = c
 
 	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixhomeserver, e.matrixusername))
@@ -357,8 +379,6 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDo
 
 	e.log("Matrix: Login successful!")
 
-	matrixInitDone <- true
-
 	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
 		fmt.Printf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body)
@@ -370,6 +390,43 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer, matrixInitDo
 	}
 
 	return
+}
+
+func (e *engine) wakeUpMatrixBots() (err error) {
+	// load all bots one by one and accept any invitations within our own homeserver
+	bots, err := getActiveBots(e.db)
+	if err != nil {
+		return
+	}
+
+	// use waitgroup to wait for all bots' instances to be ready
+	var wg sync.WaitGroup
+
+	// collect bot IDs who error'd out
+	var failedWakeUps []uint64
+
+	// using go routines here to instantiate in parallel - rate limiting might become a problem with too many bots though
+	for _, b := range bots {
+		wg.Add(1)
+
+		go func(b Bot) {
+			defer wg.Done()
+
+			if err := b.WakeUp(e); err != nil {
+				failedWakeUps = append(failedWakeUps, b.ID)
+			}
+		}(b)
+
+	}
+
+	// wait for all bot instances to wake up
+	wg.Wait()
+
+	if len(failedWakeUps) > 0 {
+		return fmt.Errorf("one or more bots could not wake up. ids: %v", failedWakeUps)
+	}
+
+	return nil
 }
 
 func NewEngine(p RunParams) *engine {

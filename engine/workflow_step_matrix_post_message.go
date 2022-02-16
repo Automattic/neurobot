@@ -36,22 +36,11 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 			return nil, err
 		}
 
-		mc, err := getMatrixClient(e.matrixhomeserver)
-		if err != nil {
-			return nil, err
+		if !b.IsHydrated() {
+			b.Hydrate(e)
 		}
 
-		_, err = mc.Login(&mautrix.ReqLogin{
-			Type:             "m.login.password",
-			Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: b.Username},
-			Password:         b.Password,
-			StoreCredentials: true,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return mc, nil
+		return b.getMCInstance(), nil
 	}
 
 	return e.client, nil

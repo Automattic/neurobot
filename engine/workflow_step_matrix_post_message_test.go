@@ -3,7 +3,6 @@ package engine
 import (
 	"testing"
 
-	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
 )
 
@@ -67,7 +66,12 @@ func TestGetMatrixClient(t *testing.T) {
 		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
 		{
 			asBot:        "bot_something",
-			clientOrigin: "bot",
+			clientOrigin: "bot1",
+		},
+		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
+		{
+			asBot:        "bot_afk",
+			clientOrigin: "bot2",
 		},
 	}
 
@@ -75,11 +79,13 @@ func TestGetMatrixClient(t *testing.T) {
 		// setup db row in bots table
 		dbs, dbs2 := setUp()
 		defer tearDown(dbs, dbs2)
-		insertDummyBotForTesting(dbs)
 
 		// setup mock engine
 		e := NewMockEngine()
 		e.db = dbs
+		e.bots = make(map[uint64]MatrixClient)
+		e.bots[1] = NewMockMatrixClient("bot1")
+		e.bots[2] = NewMockMatrixClient("bot2")
 
 		// get step instance
 		s := &postMessageMatrixWorkflowStep{
@@ -230,11 +236,12 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 	for _, table := range tables {
 		// setup db row in bots table
 		dbs, dbs2 := setUp()
-		insertDummyBotForTesting(dbs)
 
 		e := NewMockEngine()
 		e.db = dbs
 		e.matrixhomeserver = table.homeserver
+		e.bots = make(map[uint64]MatrixClient)
+		e.bots[1] = botMatrixClient
 
 		s := &postMessageMatrixWorkflowStep{
 			workflowStep: workflowStep{
@@ -271,11 +278,4 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		tearDown(dbs, dbs2)
 	}
 
-}
-
-func insertDummyBotForTesting(db db.Session) {
-	db.Collection("bots").Insert(Bot{
-		ID:         1,
-		Identifier: "bot_something",
-	})
 }

@@ -36,6 +36,7 @@ func NewMockWorkflowStep(impact string) *mockWorkflowStep {
 type mockMatrixClient struct {
 	instantiatedBy string
 	msgs           []string
+	roomsJoined    []id.RoomID
 }
 
 func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
@@ -79,6 +80,26 @@ func (m *mockMatrixClient) WasMessageSent(text string) bool {
 
 func (m *mockMatrixClient) Sync() error {
 	return nil
+}
+
+func (m *mockMatrixClient) JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
+	if roomID == "" {
+		return nil, errors.New("")
+	}
+
+	m.roomsJoined = append(m.roomsJoined, roomID)
+
+	return
+}
+
+func (m *mockMatrixClient) WasRoomJoined(room id.RoomID) bool {
+	for _, v := range m.roomsJoined {
+		if v == room {
+			return true
+		}
+	}
+
+	return false
 }
 
 func NewMockMatrixClient(creator string) MatrixClient {
