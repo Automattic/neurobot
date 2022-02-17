@@ -9,7 +9,7 @@ func TestGetActiveBots(t *testing.T) {
 	dbs, dbs2 := setUp()
 	defer tearDown(dbs, dbs2)
 
-	expected := []Bot{
+	expected := []bot{
 		{
 			ID:          2,
 			Name:        "AFK Bot",
@@ -61,7 +61,7 @@ func TestGetBot(t *testing.T) {
 }
 
 func TestBotIsHydrated(t *testing.T) {
-	b := &Bot{}
+	b := &bot{}
 	if b.IsHydrated() != false {
 		t.Error("empty bot instance should not be hydrated")
 	}
@@ -74,7 +74,7 @@ func TestBotIsHydrated(t *testing.T) {
 }
 
 func TestBotHydration(t *testing.T) {
-	b := &Bot{}
+	b := &bot{}
 	b.Hydrate(NewMockEngine())
 
 	if b.IsHydrated() != true {
@@ -87,7 +87,7 @@ func TestBotHydration(t *testing.T) {
 }
 
 func TestBotGetMCInstance(t *testing.T) {
-	b := &Bot{}
+	b := &bot{}
 	if b.getMCInstance() != nil {
 		t.Error("bot matrix instance should have been nil as its not hydrated")
 	}
@@ -103,7 +103,7 @@ func TestBotGetMCInstance(t *testing.T) {
 }
 
 func TestBotJoinRoom(t *testing.T) {
-	b := &Bot{}
+	b := &bot{}
 	_, err := b.JoinRoom("whatever")
 	if err == nil {
 		t.Error("bot shouldn't have been able to join room without hydration")

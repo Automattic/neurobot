@@ -11,7 +11,7 @@ import (
 	"maunium.net/go/mautrix/id"
 )
 
-type Bot struct {
+type bot struct {
 	ID          uint64 `db:"id,omitempty"`
 	Identifier  string `db:"identifier"`
 	Name        string `db:"name"`
@@ -26,7 +26,7 @@ type Bot struct {
 	e *engine
 }
 
-func getActiveBots(dbs db.Session) (bots []Bot, err error) {
+func getActiveBots(dbs db.Session) (bots []bot, err error) {
 	res := dbs.Collection("bots").Find(db.Cond{"active": 1})
 	err = res.All(&bots)
 	if err != nil {
@@ -36,23 +36,23 @@ func getActiveBots(dbs db.Session) (bots []Bot, err error) {
 	return
 }
 
-func getBot(dbs db.Session, identifier string) (b Bot, err error) {
+func getBot(dbs db.Session, identifier string) (b bot, err error) {
 	res := dbs.Collection("bots").Find(db.Cond{"identifier": identifier})
 	err = res.One(&b)
 
 	return
 }
 
-func (b *Bot) IsHydrated() bool {
+func (b *bot) IsHydrated() bool {
 	return b.hydrated
 }
 
-func (b *Bot) Hydrate(e *engine) {
+func (b *bot) Hydrate(e *engine) {
 	b.hydrated = true
 	b.e = e
 }
 
-func (b *Bot) WakeUp(e *engine) (err error) {
+func (b *bot) WakeUp(e *engine) (err error) {
 	// save reference
 	b.e = e
 
@@ -88,7 +88,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	return
 }
 
-func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event) {
+func (b *bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event) {
 	if membership, ok := evt.Content.Raw["membership"]; ok {
 		if membership == "invite" {
 			b.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
@@ -111,7 +111,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 	b.log(fmt.Sprintf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw))
 }
 
-func (b *Bot) getMCInstance() MatrixClient {
+func (b *bot) getMCInstance() MatrixClient {
 	if b.IsHydrated() {
 		return b.e.bots[b.ID]
 	}
@@ -119,7 +119,7 @@ func (b *Bot) getMCInstance() MatrixClient {
 	return nil
 }
 
-func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
+func (b *bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
 	if c := b.getMCInstance(); c != nil {
 		return c.JoinRoomByID(roomid)
 	}
@@ -127,6 +127,6 @@ func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error)
 	return nil, errors.New("bot instance not hydrated")
 }
 
-func (b *Bot) log(m string) {
+func (b *bot) log(m string) {
 	b.e.log(m)
 }

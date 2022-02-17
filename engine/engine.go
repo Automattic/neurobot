@@ -408,7 +408,7 @@ func (e *engine) wakeUpMatrixBots() (err error) {
 	for _, b := range bots {
 		wg.Add(1)
 
-		go func(b Bot) {
+		go func(b bot) {
 			defer wg.Done()
 
 			if err := b.WakeUp(e); err != nil {
