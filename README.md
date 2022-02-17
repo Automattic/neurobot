@@ -19,9 +19,9 @@ Currently supported workflow step:
 
 ### Quick Demo
 
-For a quick demonstration, just run the program using this command:
+Copy `.env.sample` file as `.env` file and run the program using this command:
 
-`go run main.go -debug=true`
+`go run main.go`
 
 First run, inserts some data into the sqlite database `wfb.db` which will enable you to send it a HTTP request with payload `?message=hello` which will trigger the workflow that makes it log to `stdout`.
 
@@ -35,7 +35,7 @@ You should see these lines in output:
 Request received on webhook listener! /webhooks-listener/quickstart
 suffix: quickstart registered: true
 
-Running workflow #1 payload:Hello
+Running workflow #1 payload:{Hello }
 
 >>Hello
 ```
