@@ -15,14 +15,14 @@ type pollt struct {
 
 func (t *pollt) setup() {
 	for {
-		t.process(nil)
+		t.process(payloadData{})
 		time.Sleep(t.pollingInterval)
 	}
 }
 
-func (t *pollt) process(payload interface{}) {
-	time.Sleep(2 * time.Second)   // fake processing
-	message := "RSS poll results" // fake result
+func (t *pollt) process(p payloadData) {
+	time.Sleep(2 * time.Second)    // fake processing
+	p.Message = "RSS poll results" // fake result
 
-	t.finish(message)
+	t.finish(p)
 }

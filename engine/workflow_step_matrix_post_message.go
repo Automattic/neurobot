@@ -46,12 +46,7 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 	return e.client, nil
 }
 
-func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
-	if payload == nil {
-		// nothing to do, let the next workflow step continue
-		return nil, nil
-	}
-	p := payload.(payloadData)
+func (s postMessageMatrixWorkflowStep) run(p payloadData, e *engine) (payloadData, error) {
 	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
@@ -63,25 +58,28 @@ func (s postMessageMatrixWorkflowStep) run(payload interface{}, e *engine) (inte
 		}
 	}
 
-	mc, err := s.getMatrixClient(e)
-	if err != nil {
-		return nil, err
-	}
-
 	// Override room defined in meta, if provided in payload
 	room := s.room
 	if p.Room != "" {
 		room = p.Room
 	}
 
+	// ensure we have data to work with
 	if room == "" {
-		return nil, errors.New("no room to post")
+		return p, errors.New("no room to post")
+	}
+	if msg == "" {
+		return p, errors.New("no message to post")
 	}
 
+	mc, err := s.getMatrixClient(e)
+	if err != nil {
+		return p, err
+	}
 	_, err = mc.SendText(id.RoomID(room), msg)
 	if err != nil {
-		return payload, err
+		return p, err
 	}
 
-	return payload, nil
+	return p, nil
 }

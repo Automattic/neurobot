@@ -15,15 +15,13 @@ type sendEmailWorkflowStep struct {
 	sendEmailWorkflowStepMeta
 }
 
-func (s sendEmailWorkflowStep) run(payload interface{}, e *engine) (interface{}, error) {
-	p := payload.(sendEmailWorkflowPayload)
-	// send email
-
+func (s sendEmailWorkflowStep) run(p payloadData, e *engine) (payloadData, error) {
+	// @TODO: send email
 	// hack: only show decorated log for now
 	fmt.Println("====================")
 	fmt.Printf("To: %s\n", s.emailAddr)
-	fmt.Println(p.message)
+	fmt.Println(p.Message)
 	fmt.Println("====================")
 
-	return payload, nil
+	return p, nil
 }

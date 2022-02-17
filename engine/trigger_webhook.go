@@ -9,6 +9,6 @@ type webhookt struct {
 	webhooktMeta
 }
 
-func (t *webhookt) process(payload interface{}) {
-	t.finish(payload)
+func (t *webhookt) process(p payloadData) {
+	t.finish(p)
 }

@@ -2,8 +2,8 @@ package engine
 
 type Trigger interface {
 	setup()
-	process(interface{})
-	finish(interface{})
+	process(payloadData)
+	finish(payloadData)
 }
 
 type trigger struct {
@@ -17,7 +17,7 @@ type trigger struct {
 
 func (t *trigger) setup() {}
 
-func (t *trigger) finish(payload interface{}) {
+func (t *trigger) finish(p payloadData) {
 	w := t.engine.workflows[t.workflowID]
-	w.run(payload, t.engine)
+	w.run(p, t.engine)
 }

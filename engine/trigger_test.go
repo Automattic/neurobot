@@ -51,10 +51,10 @@ func TestTriggerFinish(t *testing.T) {
 		}
 		e.workflows[1] = w
 
-		tg.finish(mockWorkflowPayload{message: table.initialPayload})
+		tg.finish(payloadData{Message: table.initialPayload})
 
-		if w.payload.(mockWorkflowPayload).message != table.processedPayload {
-			t.Errorf("trigger finish didn't generate the right processed payload. expected: '%s' got: '%s'", table.processedPayload, w.payload.(mockWorkflowPayload).message)
+		if w.payload.Message != table.processedPayload {
+			t.Errorf("trigger finish didn't generate the right processed payload. expected: '%s' got: '%s'", table.processedPayload, w.payload.Message)
 		}
 	}
 }
