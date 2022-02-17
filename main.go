@@ -12,25 +12,23 @@ import (
 	"maunium.net/go/mautrix"
 )
 
-var debug = flag.String("debug", "false", "Debug mode")
 var envFile = flag.String("env", "./.env", ".env file")
-var dbFile = flag.String("dbfile", "./wfb.db", "Database file")
 
 func main() {
 	flag.Parse()
 
-	debug, err := strconv.ParseBool(*debug)
-	if err != nil {
-		debug = false
-	}
-
-	fmt.Println("debug:", debug)
-
-	err = godotenv.Load(*envFile)
+	err := godotenv.Load(*envFile)
 	if err != nil {
 		log.Fatalf("Error loading .env file at %s. Err: %s\n", *envFile, err)
 	}
 
+	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
+	if err != nil {
+		debug = true // default
+	}
+	log.Println("debug:", debug)
+
+	dbFile := os.Getenv("DB_FILE")
 	homeserver := os.Getenv("MATRIX_HOMESERVER")
 	username := os.Getenv("MATRIX_USERNAME")
 	password := os.Getenv("MATRIX_PASSWORD")
@@ -54,7 +52,7 @@ func main() {
 
 	p := engine.RunParams{
 		Debug:                debug,
-		Database:             *dbFile,
+		Database:             dbFile,
 		PortWebhookListener:  webhookListenerPort,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
