@@ -1,25 +1,25 @@
 #################################################################
 
-[[workflow]]
-identifier = "demo-workflow" # needs a unique value for each workflow & its value should never change
-active = true
+# [[workflow]]
+# identifier = "demo-workflow" # needs a unique value for each workflow & its value should never change
+# active = true
 
-name = "Demo Workflow"
-description = "Send a HTTP request with a message and watch that gets logged to standard out"
+# name = "Demo Workflow"
+# description = "Send a HTTP request with a message and watch that gets logged to standard out"
 
-[workflow.trigger]
-name = "CURL Request Catcher"
-description = "This webhook trigger will receive your webhook request while showcasing the demo"
-variety = "webhook"
+# [workflow.trigger]
+# name = "CURL Request Catcher"
+# description = "This webhook trigger will receive your webhook request while showcasing the demo"
+# variety = "webhook"
 
-[workflow.trigger.meta]
-urlSuffix = "quickstart"
+# [workflow.trigger.meta]
+# urlSuffix = "quickstart"
 
-[[workflow.step]]
-active = true
-variety = "stdout"
-name = "Log to Standard Out"
-description = "This workflow step will show the payload to stdout while showcasing the demo"
+# [[workflow.step]]
+# active = true
+# variety = "stdout"
+# name = "Log to Standard Out"
+# description = "This workflow step will show the payload to stdout while showcasing the demo"
 
 #################################################################
 
