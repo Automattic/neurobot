@@ -1,4 +1,4 @@
-module matrix-workflow-builder
+module neurobot
 
 go 1.17
 
