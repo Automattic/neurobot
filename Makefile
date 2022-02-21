@@ -1,4 +1,4 @@
 default: build
 
 build:
-	go build
+	go build -o bin/neurobot
