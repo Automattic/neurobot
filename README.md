@@ -1,4 +1,4 @@
-# Matrix Workflow Builder
+# neurobot - A Matrix Workflow Builder
 
 It is an engine in which you can define workflows to be triggered by certain events leading to execution of a set of instructions defined under that workflow.
 
@@ -50,13 +50,19 @@ Certain triggers and certain workflow steps require additional info which are to
 
 ### Matrix HomeServer
 
-To run the workflow builder with Matrix homeserver, you can run it using this command, and have to supply Matrix credentials for the bot account you intend to use for posting messages in the `.env` file:
+To run `neurobot` with Matrix homeserver, you can specify credentials in the `.env` file and run again by same command:
 
-`go run main.go -homeserver="http://localhost:8008" -username="morpheus" -password="redpill" -debug=true`
+`go run main.go`
+
+### Debug mode
+
+Add debug flag:
+
+`go run main.go -debug=true`
 
 ## Architecture
 
-![matrix workflow builder architecture](https://github.com/Automattic/matrix-workflow-builder/blob/master/matrix-workflow-builder-visual.png?raw=true)
+![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
 
 Engine is built to react on the basis of events. Workflows are defined as an ordered list of workflow steps that are to be executed when the workflow is started. And workflows' execution start when the chosen event for its execution is triggered.
 

@@ -4,9 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"matrix-workflow-builder/engine"
 	"os"
 	"strconv"
+
+	"neurobot/engine"
 
 	"github.com/joho/godotenv"
 	"maunium.net/go/mautrix"
