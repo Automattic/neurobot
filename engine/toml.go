@@ -74,9 +74,13 @@ func parseTOMLDefs(e *engine) error {
 	for _, w := range def.Workflows {
 		id, exist := m[w.Identifier]
 		if exist {
-			updateTOMLWorkflow(e.db, id, w)
+			err = updateTOMLWorkflow(e.db, id, w)
 		} else {
-			insertTOMLWorkflow(e.db, w)
+			err = insertTOMLWorkflow(e.db, w)
+		}
+
+		if err != nil {
+			return err
 		}
 	}
 
