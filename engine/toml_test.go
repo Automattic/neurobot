@@ -414,31 +414,96 @@ func TestRunSemanticCheckOnTOML(t *testing.T) {
 		tomlDef   WorkflowDefintionTOML
 		shouldErr bool
 	}{
+		// empty toml is valid toml
 		{
 			tomlDef:   WorkflowDefintionTOML{},
 			shouldErr: false,
 		},
+		// no trigger defined
 		{
 			tomlDef: WorkflowDefintionTOML{
 				Workflows: []WorkflowTOML{
 					{
 						Identifier: "Test1",
-					},
-					{
-						Identifier: "Test1",
+						Steps: []WorkflowStepTOML{
+							{},
+						},
 					},
 				},
 			},
 			shouldErr: true,
 		},
+		// no workflow steps defined
 		{
 			tomlDef: WorkflowDefintionTOML{
 				Workflows: []WorkflowTOML{
 					{
 						Identifier: "Test1",
+						Trigger: WorkflowTriggerTOML{
+							Name:        "something",
+							Description: "something",
+							Variety:     "webhook",
+						},
+					},
+				},
+			},
+			shouldErr: true,
+		},
+		// duplicate identifier
+		{
+			tomlDef: WorkflowDefintionTOML{
+				Workflows: []WorkflowTOML{
+					{
+						Identifier: "Test1",
+						Trigger: WorkflowTriggerTOML{
+							Name:        "something",
+							Description: "something",
+							Variety:     "webhook",
+						},
+						Steps: []WorkflowStepTOML{
+							{},
+						},
+					},
+					{
+						Identifier: "Test1",
+						Trigger: WorkflowTriggerTOML{
+							Name:        "something",
+							Description: "something",
+							Variety:     "webhook",
+						},
+						Steps: []WorkflowStepTOML{
+							{},
+						},
+					},
+				},
+			},
+			shouldErr: true,
+		},
+		// valid toml
+		{
+			tomlDef: WorkflowDefintionTOML{
+				Workflows: []WorkflowTOML{
+					{
+						Identifier: "Test1",
+						Trigger: WorkflowTriggerTOML{
+							Name:        "something",
+							Description: "something",
+							Variety:     "webhook",
+						},
+						Steps: []WorkflowStepTOML{
+							{},
+						},
 					},
 					{
 						Identifier: "Test2",
+						Trigger: WorkflowTriggerTOML{
+							Name:        "something",
+							Description: "something",
+							Variety:     "webhook",
+						},
+						Steps: []WorkflowStepTOML{
+							{},
+						},
 					},
 				},
 			},

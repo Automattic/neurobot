@@ -64,6 +64,16 @@ func TestGetConfiguredTriggers(t *testing.T) {
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
 	})
+	expected = append(expected, &webhookt{
+		trigger: trigger{
+			id:          15,
+			variety:     "webhook",
+			name:        "Regular webhook trigger",
+			description: "regular description",
+			workflowID:  14,
+		},
+		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
+	})
 
 	got, err := getConfiguredTriggers(dbs)
 	if err != nil {
@@ -424,6 +434,7 @@ func getDataInsertsSQL() *[]string {
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (13,12,'endpointType','rss');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (14,12,'pollingInterval','1h');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (15,14,'urlSuffix','unittest');`,
+		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (16,15,'urlSuffix','unittest');`,
 
 		// Workflow Step Meta
 		// For 'webhook' variety workflow step
