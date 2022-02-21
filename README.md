@@ -42,11 +42,7 @@ Running workflow #1 payload:{Hello }
 
 ### Adding your own workflow
 
-Currently, its too early in the experimentation phase to build a UI to add database records. So you have to add them manually in the SQLite database.
-
-In the `workflows` table, add a new row & take note of the workflow id. In `triggers` table, add a new row and specify workflow id under `workflow_ids` column, which is meant to be a CSV. Now, under `workflow_steps` table, add a new row and specify workflow id under `workflow_id` column.
-
-Certain triggers and certain workflow steps require additional info which are to be added in their respective meta tables: `trigger_meta` and `workflow_step_meta`.
+Look inside `workflows.toml` file to figure out how to specify a workflow. Documentation would follow soon.
 
 ### Matrix HomeServer
 
