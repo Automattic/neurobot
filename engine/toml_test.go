@@ -38,6 +38,33 @@ func TestParseTOMLDefs(t *testing.T) {
 			validToml:   true,
 			semanticErr: true,
 		},
+		// Semantic error in TOML file - no trigger defined
+		{
+			toml: `[[workflow]]
+			identifier = "TOMLTEST1"
+			[[workflow]]
+			identifier = "TOMLTEST1"
+			[[workflow.step]]
+			active = true
+			name = "post message to Matrix room"
+			description = "Post message to a matrix room"
+			variety = "postMatrixMessage"`,
+			validToml:   true,
+			semanticErr: true,
+		},
+		// Semantic error in TOML file - no workflow steps
+		{
+			toml: `[[workflow]]
+			identifier = "TOMLTEST1"
+			[[workflow]]
+			identifier = "TOMLTEST1"
+			[workflow.trigger]
+			name = "something"
+			description = "something"
+			variety = "webhook"`,
+			validToml:   true,
+			semanticErr: true,
+		},
 		// Valid and semantically correct Toml file with 2 changed workflows
 		// First one, no change
 		// Second one, update
@@ -47,11 +74,24 @@ func TestParseTOMLDefs(t *testing.T) {
 			identifier = "TOMLTEST1"
 			active = true
 			name = "Toml imported Workflow"
+			[workflow.trigger]
+			name = "something"
+			description = "something"
+			variety = "webhook"
+			[[workflow.step]]
+			active = true
+			name = "post message to Matrix room"
+			description = "Post message to a matrix room"
+			variety = "postMatrixMessage"
 
 			[[workflow]]
 			identifier = "TOMLTEST2"
 			active = true # this field is being updated
 			name = "Toml imported Workflow 2"
+			[workflow.trigger]
+			name = "something"
+			description = "something"
+			variety = "webhook"
 
 			[[workflow.step]]
 			active = true
@@ -61,7 +101,16 @@ func TestParseTOMLDefs(t *testing.T) {
 			[[workflow]]
 			identifier = "TOMLTEST3"
 			active = true
-			name = "Toml imported Workflow 3"`,
+			name = "Toml imported Workflow 3"
+			[workflow.trigger]
+			name = "something"
+			description = "something"
+			variety = "webhook"
+			[[workflow.step]]
+			active = true
+			name = "post message to Matrix room"
+			description = "Post message to a matrix room"
+			variety = "postMatrixMessage"`,
 			validToml:   true,
 			semanticErr: false,
 		},

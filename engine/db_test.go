@@ -405,6 +405,7 @@ func getDataInsertsSQL() *[]string {
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook',99,0);`,
 		// TOML imported workflow's trigger - 'webhook' variety
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (14,'Regular webhook trigger','regular description','webhook',13,1);`,
+		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (15,'Regular webhook trigger','regular description','webhook',14,1);`,
 
 		// Workflow Steps
 		// 'postMatrixMessage' variety (Active)
