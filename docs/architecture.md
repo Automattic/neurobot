@@ -33,7 +33,7 @@ When workflow steps are loaded, they are just queued up in their specified order
 
 Each trigger and workflow step carries additional meta information based on their variety.
 
-## What other varieties workflow steps are planned?
+## What other varieties of workflow steps are planned?
 
 Hard to put an exhaustive list, as we would build what we need first. Some are:
 
