@@ -52,9 +52,7 @@ To run `neurobot` with Matrix homeserver, you can specify credentials in the `.e
 
 ### Debug mode
 
-Add debug flag:
-
-`go run main.go -debug=true`
+Edit `.env` and change `debug` to be `true`
 
 ## Architecture
 
