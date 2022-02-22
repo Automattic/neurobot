@@ -64,4 +64,9 @@ Engine is built to react on the basis of events. Workflows are defined as an ord
 
 For example: An incoming webhook can trigger a workflow, which can contain workflow step(s) of like posting a message to Matrix room. Or a new item in RSS Feed triggers a workflow, which can execute steps like posting a message to Matrix room and sending an external webhook request.
 
-Right now, there is no UI to define triggers, workflows & workflow steps but most likely it will be built as an interaction with the bot user that's meant to be used for this purpose.
+Right now, there is no UI to define workflows but we are supporting defining workflows in a TOML file for the short-term.
+
+## Learn more
+
+- [Explanation of architecture](docs/architecture.md)
+- [Understand TOML file structure](docs/toml-structure.md)
