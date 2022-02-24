@@ -26,7 +26,7 @@ func main() {
 
 	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
 	if err != nil {
-		debug = true // default
+		debug = false // default
 	}
 	log.Println("debug:", debug)
 
