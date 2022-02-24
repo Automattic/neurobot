@@ -38,6 +38,7 @@ func main() {
 
 	if debug {
 		log.Println("Debug:", debug)
+		fmt.Printf("Loaded environment variables from %s\n", *envFile)
 		fmt.Printf("Using database file %s\n", dbFile)
 	}
 
