@@ -28,7 +28,6 @@ func main() {
 	if err != nil {
 		debug = false // default
 	}
-	log.Println("debug:", debug)
 
 	dbFile := os.Getenv("DB_FILE")
 	homeserver := os.Getenv("MATRIX_HOMESERVER")
@@ -36,6 +35,10 @@ func main() {
 	password := os.Getenv("MATRIX_PASSWORD")
 	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
 	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
+
+	if debug {
+		log.Println("Debug:", debug)
+	}
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
