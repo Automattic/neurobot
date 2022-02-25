@@ -38,8 +38,8 @@ func main() {
 
 	if debug {
 		log.Println("Debug:", debug)
-		fmt.Printf("Loaded environment variables from %s\n", *envFile)
-		fmt.Printf("Using database file %s\n", dbFile)
+		log.Printf("Loaded environment variables from %s\n", *envFile)
+		log.Printf("Using database file %s\n", dbFile)
 	}
 
 	// if either one matrix related env var is specified, make sure all of them are specified
