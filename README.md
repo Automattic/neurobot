@@ -23,7 +23,7 @@ Copy `.env.sample` file as `.env` file and run the program using this command:
 
 `go run main.go`
 
-First run, inserts some data into the sqlite database `wfb.db` which will enable you to send it a HTTP request with payload `?message=hello` which will trigger the workflow that makes it log to `stdout`.
+First run, inserts some data into the sqlite database `neurobot.db` which will enable you to send it a HTTP request with payload `?message=hello` which will trigger the workflow that makes it log to `stdout`.
 
 After running the program, you can send a HTTP request using CURL like this:
 
