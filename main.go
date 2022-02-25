@@ -21,7 +21,6 @@ func main() {
 	err := godotenv.Load(*envFile)
 	if err != nil {
 		log.Fatalf("Error loading .env file at %s. Err: %s\n", *envFile, err)
-		return
 	}
 
 	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
