@@ -35,11 +35,9 @@ func main() {
 	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
 	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
 
-	if debug {
-		log.Println("Debug:", debug)
-		log.Printf("Loaded environment variables from %s\n", *envFile)
-		log.Printf("Using database file %s\n", dbFile)
-	}
+	log.Println("Debug:", debug)
+	log.Printf("Loaded environment variables from %s\n", *envFile)
+	log.Printf("Using database file %s\n", dbFile)
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
