@@ -25,7 +25,7 @@ func main() {
 
 	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
 	if err != nil {
-		debug = false // default
+		debug = true // default
 	}
 
 	dbFile := os.Getenv("DB_FILE")
