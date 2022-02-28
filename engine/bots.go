@@ -70,6 +70,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 		Type:             "m.login.password",
 		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: b.Username},
 		Password:         b.Password,
+		DeviceID:         "NEUROBOT",
 		StoreCredentials: true,
 	})
 	if err != nil {

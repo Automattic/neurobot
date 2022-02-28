@@ -370,6 +370,7 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 		Type:             "m.login.password",
 		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: e.matrixusername},
 		Password:         e.matrixpassword,
+		DeviceID:         "NEUROBOT",
 		StoreCredentials: true,
 	})
 	if err != nil {
