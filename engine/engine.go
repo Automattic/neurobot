@@ -177,7 +177,7 @@ func (e *engine) loadDB() (err error) {
 	m, err := migrate.NewWithDatabaseInstance("file://migration/", "sqlite3", driver)
 	if err != nil {
 		// When running tests, we might be inside the engine directory.
-		// So we retry find migrations, one directory up.
+		// So we retry finding migrations, one directory up.
 		// TODO: Find a better way to find migrations in tests.
 		m, err = migrate.NewWithDatabaseInstance("file://../migration/", "sqlite3", driver)
 
