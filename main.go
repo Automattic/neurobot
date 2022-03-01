@@ -49,15 +49,22 @@ func main() {
 		}
 	}
 
-	// set default port for running webhook listener server
-	if webhookListenerPort == "" {
-		webhookListenerPort = "8080"
-	}
-
-	// resolve .wellknown to find our server URL to connect
+	// resolve .well-known to find our server URL to connect
+	var serverURL string
 	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
 	if err != nil {
 		log.Fatal(err)
+	}
+	if wellKnown == nil {
+		// no .well-known setup on host
+		serverURL = serverName
+	} else {
+		serverURL = wellKnown.Homeserver.BaseURL
+	}
+
+	// set default port for running webhook listener server
+	if webhookListenerPort == "" {
+		webhookListenerPort = "8080"
 	}
 
 	p := engine.RunParams{
@@ -67,7 +74,7 @@ func main() {
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
 		MatrixServerName:     serverName,
-		MatrixServerURL:      wellKnown.Homeserver.BaseURL,
+		MatrixServerURL:      serverURL,
 		MatrixUsername:       username,
 		MatrixPassword:       password,
 	}
