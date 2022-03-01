@@ -44,7 +44,8 @@ type engine struct {
 	workflowsDefTOMLFile string
 
 	isMatrix         bool // Do we mean to run a matrix client?
-	matrixhomeserver string
+	matrixServerName string
+	matrixServerURL  string
 	matrixusername   string
 	matrixpassword   string
 
@@ -64,7 +65,8 @@ type RunParams struct {
 	PortWebhookListener  string
 	WorkflowsDefTOMLFile string
 	IsMatrix             bool
-	MatrixHomeServer     string
+	MatrixServerName     string // domain in use, part of identity
+	MatrixServerURL      string // actual URL to connect to, for a particular server
 	MatrixUsername       string
 	MatrixPassword       string
 }
@@ -364,7 +366,7 @@ func (e *engine) runPoller() {
 func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
 	e.client = c
 
-	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixhomeserver, e.matrixusername))
+	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixServerName, e.matrixusername))
 
 	_, err = e.client.Login(&mautrix.ReqLogin{
 		Type:             "m.login.password",
@@ -389,7 +391,7 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 				e.log(fmt.Sprintf("neurobot got invitation for %s\n", evt.RoomID))
 
 				// ensure the invitation is for a room within our homeserver only
-				matrixHSHost := strings.Split(strings.Split(e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+				matrixHSHost := strings.Split(strings.Split(e.matrixServerName, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
 				if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
 					// join the room
 					_, err := e.client.JoinRoomByID(evt.RoomID)
@@ -459,7 +461,8 @@ func NewEngine(p RunParams) *engine {
 	e.portWebhookListener = p.PortWebhookListener
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
-	e.matrixhomeserver = p.MatrixHomeServer
+	e.matrixServerName = p.MatrixServerName
+	e.matrixServerURL = p.MatrixServerURL
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
 

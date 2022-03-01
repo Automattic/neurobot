@@ -57,8 +57,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	b.e = e
 
 	b.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
-
-	client, err := mautrix.NewClient(e.matrixhomeserver, "", "")
+	client, err := mautrix.NewClient(e.matrixServerURL, "", "")
 	if err != nil {
 		return
 	}
@@ -95,7 +94,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 			b.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
 
 			// ensure the invitation is for a room within our homeserver only
-			matrixHSHost := strings.Split(strings.Split(b.e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+			matrixHSHost := strings.Split(strings.Split(b.e.matrixServerName, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
 			if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
 				// join the room
 				_, err := b.JoinRoom(evt.RoomID)

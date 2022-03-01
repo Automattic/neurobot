@@ -29,7 +29,7 @@ func main() {
 	}
 
 	dbFile := os.Getenv("DB_FILE")
-	homeserver := os.Getenv("MATRIX_HOMESERVER")
+	serverName := os.Getenv("MATRIX_SERVER_NAME")
 	username := os.Getenv("MATRIX_USERNAME")
 	password := os.Getenv("MATRIX_PASSWORD")
 	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
@@ -41,12 +41,25 @@ func main() {
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
-	if homeserver != "" || username != "" || password != "" {
-		if homeserver == "" || username == "" || password == "" {
+	if serverName != "" || username != "" || password != "" {
+		if serverName == "" || username == "" || password == "" {
 			log.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
 		} else {
 			isMatrix = true
 		}
+	}
+
+	// resolve .well-known to find our server URL to connect
+	var serverURL string
+	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if wellKnown == nil {
+		// no .well-known setup on host
+		serverURL = serverName
+	} else {
+		serverURL = wellKnown.Homeserver.BaseURL
 	}
 
 	// set default port for running webhook listener server
@@ -60,7 +73,8 @@ func main() {
 		PortWebhookListener:  webhookListenerPort,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
-		MatrixHomeServer:     homeserver,
+		MatrixServerName:     serverName,
+		MatrixServerURL:      serverURL,
 		MatrixUsername:       username,
 		MatrixPassword:       password,
 	}
@@ -68,7 +82,7 @@ func main() {
 	e := engine.NewEngine(p)
 
 	if isMatrix {
-		mc, err := mautrix.NewClient(homeserver, "", "")
+		mc, err := mautrix.NewClient(p.MatrixServerURL, "", "")
 		if err != nil {
 			log.Fatal(err)
 		}
