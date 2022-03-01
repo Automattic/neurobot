@@ -383,6 +383,27 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
 		e.log(fmt.Sprintf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body))
 	})
+	syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event) {
+		if membership, ok := evt.Content.Raw["membership"]; ok {
+			if membership == "invite" {
+				e.log(fmt.Sprintf("neurobot got invitation for %s\n", evt.RoomID))
+
+				// ensure the invitation is for a room within our homeserver only
+				matrixHSHost := strings.Split(strings.Split(e.matrixhomeserver, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+				if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
+					// join the room
+					_, err := e.client.JoinRoomByID(evt.RoomID)
+					if err != nil {
+						e.log(fmt.Sprintf("neurobot couldn't join the invitation: %s", evt.RoomID))
+					} else {
+						e.log("neurobot accepted invitation, if it wasn't accepted already")
+					}
+				} else {
+					e.log(fmt.Sprintf("neurobot whaat? %v", strings.Split(evt.RoomID.String(), ":")))
+				}
+			}
+		}
+	})
 
 	// Fire 'sync' in another go routine since its blocking
 	go func() {
