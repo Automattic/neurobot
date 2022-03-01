@@ -9,7 +9,7 @@ func TestEngineBoots(t *testing.T) {
 			IsMatrix:             false,
 			Database:             "../neurobot-test.db",
 			PortWebhookListener:  "",
-			WorkflowsDefTOMLFile: "",
+			WorkflowsDefTOMLFile: "workflows_test.toml",
 			MatrixHomeServer:     "",
 			MatrixUsername:       "",
 			MatrixPassword:       "",

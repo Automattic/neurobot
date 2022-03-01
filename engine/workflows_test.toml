@@ -1,0 +1,19 @@
+[[workflow]]
+identifier = "test"
+active = true
+name = "Test workflow"
+description = "Test workflow"
+
+[workflow.trigger]
+name = "Test trigger"
+description = "Test trigger"
+variety = "webhook"
+
+[workflow.trigger.meta]
+urlSuffix = "test"
+
+[[workflow.step]]
+active = true
+variety = "stdout"
+name = "Test step"
+description = "Test step"
