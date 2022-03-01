@@ -391,7 +391,7 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 				e.log(fmt.Sprintf("neurobot got invitation for %s\n", evt.RoomID))
 
 				// ensure the invitation is for a room within our homeserver only
-				matrixHSHost := strings.Split(strings.Split(e.matrixServerName, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+				matrixHSHost := strings.Split(e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
 				if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
 					// join the room
 					_, err := e.client.JoinRoomByID(evt.RoomID)
