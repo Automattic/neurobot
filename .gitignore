@@ -1,4 +1,5 @@
 neurobot.db
+neurobot-test.db
 .env
 neurobot
 bin/neurobot

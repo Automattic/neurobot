@@ -7,7 +7,7 @@ func TestEngineBoots(t *testing.T) {
 		RunParams{
 			Debug:                true,
 			IsMatrix:             false,
-			Database:             "",
+			Database:             "../neurobot-test.db",
 			PortWebhookListener:  "",
 			WorkflowsDefTOMLFile: "",
 			MatrixHomeServer:     "",
