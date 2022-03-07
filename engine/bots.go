@@ -53,8 +53,8 @@ func (b *Bot) Hydrate(e *engine) {
 }
 
 func (b *Bot) WakeUp(e *engine) (err error) {
-	// save reference
-	b.e = e
+	// hydrate bot
+	b.Hydrate(e)
 
 	b.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
 	client, err := mautrix.NewClient(e.matrixServerURL, "", "")
