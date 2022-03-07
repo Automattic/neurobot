@@ -99,7 +99,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 				// join the room
 				_, err := b.JoinRoom(evt.RoomID)
 				if err != nil {
-					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s", b.Name, evt.RoomID))
+					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s err:%s", b.Name, evt.RoomID, err))
 				} else {
 					b.log("accepted invitation, if it wasn't accepted already")
 				}
