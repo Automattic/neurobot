@@ -94,7 +94,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 			b.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
 
 			// ensure the invitation is for a room within our homeserver only
-			matrixHSHost := strings.Split(strings.Split(b.e.matrixServerName, "://")[1], ":")[0] // remove protocol and port info to get just the hostname
+			matrixHSHost := strings.Split(b.e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
 			if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
 				// join the room
 				_, err := b.JoinRoom(evt.RoomID)
