@@ -170,7 +170,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		{
 			stepPrefixMessage: "Hello: ",
 			payload:           "",
-			messageSent:       "Hello: ",
+			messageSent:       "Hello:",
 			isError:           false,
 			asBot:             "",
 			homeserver:        "https://example.com",
@@ -178,7 +178,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		{
 			stepPrefixMessage: "Hello: ",
 			payload:           "",
-			messageSent:       "Hello: ",
+			messageSent:       "Hello:",
 			isError:           false,
 			asBot:             "bot_something",
 			homeserver:        "https://example.com",

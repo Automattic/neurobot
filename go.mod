@@ -11,6 +11,8 @@ require (
 
 require github.com/BurntSushi/toml v1.0.0
 
+require github.com/russross/blackfriday/v2 v2.1.0 // indirect
+
 require (
 	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/format"
 	"maunium.net/go/mautrix/id"
 )
 
@@ -76,7 +78,9 @@ func (s postMessageMatrixWorkflowStep) run(p payloadData, e *engine) (payloadDat
 	if err != nil {
 		return p, err
 	}
-	_, err = mc.SendText(id.RoomID(room), msg)
+
+	formattedText := format.RenderMarkdown(msg, true, false)
+	_, err = mc.SendMessageEvent(id.RoomID(room), event.EventMessage, &formattedText)
 	if err != nil {
 		return p, err
 	}

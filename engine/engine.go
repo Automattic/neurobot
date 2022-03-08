@@ -34,6 +34,7 @@ type MatrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	Sync() error
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
+	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error)
 }
 
