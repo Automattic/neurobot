@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"neurobot/engine"
 
@@ -51,16 +52,23 @@ func main() {
 
 	// resolve .well-known to find our server URL to connect
 	var serverURL string
-	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
+	log.Printf("Discovering Client API for %s\n", serverName)
+	wellKnown, err := mautrix.DiscoverClientAPI(serverName) // both can be nil for hosts that have https but are not a matrix server
 	if err != nil {
-		log.Fatal(err)
-	}
-	if wellKnown == nil {
-		// no .well-known setup on host
-		serverURL = serverName
+		log.Println(err)
+		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
+			serverURL = "http://" + serverName
+		} else {
+			serverURL = "https://" + serverName
+		}
 	} else {
-		serverURL = wellKnown.Homeserver.BaseURL
+		if wellKnown != nil {
+			serverURL = wellKnown.Homeserver.BaseURL
+		} else {
+			serverURL = "https://" + serverName
+		}
 	}
+	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	// set default port for running webhook listener server
 	if webhookListenerPort == "" {
