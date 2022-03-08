@@ -24,5 +24,6 @@ func (t *pollt) process(p payloadData) {
 	time.Sleep(2 * time.Second)    // fake processing
 	p.Message = "RSS poll results" // fake result
 
+	t.payload = p
 	t.finish(p)
 }

@@ -4,6 +4,8 @@ type Trigger interface {
 	setup()
 	process(payloadData)
 	finish(payloadData)
+	GetWorkflowId() uint64
+	GetPayload() payloadData
 }
 
 type trigger struct {
@@ -13,6 +15,15 @@ type trigger struct {
 	description string
 	engine      *engine
 	workflowID  uint64
+	payload     payloadData
+}
+
+func (t *trigger) GetWorkflowId() uint64 {
+	return t.workflowID
+}
+
+func (t *trigger) GetPayload() payloadData {
+	return t.payload
 }
 
 func (t *trigger) setup() {}
