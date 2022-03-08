@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
 )
 
@@ -56,6 +57,14 @@ func (m *mockMatrixClient) SendText(roomID id.RoomID, text string) (*mautrix.Res
 	}
 
 	m.msgs = append(m.msgs, text) // store internally for checking, whether this function was called or not
+
+	return &mautrix.RespSendEvent{
+		EventID: "AAAA",
+	}, nil
+}
+
+func (m *mockMatrixClient) SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error) {
+	m.msgs = append(m.msgs, contentJSON.(*event.MessageEventContent).Body) // store internally for checking, whether this function was called or not
 
 	return &mautrix.RespSendEvent{
 		EventID: "AAAA",
