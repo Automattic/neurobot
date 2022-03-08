@@ -6,6 +6,7 @@ type Trigger interface {
 	finish(payloadData)
 	GetWorkflowId() uint64
 	GetPayload() payloadData
+	SetPayload(payload payloadData)
 }
 
 type trigger struct {
@@ -24,6 +25,10 @@ func (t *trigger) GetWorkflowId() uint64 {
 
 func (t *trigger) GetPayload() payloadData {
 	return t.payload
+}
+
+func (t *trigger) SetPayload(payload payloadData) {
+	t.payload = payload
 }
 
 func (t *trigger) setup() {}

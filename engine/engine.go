@@ -358,10 +358,11 @@ func (e *engine) runWebhookListener() {
 
 			e.log(fmt.Sprintf(">> %s [%s]", message, room))
 
-			t.process(payloadData{
+			t.SetPayload(payloadData{
 				Message: message,
 				Room:    room,
 			})
+			e.eventBus.Publish(event.TriggerTopic(), t)
 		} else {
 			http.Error(w, "404 not found.", http.StatusNotFound)
 			return
