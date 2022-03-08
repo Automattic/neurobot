@@ -11,7 +11,10 @@ require (
 
 require github.com/BurntSushi/toml v1.0.0
 
-require github.com/russross/blackfriday/v2 v2.1.0 // indirect
+require (
+	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+)
 
 require (
 	github.com/btcsuite/btcutil v1.0.2 // indirect
