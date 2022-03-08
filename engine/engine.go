@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"neurobot/internal/event"
 	"strings"
 	"sync"
 
@@ -50,7 +51,8 @@ type engine struct {
 	matrixusername   string
 	matrixpassword   string
 
-	db db.Session
+	db       db.Session
+	eventBus event.Bus
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
@@ -100,6 +102,21 @@ func (e *engine) StartUpLite() {
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.log("Loading data...")
 	e.loadData()
+
+	e.eventBus = event.NewMemoryBus()
+	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
+		var trigger Trigger
+
+		switch event.(type) {
+		default:
+			return
+		case Trigger:
+			trigger = event.(Trigger)
+		}
+
+		workflow := e.workflows[trigger.GetWorkflowId()]
+		workflow.run(trigger.GetPayload(), e)
+	})
 
 	e.log("Finished starting up engine.")
 }
