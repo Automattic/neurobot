@@ -53,7 +53,7 @@ func main() {
 	// resolve .well-known to find our server URL to connect
 	var serverURL string
 	log.Printf("Discovering Client API for %s\n", serverName)
-	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
+	wellKnown, err := mautrix.DiscoverClientAPI(serverName) // both can be nil for hosts that have https but are not a matrix server
 	if err != nil {
 		log.Println(err)
 		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
