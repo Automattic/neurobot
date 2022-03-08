@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"neurobot/internal/event"
+	"neurobot/internal/poller"
 	"strings"
 	"sync"
 
@@ -375,9 +377,19 @@ func (e *engine) runWebhookListener() {
 func (e *engine) runPoller() {
 	e.log("> Running polls...")
 	for _, t := range e.triggers["poll"] {
-		go func(t Trigger) {
-			t.setup()
-		}(t)
+		// TODO: It's not currently possible to access the metadata of a trigger of type "poll".
+		// Since there aren't currently poller triggers implemented, we'll just hardcode some values
+		// here for now, for demonstrations purposes.
+		// In the future, the pollingInterval should be extracted from the trigger of type poller, since it's actually
+		// part of the poller configuration and not the trigger.
+		pollingInterval := "10m"
+		urlToPoll, _ := url.Parse("https://example.com")
+
+		// TODO: this is here just so the t variable is not unused
+		t.GetWorkflowId()
+
+		httpPoller := poller.NewHttpPoller(pollingInterval, urlToPoll, e.eventBus)
+		go httpPoller.Run()
 	}
 }
 
