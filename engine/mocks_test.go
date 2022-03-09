@@ -31,7 +31,7 @@ func NewMockWorkflowStep(impact string) *mockWorkflowStep {
 type mockMatrixClient struct {
 	instantiatedBy string
 	msgs           []string
-	roomsJoined    []id.RoomID
+	roomsJoined    []string
 }
 
 func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
@@ -85,19 +85,19 @@ func (m *mockMatrixClient) Sync() error {
 	return nil
 }
 
-func (m *mockMatrixClient) JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
-	if roomID == "" {
+func (m *mockMatrixClient) JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error) {
+	if roomIDorAlias == "" {
 		return nil, errors.New("")
 	}
 
-	m.roomsJoined = append(m.roomsJoined, roomID)
+	m.roomsJoined = append(m.roomsJoined, roomIDorAlias)
 
 	return
 }
 
-func (m *mockMatrixClient) WasRoomJoined(room id.RoomID) bool {
+func (m *mockMatrixClient) WasRoomJoined(roomIDorAlias string) bool {
 	for _, v := range m.roomsJoined {
-		if v == room {
+		if v == roomIDorAlias {
 			return true
 		}
 	}
