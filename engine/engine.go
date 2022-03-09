@@ -12,7 +12,7 @@ import (
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 	"maunium.net/go/mautrix"
-	"maunium.net/go/mautrix/event"
+	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -34,7 +34,7 @@ type MatrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	Sync() error
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
-	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
+	SendMessageEvent(roomID id.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error)
 }
 
@@ -383,10 +383,10 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 	e.log("Matrix: Login successful!")
 
 	syncer := s.(*mautrix.DefaultSyncer)
-	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+	syncer.OnEventType(mautrixEvent.EventMessage, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
 		e.log(fmt.Sprintf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body))
 	})
-	syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event) {
+	syncer.OnEventType(mautrixEvent.StateMember, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
 		if membership, ok := evt.Content.Raw["membership"]; ok {
 			if membership == "invite" {
 				e.log(fmt.Sprintf("neurobot got invitation for %s\n", evt.RoomID))
