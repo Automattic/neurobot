@@ -8,7 +8,6 @@ import (
 	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/id"
 )
 
 type Bot struct {
@@ -97,7 +96,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 			matrixHSHost := strings.Split(b.e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
 			if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
 				// join the room
-				_, err := b.JoinRoom(evt.RoomID)
+				_, err := b.JoinRoom(evt.RoomID.String())
 				if err != nil {
 					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s err:%s", b.Name, evt.RoomID, err))
 				} else {
@@ -119,9 +118,9 @@ func (b *Bot) getMCInstance() MatrixClient {
 	return nil
 }
 
-func (b *Bot) JoinRoom(roomid id.RoomID) (resp *mautrix.RespJoinRoom, err error) {
+func (b *Bot) JoinRoom(roomIDorAlias string) (resp *mautrix.RespJoinRoom, err error) {
 	if c := b.getMCInstance(); c != nil {
-		return c.JoinRoomByID(roomid)
+		return c.JoinRoom(roomIDorAlias, "", "")
 	}
 
 	return nil, errors.New("bot instance not hydrated")
