@@ -79,6 +79,16 @@ func (s postMessageMatrixWorkflowStep) run(p payloadData, e *engine) (payloadDat
 		return p, err
 	}
 
+	// resolve room alias
+	if room[0:1] == "#" {
+		resolve, err := mc.ResolveAlias(id.RoomAlias(room))
+		if err != nil {
+			return p, err
+		}
+
+		room = resolve.RoomID.String()
+	}
+
 	formattedText := format.RenderMarkdown(msg, true, false)
 	_, err = mc.SendMessageEvent(id.RoomID(room), event.EventMessage, &formattedText)
 	if err != nil {

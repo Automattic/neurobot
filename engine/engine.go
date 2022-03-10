@@ -33,9 +33,10 @@ type Engine interface {
 type MatrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	Sync() error
+	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
-	JoinRoomByID(roomID id.RoomID) (resp *mautrix.RespJoinRoom, err error)
+	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 }
 
 type engine struct {
@@ -395,7 +396,7 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 				matrixHSHost := strings.Split(e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
 				if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
 					// join the room
-					_, err := e.client.JoinRoomByID(evt.RoomID)
+					_, err := e.client.JoinRoom(evt.RoomID.String(), "", "")
 					if err != nil {
 						e.log(fmt.Sprintf("neurobot couldn't join the invitation: %s", evt.RoomID))
 					} else {
