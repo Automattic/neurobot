@@ -10,5 +10,6 @@ type webhookt struct {
 }
 
 func (t *webhookt) process(p payloadData) {
+	t.payload = p
 	t.finish(p)
 }

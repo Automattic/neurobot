@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"neurobot/internal/event"
+	"neurobot/internal/poller"
 	"strings"
 	"sync"
 
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 	"maunium.net/go/mautrix"
-	"maunium.net/go/mautrix/event"
+	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -35,7 +38,7 @@ type MatrixClient interface {
 	Sync() error
 	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
-	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
+	SendMessageEvent(roomID id.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 }
 
@@ -51,7 +54,8 @@ type engine struct {
 	matrixusername   string
 	matrixpassword   string
 
-	db db.Session
+	db       db.Session
+	eventBus event.Bus
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
@@ -101,6 +105,21 @@ func (e *engine) StartUpLite() {
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.log("Loading data...")
 	e.loadData()
+
+	e.eventBus = event.NewMemoryBus()
+	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
+		var trigger Trigger
+
+		switch event.(type) {
+		default:
+			return
+		case Trigger:
+			trigger = event.(Trigger)
+		}
+
+		workflow := e.workflows[trigger.GetWorkflowId()]
+		workflow.run(trigger.GetPayload(), e)
+	})
 
 	e.log("Finished starting up engine.")
 }
@@ -340,10 +359,11 @@ func (e *engine) runWebhookListener() {
 
 			e.log(fmt.Sprintf(">> %s [%s]", message, room))
 
-			t.process(payloadData{
+			t.SetPayload(payloadData{
 				Message: message,
 				Room:    room,
 			})
+			e.eventBus.Publish(event.TriggerTopic(), t)
 		} else {
 			http.Error(w, "404 not found.", http.StatusNotFound)
 			return
@@ -359,9 +379,19 @@ func (e *engine) runWebhookListener() {
 func (e *engine) runPoller() {
 	e.log("> Running polls...")
 	for _, t := range e.triggers["poll"] {
-		go func(t Trigger) {
-			t.setup()
-		}(t)
+		// TODO: It's not currently possible to access the metadata of a trigger of type "poll".
+		// Since there aren't currently poller triggers implemented, we'll just hardcode some values
+		// here for now, for demonstrations purposes.
+		// In the future, the pollingInterval should be extracted from the trigger of type poller, since it's actually
+		// part of the poller configuration and not the trigger.
+		pollingInterval := "10m"
+		urlToPoll, _ := url.Parse("https://example.com")
+
+		// TODO: this is here just so the t variable is not unused
+		t.GetWorkflowId()
+
+		httpPoller := poller.NewHttpPoller(pollingInterval, urlToPoll, e.eventBus)
+		go httpPoller.Run()
 	}
 }
 
@@ -384,10 +414,10 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 	e.log("Matrix: Login successful!")
 
 	syncer := s.(*mautrix.DefaultSyncer)
-	syncer.OnEventType(event.EventMessage, func(source mautrix.EventSource, evt *event.Event) {
+	syncer.OnEventType(mautrixEvent.EventMessage, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
 		e.log(fmt.Sprintf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body))
 	})
-	syncer.OnEventType(event.StateMember, func(source mautrix.EventSource, evt *event.Event) {
+	syncer.OnEventType(mautrixEvent.StateMember, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
 		if membership, ok := evt.Content.Raw["membership"]; ok {
 			if membership == "invite" {
 				e.log(fmt.Sprintf("neurobot got invitation for %s\n", evt.RoomID))
