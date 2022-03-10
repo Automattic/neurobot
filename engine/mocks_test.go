@@ -105,6 +105,14 @@ func (m *mockMatrixClient) WasRoomJoined(roomIDorAlias string) bool {
 	return false
 }
 
+func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error) {
+	// convert #room:matrix.test to !room:matrix.test as part of mock resolution
+	return &mautrix.RespAliasResolve{
+		RoomID:  id.RoomID(strings.Replace(alias.String(), "#", "!", 1)),
+		Servers: []string{"matrix.test"},
+	}, nil
+}
+
 func NewMockMatrixClient(creator string) MatrixClient {
 	return &mockMatrixClient{
 		instantiatedBy: creator,
