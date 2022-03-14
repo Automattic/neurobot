@@ -2,6 +2,10 @@
 
 It is an engine in which you can define workflows to be triggered by certain events leading to execution of a set of instructions defined under that workflow.
 
+![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
+
+> [Explanation of architecture](docs/architecture.md)
+
 Currently supported event triggers:
 
 | Trigger | Variety |
@@ -15,7 +19,21 @@ Currently supported workflow step:
 | Show message on stdout | `stdout` |
 | Post message to a Matrix room | `postMatrixMessage` |
 
-## Instructions to run it
+## How to run neurobot?
+
+### Components
+
+List of concerned files:
+- Compiled program (binary)
+- `.env` - used for configuration
+- `workflows.toml` - used for defining workflows using [TOML syntax](https://toml.io/en/)
+- `wfb.db` - SQLite database file
+
+You can compile the program by `make build` and binary file gets saved in `bin` directory. Then just start the program, by specifying what `.env` file to load. By default it looks for it in the current directory. A sample `.env.sample` file is also provided for use. All configuration sits inside of `.env` file. When starting up, for the first time, a SQLite database would be created and with every run, workflows defined in TOML file are imported, overwriting previous imported data of the defined workflows. TOML file will eventually be replaced by a UI, but that's not on the short-term roadmap. Refer to [TOML file structure](toml-structure.md) to make sense of it.
+
+### Matrix bot
+
+You can skip this section for a quick demo below, but in order to test by posting a message to a Matrix room, you would need to create a bot user (a user that's meant to be programmatically controlled is a bot, there is no other difference between a regular user and bot user) on your Matrix homeserver and supply its access token in the `.env` file. You don't have to name it `neurobot` but for documentation, that's the name we will assume, you have chosen. If your workflows would require matrix actions that require admin priveleges, you can promote `neurobot` to be an admin on the server as well. For a deep understanding, we suggest reading more on [neurobot's Architecture](docs/architecture.md).
 
 ### Quick Demo
 
@@ -42,29 +60,4 @@ Running workflow #1 payload:{Hello }
 
 ### Adding your own workflow
 
-Look inside `workflows.toml` file to figure out how to specify a workflow. Documentation would follow soon.
-
-### Matrix HomeServer
-
-To run `neurobot` with Matrix homeserver, you can specify credentials in the `.env` file and run again by same command:
-
-`go run main.go`
-
-### Debug mode
-
-Edit `.env` and change `debug` to be `true`
-
-## Architecture
-
-![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
-
-Engine is built to react on the basis of events. Workflows are defined as an ordered list of workflow steps that are to be executed when the workflow is started. And workflows' execution start when the chosen event for its execution is triggered.
-
-For example: An incoming webhook can trigger a workflow, which can contain workflow step(s) of like posting a message to Matrix room. Or a new item in RSS Feed triggers a workflow, which can execute steps like posting a message to Matrix room and sending an external webhook request.
-
-Right now, there is no UI to define workflows but we are supporting defining workflows in a TOML file for the short-term.
-
-## Learn more
-
-- [Explanation of architecture](docs/architecture.md)
-- [Understand TOML file structure](docs/toml-structure.md)
+Add workflows in your `workflows.toml` file. [Understand TOML file structure](docs/toml-structure.md)

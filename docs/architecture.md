@@ -1,19 +1,15 @@
 Architecture
 ============
 
-neurobot's architecture is built to react on the basis of events, not just events within Matrix but outside of Matrix as well. This provides a great foundation to describe any kind of integration that we can possibly think of.
+neurobot's architecture is built to react on the basis of events, not just events within Matrix but outside of Matrix as well. This provides a great foundation to describe any kind of integration that we can possibly think of. Workflows are defined as an ordered list of workflow steps that are to be executed when the workflow is started. And workflows' execution start when the chosen event for its execution is triggered.
 
 [💥 Trigger] --------> [ 🚀 Workflow = [📡 WorkflowStep] + [📤 WorkflowStep] ]
 
-## Components
+For example: An incoming webhook can trigger a workflow, which can contain workflow step(s) of like posting a message to Matrix room. Or a new item in RSS Feed triggers a workflow, which can execute steps like posting a message to Matrix room and sending an external webhook request.
 
-The files you need to concern yourself with are:
-- Compiled program (binary)
-- `.env` - used for configuration
-- `workflows.toml` - used for defining workflows using [TOML syntax](https://toml.io/en/)
-- `wfb.db` - SQLite database file
+![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
 
-You can compile the program by `make build` and binary file gets saved in `bin` directory. Then just start the program, with the possiblity of specifying what `.env` file to load. By default it looks for it in the current directory. All configuration sits inside of `.env` file. When starting up, for the first time, a SQLite database would be created and with every run, workflows defined in TOML file are imported, overwriting previous imported data of the defined workflows. TOML file will eventually be replaced by a UI, but that's not on the short-term roadmap. Refer to [TOML file structure](toml-structure.md) to make sense of it.
+Right now, there is no UI to define workflows but we are supporting [defining workflows in a TOML file](toml-structure.md) for the short-term.
 
 ## How does it work?
 
