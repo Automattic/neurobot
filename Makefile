@@ -4,7 +4,7 @@ build:
 	go build -o bin/neurobot
 
 test:
-	go test -v ./engine
+	go test -v ./...
 
 coverage:
 	cd engine
