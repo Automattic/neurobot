@@ -40,7 +40,7 @@ func TestValid(t *testing.T) {
 func TestId(t *testing.T) {
 	id, _ := NewId("!room:matrix.test")
 	if id.Id() != "!room:matrix.test" {
-		t.Error("invalid id")
+		t.Errorf("invalid id, got %s", id.Id())
 	}
 }
 
