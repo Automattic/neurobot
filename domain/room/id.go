@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Id is a value object for 'room id' in matrix which would store value like !room:matrix.test or #roomalias:matrix.test
 type Id interface {
 	Id() string
 	IsAlias() bool
@@ -15,6 +16,7 @@ type id struct {
 	value string
 }
 
+// NewId creates a matrix room 'id' instance from a string value and returns a pointer to it
 func NewId(value string) (Id, error) {
 	if value == "" {
 		return nil, errors.New("room id must not be empty")
