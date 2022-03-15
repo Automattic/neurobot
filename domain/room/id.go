@@ -33,13 +33,13 @@ func NewId(value string) (Id, error) {
 		return nil, fmt.Errorf("room id must have format !foo:example.com or #foo:example.com, got %s", value)
 	}
 
-	return id{value: value}, nil
+	return &id{value: value}, nil
 }
 
-func (id id) Id() string {
+func (id *id) Id() string {
 	return id.value
 }
 
-func (id id) IsAlias() bool {
+func (id *id) IsAlias() bool {
 	return strings.HasPrefix(id.value, "#")
 }
