@@ -11,6 +11,7 @@ import (
 )
 
 type mautrixClient interface {
+	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID mautrixId.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
@@ -24,6 +25,18 @@ func NewMautrixClient(mautrix mautrixClient) *client {
 	return &client{
 		mautrix: mautrix,
 	}
+}
+
+func (client *client) Login(username string, password string) error {
+	_, err := client.mautrix.Login(&mautrix.ReqLogin{
+		Type:             "m.login.password",
+		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: username},
+		Password:         password,
+		DeviceID:         "NEUROBOT",
+		StoreCredentials: true,
+	})
+
+	return err
 }
 
 func (client *client) SendMessage(roomID room.ID, message msg.Message) error {
