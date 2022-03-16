@@ -1,7 +1,7 @@
 package matrix
 
 import (
-	. "neurobot/domain/message"
+	msg "neurobot/domain/message"
 	"neurobot/domain/room"
 	"neurobot/mocks"
 	"testing"
@@ -12,7 +12,7 @@ func TestSendPlainTextMessage(t *testing.T) {
 	client := NewMautrixClient(mautrixClient)
 
 	roomId, _ := room.NewId("!foo:matrix.test")
-	message := NewPlainTextMessage("foo")
+	message := msg.NewPlainTextMessage("foo")
 
 	err := client.SendMessage(roomId, message)
 	if err != nil {
@@ -25,7 +25,7 @@ func TestSendMarkdownMessage(t *testing.T) {
 	client := NewMautrixClient(mautrixClient)
 
 	roomId, _ := room.NewId("!foo:matrix.test")
-	message := NewMarkdownMessage("foo")
+	message := msg.NewMarkdownMessage("foo")
 
 	err := client.SendMessage(roomId, message)
 	if err != nil {
