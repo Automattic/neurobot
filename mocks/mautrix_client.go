@@ -1,32 +1,102 @@
 package mocks
 
 import (
+	"errors"
+	"neurobot/engine"
+	"strings"
+
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
-	mautrixId "maunium.net/go/mautrix/id"
+	"maunium.net/go/mautrix/id"
 )
 
-type MautrixClient interface {
-	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
-	SendMessageEvent(roomID mautrixId.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
-	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
+type mockMatrixClient struct {
+	instantiatedBy string
+	msgs           []string
+	roomsJoined    []string
 }
 
-type mockMautrixClient struct {
+func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
+	// assume the best for mock purposes
+	homeserverInfo := mautrix.HomeserverInfo{BaseURL: ""}
+	identityServerInfo := mautrix.IdentityServerInfo{BaseURL: ""}
+
+	return &mautrix.RespLogin{
+		AccessToken: "XXXX",
+		DeviceID:    "YYYY",
+		UserID:      "1",
+		WellKnown: &mautrix.ClientWellKnown{
+			Homeserver:     homeserverInfo,
+			IdentityServer: identityServerInfo,
+		},
+	}, nil
 }
 
-func NewMockMautrixClient() MautrixClient {
-	return &mockMautrixClient{}
+func (m *mockMatrixClient) SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error) {
+	// a specific message is designed to return error
+	if text == "throwerr" {
+		return nil, errors.New("whatever")
+	}
+
+	m.msgs = append(m.msgs, text) // store internally for checking, whether this function was called or not
+
+	return &mautrix.RespSendEvent{
+		EventID: "AAAA",
+	}, nil
 }
 
-func (client *mockMautrixClient) SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error) {
-	return nil, nil
+func (m *mockMatrixClient) SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error) {
+	m.msgs = append(m.msgs, contentJSON.(event.MessageEventContent).Body) // store internally for checking, whether this function was called or not
+
+	return &mautrix.RespSendEvent{
+		EventID: "AAAA",
+	}, nil
 }
 
-func (client *mockMautrixClient) SendMessageEvent(roomID mautrixId.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error) {
-	return nil, nil
+func (m *mockMatrixClient) WasMessageSent(text string) bool {
+	for _, v := range m.msgs {
+		if v == text {
+			return true
+		}
+	}
+
+	return false
 }
 
-func (client *mockMautrixClient) ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error) {
-	return nil, nil
+func (m *mockMatrixClient) Sync() error {
+	return nil
+}
+
+func (m *mockMatrixClient) JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error) {
+	if roomIDorAlias == "" {
+		return nil, errors.New("")
+	}
+
+	m.roomsJoined = append(m.roomsJoined, roomIDorAlias)
+
+	return
+}
+
+func (m *mockMatrixClient) WasRoomJoined(roomIDorAlias string) bool {
+	for _, v := range m.roomsJoined {
+		if v == roomIDorAlias {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error) {
+	// convert #room:matrix.test to !room:matrix.test as part of mock resolution
+	return &mautrix.RespAliasResolve{
+		RoomID:  id.RoomID(strings.Replace(alias.String(), "#", "!", 1)),
+		Servers: []string{"matrix.test"},
+	}, nil
+}
+
+func NewMockMatrixClient(creator string) engine.MatrixClient {
+	return &mockMatrixClient{
+		instantiatedBy: creator,
+	}
 }
