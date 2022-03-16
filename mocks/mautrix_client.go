@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"errors"
-	"neurobot/engine"
 	"strings"
 
 	"maunium.net/go/mautrix"
@@ -95,7 +94,7 @@ func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespA
 	}, nil
 }
 
-func NewMockMatrixClient(creator string) engine.MatrixClient {
+func NewMockMatrixClient(creator string) *mockMatrixClient {
 	return &mockMatrixClient{
 		instantiatedBy: creator,
 	}
