@@ -6,5 +6,5 @@ import (
 )
 
 type Client interface {
-	SendMessage(roomId room.Id, message message.Message) error
+	SendMessage(roomID room.ID, message message.Message) error
 }

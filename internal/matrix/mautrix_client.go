@@ -26,8 +26,8 @@ func NewMautrixClient(mautrix mautrixClient) *client {
 	}
 }
 
-func (client *client) SendMessage(roomId room.ID, message msg.Message) error {
-	resolvedRoomId, err := client.resolveRoomAlias(roomId)
+func (client *client) SendMessage(roomID room.ID, message msg.Message) error {
+	resolvedRoomID, err := client.resolveRoomAlias(roomID)
 	if err != nil {
 		return err
 	}
@@ -35,21 +35,21 @@ func (client *client) SendMessage(roomId room.ID, message msg.Message) error {
 	switch message.ContentType() {
 	case msg.Markdown:
 		rendered := format.RenderMarkdown(message.String(), true, false)
-		_, err = client.mautrix.SendMessageEvent(resolvedRoomId, event.EventMessage, rendered)
+		_, err = client.mautrix.SendMessageEvent(resolvedRoomID, event.EventMessage, rendered)
 
 	case msg.PlainText:
-		_, err = client.mautrix.SendText(resolvedRoomId, message.String())
+		_, err = client.mautrix.SendText(resolvedRoomID, message.String())
 	}
 
 	return err
 }
 
-func (client *client) resolveRoomAlias(roomId room.ID) (mautrixId.RoomID, error) {
-	if !roomId.IsAlias() {
-		return mautrixId.RoomID(roomId.ID()), nil
+func (client *client) resolveRoomAlias(roomID room.ID) (mautrixId.RoomID, error) {
+	if !roomID.IsAlias() {
+		return mautrixId.RoomID(roomID.ID()), nil
 	}
 
-	response, err := client.mautrix.ResolveAlias(mautrixId.RoomAlias(roomId.ID()))
+	response, err := client.mautrix.ResolveAlias(mautrixId.RoomAlias(roomID.ID()))
 	if err != nil {
 		return "", err
 	}
