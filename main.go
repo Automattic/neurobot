@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"neurobot/app"
+	"neurobot/infrastructure/event"
 	"os"
 	"strconv"
 	"strings"
@@ -41,7 +42,9 @@ func main() {
 	log.Printf("Loaded environment variables from %s\n", *envFile)
 	log.Printf("Using database file %s\n", dbFile)
 
-	app.Run()
+	bus := event.NewMemoryBus()
+	app.Run(bus)
+
 	// TODO: Code from this point on should eventually be moved out of this file.
 
 	// if either one matrix related env var is specified, make sure all of them are specified
