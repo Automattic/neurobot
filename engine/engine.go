@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"neurobot/infrastructure/event"
-	"neurobot/internal/poller"
+	"neurobot/infrastructure/poller"
 	"strings"
 	"sync"
 
