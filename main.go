@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"neurobot/app"
 	"os"
 	"strconv"
 	"strings"
@@ -39,6 +40,9 @@ func main() {
 	log.Println("Debug:", debug)
 	log.Printf("Loaded environment variables from %s\n", *envFile)
 	log.Printf("Using database file %s\n", dbFile)
+
+	app.Run()
+	// TODO: Code from this point on should eventually be moved out of this file.
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
