@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"neurobot/infrastructure/event"
-	"neurobot/infrastructure/poller"
+	"neurobot/infrastructure/http"
 	"strings"
 	"sync"
 
@@ -390,7 +390,7 @@ func (e *engine) runPoller() {
 		// TODO: this is here just so the t variable is not unused
 		t.GetWorkflowId()
 
-		httpPoller := poller.NewHttpPoller(pollingInterval, urlToPoll, e.eventBus)
+		httpPoller := http.NewHttpPoller(pollingInterval, urlToPoll, e.eventBus)
 		go httpPoller.Run()
 	}
 }
