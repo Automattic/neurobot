@@ -4,7 +4,7 @@ It is an engine in which you can define workflows to be triggered by certain eve
 
 ![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
 
-> [Explanation of architecture](docs/architecture.md)
+> [Explanation of architecture](resources/docs/architecture.md)
 
 Currently supported event triggers:
 
@@ -33,7 +33,7 @@ You can compile the program by `make build`, which will generate the `neurobot` 
 
 ### Matrix bot
 
-You can skip this section for a quick demo below, but in order to test by posting a message to a Matrix room, you would need to create a bot user (a user that's meant to be programmatically controlled is a bot, there is no other difference between a regular user and bot user) on your Matrix homeserver and supply its access token in the `.env` file. You don't have to name it `neurobot` but for documentation, that's the name we will assume, you have chosen. If your workflows would require matrix actions that require admin priveleges, you can promote `neurobot` to be an admin on the server as well. For a deep understanding, we suggest reading more on [neurobot's Architecture](docs/architecture.md).
+You can skip this section for a quick demo below, but in order to test by posting a message to a Matrix room, you would need to create a bot user (a user that's meant to be programmatically controlled is a bot, there is no other difference between a regular user and bot user) on your Matrix homeserver and supply its access token in the `.env` file. You don't have to name it `neurobot` but for documentation, that's the name we will assume, you have chosen. If your workflows would require matrix actions that require admin priveleges, you can promote `neurobot` to be an admin on the server as well. For a deep understanding, we suggest reading more on [neurobot's Architecture](resources/docs/architecture.md).
 
 ### Quick Demo
 
@@ -60,4 +60,4 @@ Running workflow #1 payload:{Hello }
 
 ### Adding your own workflow
 
-Add workflows in your `workflows.toml` file. [Understand TOML file structure](docs/toml-structure.md)
+Add workflows in your `workflows.toml` file. [Understand TOML file structure](resources/docs/toml-structure.md)
