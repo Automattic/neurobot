@@ -26,7 +26,7 @@ Currently supported workflow step:
 List of concerned files:
 - Compiled program (binary)
 - `.env` - used for configuration
-- `wfb.db` - SQLite database file
+- `neurobot.db` - SQLite database file
 - `resources/workflows.toml` - used for defining workflows using [TOML syntax](https://toml.io/en/)
 
 You can compile the program by `make build`, which will generate the `neurobot` binary in the project root. Then just start the program, by specifying what `.env` file to load. By default it looks for it in the current directory. A sample `.env.sample` file is also provided for use. All configuration sits inside of `.env` file. When starting up, for the first time, a SQLite database would be created and with every run, workflows defined in TOML file are imported, overwriting previous imported data of the defined workflows. TOML file will eventually be replaced by a UI, but that's not on the short-term roadmap. Refer to [TOML file structure](toml-structure.md) to make sense of it.
