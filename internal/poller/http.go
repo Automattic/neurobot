@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"neurobot/internal/event"
+	"neurobot/infrastructure/event"
 	"time"
 )
 
