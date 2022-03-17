@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	netHttp "net/http"
 	"net/url"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
@@ -292,11 +292,11 @@ func (e *engine) handleTOMLDefinitions() {
 }
 
 func (e *engine) runWebhookListener() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	netHttp.HandleFunc("/", func(w netHttp.ResponseWriter, r *netHttp.Request) {
 		e.log(fmt.Sprintf("Request received on webhook listener! %s", r.URL.Path))
 
 		if !strings.HasPrefix(r.URL.Path, "/webhooks-listener/") {
-			http.Error(w, "404 not found.", http.StatusNotFound)
+			netHttp.Error(w, "404 not found.", netHttp.StatusNotFound)
 			return
 		}
 
@@ -319,13 +319,13 @@ func (e *engine) runWebhookListener() {
 			case "GET":
 				messageSlice, ok := r.URL.Query()["message"]
 				if !ok || len(messageSlice) < 1 {
-					http.Error(w, "400 bad request (No message parameter provided)", http.StatusBadRequest)
+					netHttp.Error(w, "400 bad request (No message parameter provided)", netHttp.StatusBadRequest)
 					return
 				}
 				message = messageSlice[0]
 				if roomSlice, ok := r.URL.Query()["room"]; ok {
 					if len(roomSlice) == 1 && roomSlice[0] == "" {
-						http.Error(w, "400 bad request (No room value specified)", http.StatusBadRequest)
+						netHttp.Error(w, "400 bad request (No room value specified)", netHttp.StatusBadRequest)
 						return
 					}
 					room = roomSlice[0]
@@ -353,7 +353,7 @@ func (e *engine) runWebhookListener() {
 			}
 
 			if message == "" {
-				http.Error(w, "400 bad request (No message to post)", http.StatusBadRequest)
+				netHttp.Error(w, "400 bad request (No message to post)", netHttp.StatusBadRequest)
 				return
 			}
 
@@ -365,13 +365,13 @@ func (e *engine) runWebhookListener() {
 			})
 			e.eventBus.Publish(event.TriggerTopic(), t)
 		} else {
-			http.Error(w, "404 not found.", http.StatusNotFound)
+			netHttp.Error(w, "404 not found.", netHttp.StatusNotFound)
 			return
 		}
 	})
 
 	e.log(fmt.Sprintf("> Starting webhook listener at port %s...", e.portWebhookListener))
-	if err := http.ListenAndServe(":"+e.portWebhookListener, nil); err != nil {
+	if err := netHttp.ListenAndServe(":"+e.portWebhookListener, nil); err != nil {
 		log.Fatal(err)
 	}
 }
