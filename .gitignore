@@ -1,4 +1,3 @@
-neurobot.db
 .env
 neurobot
-bin/neurobot
+neurobot.db

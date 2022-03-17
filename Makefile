@@ -1,7 +1,7 @@
 default: build
 
 build:
-	go build -o bin/neurobot
+	go build -o neurobot
 
 test:
 	go test -v ./...
