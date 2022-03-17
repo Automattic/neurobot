@@ -66,6 +66,7 @@ type engine struct {
 }
 
 type RunParams struct {
+	EventBus             event.Bus
 	Debug                bool
 	Database             string
 	PortWebhookListener  string
@@ -106,7 +107,6 @@ func (e *engine) StartUpLite() {
 	e.log("Loading data...")
 	e.loadData()
 
-	e.eventBus = event.NewMemoryBus()
 	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
 		var trigger Trigger
 
@@ -497,6 +497,7 @@ func NewEngine(p RunParams) *engine {
 	e.matrixServerURL = p.MatrixServerURL
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
+	e.eventBus = p.EventBus
 
 	return &e
 }
