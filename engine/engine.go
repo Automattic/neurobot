@@ -195,7 +195,7 @@ func (e *engine) loadDB() (err error) {
 		return fmt.Errorf("creating sqlite3 db driver failed %s", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance("file://migration/", "sqlite3", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://infrastructure/database/migration/", "sqlite3", driver)
 	if err != nil {
 		return fmt.Errorf("initializing db migration failed %s", err)
 	}
