@@ -1,9 +1,9 @@
 package matrix
 
 import (
-	msg "neurobot/domain/message"
-	"neurobot/domain/room"
-	"neurobot/mocks"
+	msg "neurobot/model/message"
+	"neurobot/model/room"
+	"neurobot/resources/mocks"
 	"testing"
 )
 

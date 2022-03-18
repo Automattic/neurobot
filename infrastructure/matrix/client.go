@@ -1,8 +1,8 @@
 package matrix
 
 import (
-	"neurobot/domain/message"
-	"neurobot/domain/room"
+	"neurobot/model/message"
+	"neurobot/model/room"
 )
 
 type Client interface {

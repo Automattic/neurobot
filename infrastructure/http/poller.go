@@ -1,11 +1,11 @@
-package poller
+package http
 
 import (
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"neurobot/internal/event"
+	"neurobot/infrastructure/event"
 	"time"
 )
 
@@ -51,5 +51,5 @@ func (poller *HttpPoller) poll() {
 	log.Printf(string(body))
 
 	// TODO: create a trigger, then publish it
-	// poller.eventBus.Publish(event.TriggerTopic(), trigger)
+	// http.eventBus.Publish(event.TriggerTopic(), trigger)
 }

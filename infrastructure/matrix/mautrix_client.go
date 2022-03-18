@@ -1,13 +1,12 @@
 package matrix
 
 import (
-	msg "neurobot/domain/message"
-	"neurobot/domain/room"
-
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
 	mautrixId "maunium.net/go/mautrix/id"
+	msg "neurobot/model/message"
+	"neurobot/model/room"
 )
 
 type mautrixClient interface {

@@ -370,7 +370,7 @@ func tearDown(dbs db.Session, dbs2 db.Session) {
 
 func getDBSchemaSQL() *[]string {
 	// read all db schema up files & loop through them to setup the db schema
-	sqlFiles, err := ioutil.ReadDir("../migration/")
+	sqlFiles, err := ioutil.ReadDir("../infrastructure/database/migration/")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -378,7 +378,7 @@ func getDBSchemaSQL() *[]string {
 	var sqls []string
 	for _, file := range sqlFiles {
 		if strings.HasSuffix(file.Name(), ".up.sql") {
-			fileBytes, err := ioutil.ReadFile("../migration/" + file.Name())
+			fileBytes, err := ioutil.ReadFile("../infrastructure/database/migration/" + file.Name())
 			if err != nil {
 				panic(err)
 			}
