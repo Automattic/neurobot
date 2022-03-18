@@ -36,7 +36,6 @@ type MatrixClient interface {
 
 type engine struct {
 	debug                bool
-	database             string
 	portWebhookListener  string
 	workflowsDefTOMLFile string
 
@@ -462,7 +461,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.database = p.Database
 	e.portWebhookListener = p.PortWebhookListener
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
