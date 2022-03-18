@@ -36,6 +36,7 @@ func init() {
 // }
 func Test(fn func(session db.Session)) {
 	session := MakeTestDatabaseSession()
+	defer session.Close()
 	_ = session.Tx(func(session db.Session) error {
 		fn(session)
 
