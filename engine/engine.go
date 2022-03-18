@@ -6,7 +6,7 @@ import (
 	"log"
 	netHttp "net/http"
 	"net/url"
-	infraDatabase "neurobot/infrastructure/database"
+	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	"strings"
@@ -175,12 +175,12 @@ func (e *engine) log(m string) {
 
 func (e *engine) loadDB() (err error) {
 	// Use upper.io ORM now
-	e.db, err = infraDatabase.MakeDatabaseSession()
+	e.db, err = database.MakeDatabaseSession()
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
 
-	err = infraDatabase.Migrate(e.db)
+	err = database.Migrate(e.db)
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
