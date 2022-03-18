@@ -7,7 +7,7 @@ neurobot's architecture is built to react on the basis of events, not just event
 
 For example: An incoming webhook can trigger a workflow, which can contain workflow step(s) of like posting a message to Matrix room. Or a new item in RSS Feed triggers a workflow, which can execute steps like posting a message to Matrix room and sending an external webhook request.
 
-![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
+![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/resources/visual.png?raw=true)
 
 Right now, there is no UI to define workflows but we are supporting [defining workflows in a TOML file](toml-structure.md) for the short-term.
 
