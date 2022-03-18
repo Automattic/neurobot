@@ -2,7 +2,7 @@
 
 It is an engine in which you can define workflows to be triggered by certain events leading to execution of a set of instructions defined under that workflow.
 
-![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/neurobot-visual.png?raw=true)
+![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/resources/visual.png?raw=true)
 
 > [Explanation of architecture](resources/docs/architecture.md)
 
