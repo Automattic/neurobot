@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,13 +16,6 @@ import (
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
-
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-
-	// SQLite3 DB Driver
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Engine interface {
@@ -183,30 +175,13 @@ func (e *engine) log(m string) {
 }
 
 func (e *engine) loadDB() (err error) {
-	database, err := sql.Open("sqlite3", e.database)
+	// Use upper.io ORM now
+	e.db, err = infraDatabase.MakeDatabaseSession()
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
-	defer database.Close()
 
-	// Run DB migration
-	driver, err := sqlite3.WithInstance(database, &sqlite3.Config{})
-	if err != nil {
-		return fmt.Errorf("creating sqlite3 db driver failed %s", err)
-	}
-
-	m, err := migrate.NewWithDatabaseInstance("file://infrastructure/database/migration/", "sqlite3", driver)
-	if err != nil {
-		return fmt.Errorf("initializing db migration failed %s", err)
-	}
-
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("migrating database failed %s", err)
-	}
-
-	// Use upper.io ORM now
-	e.db, err = infraDatabase.MakeDatabaseSession()
+	err = infraDatabase.Migrate(e.db)
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
