@@ -7,13 +7,13 @@ import (
 	"log"
 	netHttp "net/http"
 	"net/url"
+	infraDatabase "neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	"strings"
 	"sync"
 
 	"github.com/upper/db/v4"
-	"github.com/upper/db/v4/adapter/sqlite"
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
@@ -206,9 +206,7 @@ func (e *engine) loadDB() (err error) {
 	}
 
 	// Use upper.io ORM now
-	e.db, err = sqlite.Open(sqlite.ConnectionURL{
-		Database: e.database,
-	})
+	e.db, err = infraDatabase.MakeDatabaseSession()
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
