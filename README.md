@@ -1,4 +1,4 @@
-# neurobot - A Matrix Workflow Builder
+# ![neurobot logo](https://github.com/Automattic/neurobot/blob/master/resources/icon.svg?raw=true) neurobot - A Matrix Workflow Builder
 
 It is an engine in which you can define workflows to be triggered by certain events leading to execution of a set of instructions defined under that workflow.
 
@@ -61,3 +61,7 @@ Running workflow #1 payload:{Hello }
 ### Adding your own workflow
 
 Add workflows in your `workflows.toml` file. [Understand TOML file structure](resources/docs/toml-structure.md)
+
+## Credits
+
+Thanks to [OpenMoji](https://openmoji.org) for open source emojis!
