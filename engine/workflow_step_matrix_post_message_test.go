@@ -65,12 +65,12 @@ func TestGetMatrixClient(t *testing.T) {
 		},
 		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
 		{
-			asBot:        "bot_something",
+			asBot:        "foo",
 			clientOrigin: "bot1",
 		},
 		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
 		{
-			asBot:        "bot_afk",
+			asBot:        "bar",
 			clientOrigin: "bot2",
 		},
 	}
@@ -148,7 +148,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "Message!",
 			messageSent:       "Test!\nMessage!",
 			isError:           false,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -164,7 +164,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "Message!",
 			messageSent:       "Message!",
 			isError:           false,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -180,7 +180,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "",
 			messageSent:       "Hello:",
 			isError:           false,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -196,7 +196,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "",
 			messageSent:       "",
 			isError:           true,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -212,7 +212,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "throwerr",
 			messageSent:       "",
 			isError:           true,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -220,7 +220,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "Message!",
 			messageSent:       "Test!\nMessage!",
 			isError:           true,
-			asBot:             "bot_something",        // otherwise e.client will be used
+			asBot:             "foo",                  // otherwise e.client will be used
 			homeserver:        " https://example.com", // invalid url to test returning of an error
 		},
 		{
