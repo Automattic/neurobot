@@ -3,7 +3,7 @@ package matrix
 import (
 	msg "neurobot/model/message"
 	"neurobot/model/room"
-	"neurobot/resources/mocks"
+	"neurobot/resources/tests/mocks"
 	"testing"
 )
 

@@ -1,29 +1,21 @@
 package engine
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	netHttp "net/http"
 	"net/url"
+	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	"strings"
 	"sync"
 
 	"github.com/upper/db/v4"
-	"github.com/upper/db/v4/adapter/sqlite"
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/id"
-
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-
-	// SQLite3 DB Driver
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Engine interface {
@@ -44,7 +36,6 @@ type MatrixClient interface {
 
 type engine struct {
 	debug                bool
-	database             string
 	portWebhookListener  string
 	workflowsDefTOMLFile string
 
@@ -183,32 +174,13 @@ func (e *engine) log(m string) {
 }
 
 func (e *engine) loadDB() (err error) {
-	database, err := sql.Open("sqlite3", e.database)
+	// Use upper.io ORM now
+	e.db, err = database.MakeDatabaseSession()
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
-	defer database.Close()
 
-	// Run DB migration
-	driver, err := sqlite3.WithInstance(database, &sqlite3.Config{})
-	if err != nil {
-		return fmt.Errorf("creating sqlite3 db driver failed %s", err)
-	}
-
-	m, err := migrate.NewWithDatabaseInstance("file://infrastructure/database/migration/", "sqlite3", driver)
-	if err != nil {
-		return fmt.Errorf("initializing db migration failed %s", err)
-	}
-
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("migrating database failed %s", err)
-	}
-
-	// Use upper.io ORM now
-	e.db, err = sqlite.Open(sqlite.ConnectionURL{
-		Database: e.database,
-	})
+	err = database.Migrate(e.db)
 	if err != nil {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
@@ -489,7 +461,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.database = p.Database
 	e.portWebhookListener = p.PortWebhookListener
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix

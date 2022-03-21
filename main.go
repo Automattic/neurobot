@@ -85,7 +85,6 @@ func main() {
 	p := engine.RunParams{
 		EventBus:             bus,
 		Debug:                debug,
-		Database:             dbFile,
 		PortWebhookListener:  webhookListenerPort,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
