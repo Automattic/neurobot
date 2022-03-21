@@ -6,7 +6,6 @@ import (
 	model "neurobot/model/bot"
 	"strings"
 
-	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
@@ -37,13 +36,6 @@ func MakeBotFromModelBot(bot model.Bot) Bot {
 		CreatedBy:   bot.CreatedBy,
 		Active:      bot.Active,
 	}
-}
-
-func getBot(dbs db.Session, identifier string) (b Bot, err error) {
-	res := dbs.Collection("bots").Find(db.Cond{"identifier": identifier})
-	err = res.One(&b)
-
-	return
 }
 
 func (b *Bot) IsHydrated() bool {

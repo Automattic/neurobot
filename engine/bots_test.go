@@ -4,33 +4,6 @@ import (
 	"testing"
 )
 
-func TestGetBot(t *testing.T) {
-	dbs, dbs2 := setUp()
-	defer tearDown(dbs, dbs2)
-
-	tables := []struct {
-		identifier string
-		botID      uint64
-	}{
-		{
-			identifier: "bot_afk",
-			botID:      2,
-		},
-		{
-			identifier: "bot_none",
-			botID:      0, // nil value basically, database row doesn't exist
-		},
-	}
-
-	for _, table := range tables {
-		got, _ := getBot(dbs, table.identifier)
-		t.Log(got)
-		if table.botID != got.ID {
-			t.Errorf("didn't get what was expected. identifier: %s got: %d expected: %d", table.identifier, got.ID, table.botID)
-		}
-	}
-}
-
 func TestBotIsHydrated(t *testing.T) {
 	b := &Bot{}
 	if b.IsHydrated() != false {
