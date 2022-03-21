@@ -9,6 +9,7 @@ import (
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
+	"neurobot/model/bot"
 	"strings"
 	"sync"
 
@@ -45,8 +46,9 @@ type engine struct {
 	matrixusername   string
 	matrixpassword   string
 
-	db       db.Session
-	eventBus event.Bus
+	db            db.Session
+	eventBus      event.Bus
+	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
@@ -58,6 +60,7 @@ type engine struct {
 
 type RunParams struct {
 	EventBus             event.Bus
+	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
 	PortWebhookListener  string
@@ -469,6 +472,7 @@ func NewEngine(p RunParams) *engine {
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
 	e.eventBus = p.EventBus
+	e.botRepository = p.BotRepository
 
 	return &e
 }
