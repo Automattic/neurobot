@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	model "neurobot/model/bot"
 	"strings"
 
 	"github.com/upper/db/v4"
@@ -23,6 +24,19 @@ type Bot struct {
 	hydrated bool
 
 	e *engine
+}
+
+func MakeBotFromModelBot(bot model.Bot) Bot {
+	return Bot{
+		ID:          bot.ID,
+		Identifier:  bot.Identifier,
+		Name:        bot.Name,
+		Description: bot.Description,
+		Username:    bot.Username,
+		Password:    bot.Password,
+		CreatedBy:   bot.CreatedBy,
+		Active:      bot.Active,
+	}
 }
 
 func getActiveBots(dbs db.Session) (bots []Bot, err error) {
