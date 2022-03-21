@@ -6,6 +6,7 @@ import (
 	"log"
 	"neurobot/app"
 	"neurobot/infrastructure/event"
+	"neurobot/infrastructure/http"
 	"os"
 	"strconv"
 	"strings"
@@ -35,7 +36,6 @@ func main() {
 	serverName := os.Getenv("MATRIX_SERVER_NAME")
 	username := os.Getenv("MATRIX_USERNAME")
 	password := os.Getenv("MATRIX_PASSWORD")
-	webhookListenerPort := os.Getenv("WEBHOOK_LISTENER_PORT")
 	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
 
 	log.Println("Debug:", debug)
@@ -78,14 +78,16 @@ func main() {
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	// set default port for running webhook listener server
-	if webhookListenerPort == "" {
-		webhookListenerPort = "8080"
+	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
+	if err != nil {
+		webhookListenerPort = 8080
 	}
+	webhookListenerServer := http.NewServer(webhookListenerPort)
 
 	p := engine.RunParams{
 		EventBus:             bus,
 		Debug:                debug,
-		PortWebhookListener:  webhookListenerPort,
+		WebhookListener:      webhookListenerServer,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
 		MatrixServerName:     serverName,
