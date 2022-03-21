@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"neurobot/app/bot"
 	"testing"
 
 	"maunium.net/go/mautrix"
@@ -86,6 +87,7 @@ func TestGetMatrixClient(t *testing.T) {
 		e.bots = make(map[uint64]MatrixClient)
 		e.bots[1] = NewMockMatrixClient("bot1")
 		e.bots[2] = NewMockMatrixClient("bot2")
+		e.botRepository = bot.NewRepository(dbs)
 
 		// get step instance
 		s := &postMessageMatrixWorkflowStep{
@@ -242,6 +244,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		e.matrixServerURL = table.homeserver
 		e.bots = make(map[uint64]MatrixClient)
 		e.bots[1] = botMatrixClient
+		e.botRepository = bot.NewRepository(dbs)
 
 		s := &postMessageMatrixWorkflowStep{
 			workflowStep: workflowStep{

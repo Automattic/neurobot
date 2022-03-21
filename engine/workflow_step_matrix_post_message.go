@@ -32,11 +32,14 @@ var getMatrixClient = func(homeserver string) (MatrixClient, error) {
 
 func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClient, err error) {
 	if s.asBot != "" {
-
-		b, err := getBot(e.db, s.asBot)
+		modelBot, err := e.botRepository.FindByIdentifier(s.asBot)
 		if err != nil {
 			return nil, err
 		}
+
+		// Convert model/bot to engine/bot
+		// TODO: Remove once engine/bot has been replaced in favour of model/bot
+		b := MakeBotFromModelBot(modelBot)
 
 		if !b.IsHydrated() {
 			b.Hydrate(e)
