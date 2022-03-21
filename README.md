@@ -1,6 +1,8 @@
-# ![neurobot logo](https://github.com/Automattic/neurobot/blob/master/resources/icon.svg?raw=true) neurobot - A Matrix Workflow Builder
+# neurobot - A Matrix Workflow Builder
 
-It is an engine in which you can define workflows to be triggered by certain events leading to execution of a set of instructions defined under that workflow.
+| | |
+|----|----|
+| <img src="https://github.com/Automattic/neurobot/blob/master/resources/icon.svg?raw=true" alt="neurobot brain emoji" width="70" /> | It is an engine in which you can define workflows to be triggered by certain events leading to execution of a set of instructions defined under that workflow. |
 
 ![neurobot's architecture](https://github.com/Automattic/neurobot/blob/master/resources/visual.png?raw=true)
 
