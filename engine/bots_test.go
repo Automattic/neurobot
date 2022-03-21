@@ -1,37 +1,8 @@
 package engine
 
 import (
-	"reflect"
 	"testing"
 )
-
-func TestGetActiveBots(t *testing.T) {
-	dbs, dbs2 := setUp()
-	defer tearDown(dbs, dbs2)
-
-	expected := []Bot{
-		{
-			ID:          2,
-			Name:        "AFK Bot",
-			Identifier:  "bot_afk",
-			Description: "Used to post AFK messages for team members",
-			Username:    "bot_afk",
-			Password:    "bot_afk",
-			CreatedBy:   "ashfame",
-			Active:      true,
-		},
-	}
-
-	got, _ := getActiveBots(dbs)
-	if !reflect.DeepEqual(expected, got) {
-		t.Errorf("incorrect bot data")
-	}
-
-	_, err := getActiveBots(dbs2)
-	if err == nil {
-		t.Error("empty database didn't return error")
-	}
-}
 
 func TestGetBot(t *testing.T) {
 	dbs, dbs2 := setUp()
