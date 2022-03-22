@@ -134,7 +134,7 @@ func insertTOMLWorkflow(dbs db.Session, w WorkflowTOML) error {
 	iwr, err := dbs.Collection("workflows").Insert(model.Workflow{
 		Name:        w.Name,
 		Description: w.Description,
-		Active:      boolToInt(w.Active),
+		Active:      w.Active,
 	})
 	if err != nil {
 		return err
@@ -177,7 +177,7 @@ func updateTOMLWorkflow(dbs db.Session, id uint64, w WorkflowTOML) error {
 	res := dbs.Collection("workflows").Find(id)
 	res.One(&r)
 	r.Name = w.Name
-	r.Active = boolToInt(w.Active)
+	r.Active = w.Active
 	r.Description = w.Description
 	err := res.Update(r)
 	if err != nil {

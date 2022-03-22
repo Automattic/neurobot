@@ -12,25 +12,25 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 			ID:          11,
 			Name:        "MVP",
 			Description: "",
-			Active:      1,
+			Active:      true,
 		},
 		"Deactivated Workflow": {
 			ID:          12,
 			Name:        "Deactivated Workflow",
 			Description: "",
-			Active:      0,
+			Active:      false,
 		},
 		"Toml imported Workflow": {
 			ID:          13,
 			Name:        "Toml imported Workflow",
 			Description: "",
-			Active:      1,
+			Active:      true,
 		},
 		"Toml imported Workflow 2": {
 			ID:          14,
 			Name:        "Toml imported Workflow 2",
 			Description: "",
-			Active:      0,
+			Active:      false,
 		},
 	}
 
