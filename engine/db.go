@@ -2,7 +2,7 @@ package engine
 
 import (
 	"fmt"
-	model "neurobot/model/workflow"
+	wf "neurobot/app/workflow"
 	"strings"
 	"time"
 
@@ -94,11 +94,10 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 	return
 }
 
+// get all active workflows out of the database
 func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
-	// get all active workflows out of the database
-	var savedWorkflows []model.Workflow
-	res := dbs.Collection("workflows").Find(db.Cond{"active": "1"})
-	err = res.All(&savedWorkflows)
+	repository := wf.NewRepository(dbs)
+	savedWorkflows, err := repository.FindActive()
 	if err != nil {
 		return
 	}
