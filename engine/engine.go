@@ -197,7 +197,7 @@ func (e *engine) registerWebhookTrigger(t *webhookt) {
 	t.engine = e
 
 	// Register routes on webhook listener http server
-	e.WebhookListener.RegisterRoute(
+	err := e.WebhookListener.RegisterRoute(
 		fmt.Sprintf("/webhooks-listener/%s", t.urlSuffix),
 		func(w netHttp.ResponseWriter, val map[string]string) {
 			t.SetPayload(payloadData{
@@ -207,6 +207,9 @@ func (e *engine) registerWebhookTrigger(t *webhookt) {
 			e.eventBus.Publish(event.TriggerTopic(), t)
 		},
 	)
+	if err != nil {
+		log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
+	}
 
 	e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.urlSuffix))
 }
