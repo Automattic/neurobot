@@ -342,15 +342,15 @@ func setUp() (db.Session, db.Session) {
 			log.Fatal(err)
 		}
 	}
+
+	fixtures.Bots(dbs)
+
 	for _, sql := range *getDataInsertsSQL() {
 		_, err = dbs.SQL().Exec(sql)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-
-	// Create bot fixtures
-	fixtures.Bots(dbs)
 
 	// Setup empty database now
 	dbs2, err := sqlite.Open(sqlite.ConnectionURL{Database: "./db_empty.db"})
