@@ -9,34 +9,34 @@ import (
 	"time"
 )
 
-type HttpPoller struct {
+type poller struct {
 	interval time.Duration
 	url      *url.URL
 	eventBus event.Bus
 }
 
-func NewHttpPoller(duration string, url *url.URL, eventBus event.Bus) *HttpPoller {
+func NewHttpPoller(duration string, url *url.URL, eventBus event.Bus) *poller {
 	interval, err := time.ParseDuration(duration)
 	if err != nil {
 		log.Printf("Failed to parse duration %s, defaulting to 1 minute", duration)
 		interval, _ = time.ParseDuration("1m")
 	}
 
-	return &HttpPoller{
+	return &poller{
 		interval: interval,
 		url:      url,
 		eventBus: eventBus,
 	}
 }
 
-func (poller *HttpPoller) Run() {
+func (poller *poller) Run() {
 	for {
 		time.Sleep(poller.interval)
 		poller.poll()
 	}
 }
 
-func (poller *HttpPoller) poll() {
+func (poller *poller) poll() {
 	response, err := http.Get(poller.url.String())
 	if err != nil {
 		log.Printf("Failed to poll %s: %s", poller.url.String(), err)
