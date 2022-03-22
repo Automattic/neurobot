@@ -9,6 +9,7 @@ import (
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
+	"neurobot/model/bot"
 	"strings"
 	"sync"
 
@@ -45,8 +46,9 @@ type engine struct {
 	matrixusername   string
 	matrixpassword   string
 
-	db       db.Session
-	eventBus event.Bus
+	db            db.Session
+	eventBus      event.Bus
+	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
 	triggers  map[string]map[string]Trigger
@@ -58,6 +60,7 @@ type engine struct {
 
 type RunParams struct {
 	EventBus             event.Bus
+	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
 	PortWebhookListener  string
@@ -421,9 +424,16 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 
 func (e *engine) wakeUpMatrixBots() (err error) {
 	// load all bots one by one and accept any invitations within our own homeserver
-	bots, err := getActiveBots(e.db)
+	modelBots, err := e.botRepository.FindActive()
 	if err != nil {
 		return
+	}
+
+	// Convert model/bot to engine/bot
+	// TODO: Remove once engine/bot has been replaced in favour of model/bot
+	var bots []Bot
+	for _, modelBot := range modelBots {
+		bots = append(bots, MakeBotFromModelBot(modelBot))
 	}
 
 	// use waitgroup to wait for all bots' instances to be ready
@@ -469,6 +479,7 @@ func NewEngine(p RunParams) *engine {
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
 	e.eventBus = p.EventBus
+	e.botRepository = p.BotRepository
 
 	return &e
 }

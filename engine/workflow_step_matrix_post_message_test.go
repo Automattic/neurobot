@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"neurobot/app/bot"
 	"testing"
 
 	"maunium.net/go/mautrix"
@@ -65,12 +66,12 @@ func TestGetMatrixClient(t *testing.T) {
 		},
 		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
 		{
-			asBot:        "bot_something",
+			asBot:        "foo",
 			clientOrigin: "bot1",
 		},
 		// When bot identifier is specified, use the matrix client instatiated by the particular bot credentials
 		{
-			asBot:        "bot_afk",
+			asBot:        "bar",
 			clientOrigin: "bot2",
 		},
 	}
@@ -86,6 +87,7 @@ func TestGetMatrixClient(t *testing.T) {
 		e.bots = make(map[uint64]MatrixClient)
 		e.bots[1] = NewMockMatrixClient("bot1")
 		e.bots[2] = NewMockMatrixClient("bot2")
+		e.botRepository = bot.NewRepository(dbs)
 
 		// get step instance
 		s := &postMessageMatrixWorkflowStep{
@@ -148,7 +150,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "Message!",
 			messageSent:       "Test!\nMessage!",
 			isError:           false,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -164,7 +166,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "Message!",
 			messageSent:       "Message!",
 			isError:           false,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -180,7 +182,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "",
 			messageSent:       "Hello:",
 			isError:           false,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -196,7 +198,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "",
 			messageSent:       "",
 			isError:           true,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -212,7 +214,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "throwerr",
 			messageSent:       "",
 			isError:           true,
-			asBot:             "bot_something",
+			asBot:             "foo",
 			homeserver:        "https://example.com",
 		},
 		{
@@ -220,7 +222,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			payload:           "Message!",
 			messageSent:       "Test!\nMessage!",
 			isError:           true,
-			asBot:             "bot_something",        // otherwise e.client will be used
+			asBot:             "foo",                  // otherwise e.client will be used
 			homeserver:        " https://example.com", // invalid url to test returning of an error
 		},
 		{
@@ -242,6 +244,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 		e.matrixServerURL = table.homeserver
 		e.bots = make(map[uint64]MatrixClient)
 		e.bots[1] = botMatrixClient
+		e.botRepository = bot.NewRepository(dbs)
 
 		s := &postMessageMatrixWorkflowStep{
 			workflowStep: workflowStep{

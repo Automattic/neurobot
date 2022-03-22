@@ -3,9 +3,9 @@ package engine
 import (
 	"errors"
 	"fmt"
+	model "neurobot/model/bot"
 	"strings"
 
-	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
@@ -25,21 +25,17 @@ type Bot struct {
 	e *engine
 }
 
-func getActiveBots(dbs db.Session) (bots []Bot, err error) {
-	res := dbs.Collection("bots").Find(db.Cond{"active": 1})
-	err = res.All(&bots)
-	if err != nil {
-		return
+func MakeBotFromModelBot(bot model.Bot) Bot {
+	return Bot{
+		ID:          bot.ID,
+		Identifier:  bot.Identifier,
+		Name:        bot.Name,
+		Description: bot.Description,
+		Username:    bot.Username,
+		Password:    bot.Password,
+		CreatedBy:   bot.CreatedBy,
+		Active:      bot.Active,
 	}
-
-	return
-}
-
-func getBot(dbs db.Session, identifier string) (b Bot, err error) {
-	res := dbs.Collection("bots").Find(db.Cond{"identifier": identifier})
-	err = res.One(&b)
-
-	return
 }
 
 func (b *Bot) IsHydrated() bool {

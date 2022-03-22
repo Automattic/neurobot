@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"neurobot/app"
+	"neurobot/app/bot"
+	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"os"
 	"strconv"
@@ -41,6 +43,13 @@ func main() {
 	log.Println("Debug:", debug)
 	log.Printf("Loaded environment variables from %s\n", *envFile)
 	log.Printf("Using database file %s\n", dbFile)
+
+	databaseSession, err := database.MakeDatabaseSession()
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	botRepository := bot.NewRepository(databaseSession)
 
 	bus := event.NewMemoryBus()
 	app.Run(bus)
@@ -84,6 +93,7 @@ func main() {
 
 	p := engine.RunParams{
 		EventBus:             bus,
+		BotRepository:        botRepository,
 		Debug:                debug,
 		PortWebhookListener:  webhookListenerPort,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
