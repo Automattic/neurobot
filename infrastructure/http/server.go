@@ -55,9 +55,13 @@ func (s Server) RegisterRoute(route string, fn registeredRoute) error {
 				var jsonResult map[string]interface{}
 				body, err := ioutil.ReadAll(r.Body)
 				if err != nil {
+					log.Printf("error during json unmarshalling: %s\n", err)
 					http.Error(w, "400 bad request", http.StatusBadRequest)
 				}
-				json.Unmarshal(body, &jsonResult)
+				if err := json.Unmarshal(body, &jsonResult); err != nil {
+					log.Printf("error during json unmarshalling: %s\n", err)
+					http.Error(w, "500 Server error: couldn't decode json", http.StatusInternalServerError)
+				}
 			case "application/x-www-form-urlencoded":
 				err := r.ParseForm()
 				if err != nil {
