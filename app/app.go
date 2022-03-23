@@ -1,14 +1,26 @@
 package app
 
-import "neurobot/infrastructure/event"
+import (
+	"neurobot/infrastructure/event"
+	b "neurobot/model/bot"
+	w "neurobot/model/workflow"
+)
 
 type app struct {
-	eventBus event.Bus
+	eventBus           event.Bus
+	botRepository      b.Repository
+	workflowRepository w.Repository
 }
 
-func NewApp(eventBus event.Bus) *app {
+func NewApp(
+	eventBus event.Bus,
+	botRepository b.Repository,
+	workflowRepository w.Repository,
+) *app {
 	return &app{
-		eventBus: eventBus,
+		eventBus:           eventBus,
+		botRepository:      botRepository,
+		workflowRepository: workflowRepository,
 	}
 }
 

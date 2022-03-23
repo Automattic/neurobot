@@ -6,6 +6,7 @@ import (
 	"log"
 	application "neurobot/app"
 	"neurobot/app/bot"
+	"neurobot/app/workflow"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
@@ -50,9 +51,10 @@ func main() {
 	}
 
 	botRepository := bot.NewRepository(databaseSession)
+	workflowRepository := workflow.NewRepository(databaseSession)
 
 	bus := event.NewMemoryBus()
-	app := application.NewApp(bus)
+	app := application.NewApp(bus, botRepository, workflowRepository)
 	if err := app.Run(); err != nil {
 		log.Fatalf("%s", err)
 	}
