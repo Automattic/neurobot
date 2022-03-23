@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	netHttp "net/http"
@@ -37,7 +36,7 @@ type MatrixClient interface {
 
 type engine struct {
 	debug                bool
-	portWebhookListener  string
+	WebhookListener      http.Server
 	workflowsDefTOMLFile string
 
 	isMatrix         bool // Do we mean to run a matrix client?
@@ -63,7 +62,7 @@ type RunParams struct {
 	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
-	PortWebhookListener  string
+	WebhookListener      http.Server
 	WorkflowsDefTOMLFile string
 	IsMatrix             bool
 	MatrixServerName     string // domain in use, part of identity
@@ -165,9 +164,7 @@ func (e *engine) ShutDown() {
 func (e *engine) Run() {
 	e.log("\nAt last, running the engine now..")
 
-	go e.runPoller()
-
-	e.runWebhookListener()
+	e.runPoller()
 }
 
 func (e *engine) log(m string) {
@@ -200,8 +197,20 @@ func (e *engine) registerWebhookTrigger(t *webhookt) {
 	// Add engine instance to inside of trigger, required for starting workflows
 	t.engine = e
 
-	// Let the engine know what urlSuffix are associated with this particular instance of trigger
-	e.triggers["webhook"][t.urlSuffix] = t
+	// Register routes on webhook listener http server
+	err := e.WebhookListener.RegisterRoute(
+		fmt.Sprintf("/webhooks-listener/%s", t.urlSuffix),
+		func(w netHttp.ResponseWriter, val map[string]string) {
+			t.SetPayload(payloadData{
+				Message: val["message"],
+				Room:    val["room"],
+			})
+			e.eventBus.Publish(event.TriggerTopic(), t)
+		},
+	)
+	if err != nil {
+		log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
+	}
 
 	e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.urlSuffix))
 }
@@ -262,91 +271,6 @@ func (e *engine) loadData() {
 
 func (e *engine) handleTOMLDefinitions() {
 	if err := parseTOMLDefs(e); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (e *engine) runWebhookListener() {
-	netHttp.HandleFunc("/", func(w netHttp.ResponseWriter, r *netHttp.Request) {
-		e.log(fmt.Sprintf("Request received on webhook listener! %s", r.URL.Path))
-
-		if !strings.HasPrefix(r.URL.Path, "/webhooks-listener/") {
-			netHttp.Error(w, "404 not found.", netHttp.StatusNotFound)
-			return
-		}
-
-		suffix := strings.TrimSuffix(
-			strings.TrimPrefix(
-				r.URL.Path,
-				"/webhooks-listener/",
-			),
-			"/",
-		)
-
-		t, exists := e.triggers["webhook"][suffix]
-		e.log(fmt.Sprintf("suffix: %s registered: %t", suffix, exists))
-		if exists {
-
-			var message string
-			var room string
-
-			switch r.Method {
-			case "GET":
-				messageSlice, ok := r.URL.Query()["message"]
-				if !ok || len(messageSlice) < 1 {
-					netHttp.Error(w, "400 bad request (No message parameter provided)", netHttp.StatusBadRequest)
-					return
-				}
-				message = messageSlice[0]
-				if roomSlice, ok := r.URL.Query()["room"]; ok {
-					if len(roomSlice) == 1 && roomSlice[0] == "" {
-						netHttp.Error(w, "400 bad request (No room value specified)", netHttp.StatusBadRequest)
-						return
-					}
-					room = roomSlice[0]
-				}
-			case "POST":
-				switch r.Header.Values("Content-Type")[0] {
-				case "application/json":
-					decoder := json.NewDecoder(r.Body)
-					var data payloadData
-					err := decoder.Decode(&data)
-					if err != nil {
-						panic(err)
-					}
-
-					message = data.Message
-					room = data.Room
-				case "application/x-www-form-urlencoded":
-					err := r.ParseForm()
-					if err != nil {
-						panic(err)
-					}
-					message = r.Form.Get("message")
-					room = r.Form.Get("room")
-				}
-			}
-
-			if message == "" {
-				netHttp.Error(w, "400 bad request (No message to post)", netHttp.StatusBadRequest)
-				return
-			}
-
-			e.log(fmt.Sprintf(">> %s [%s]", message, room))
-
-			t.SetPayload(payloadData{
-				Message: message,
-				Room:    room,
-			})
-			e.eventBus.Publish(event.TriggerTopic(), t)
-		} else {
-			netHttp.Error(w, "404 not found.", netHttp.StatusNotFound)
-			return
-		}
-	})
-
-	e.log(fmt.Sprintf("> Starting webhook listener at port %s...", e.portWebhookListener))
-	if err := netHttp.ListenAndServe(":"+e.portWebhookListener, nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -471,7 +395,7 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.portWebhookListener = p.PortWebhookListener
+	e.WebhookListener = p.WebhookListener
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
