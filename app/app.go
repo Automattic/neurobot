@@ -2,11 +2,22 @@ package app
 
 import "neurobot/infrastructure/event"
 
-// Run contains all our app's entry points, e.g. a CLI, an incoming HTTP request, or an event coming from the event bus.
-func Run(bus event.Bus) {
+type app struct {
+	eventBus event.Bus
+}
+
+func NewApp(eventBus event.Bus) *app {
+	return &app{
+		eventBus: eventBus,
+	}
+}
+
+func (app app) Run() (err error) {
 	// TODO
 
 	// go bus.Subscribe(event.TriggerTopic(), func(event interface{}) {
 	//	// do something with the event
 	// })
+
+	return err
 }

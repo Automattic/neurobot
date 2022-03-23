@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"neurobot/app"
+	application "neurobot/app"
 	"neurobot/app/bot"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
@@ -52,7 +52,10 @@ func main() {
 	botRepository := bot.NewRepository(databaseSession)
 
 	bus := event.NewMemoryBus()
-	app.Run(bus)
+	app := application.NewApp(bus)
+	if err := app.Run(); err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	// TODO: Code from this point on should eventually be moved out of this file.
 
