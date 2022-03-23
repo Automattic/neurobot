@@ -66,8 +66,20 @@ func (repository *repository) Save(workflow *model.Workflow) error {
 	return repository.insert(workflow)
 }
 
-func (repository *repository) update(workflow *model.Workflow) error {
-	panic("implement me")
+func (repository *repository) update(workflow *model.Workflow) (err error) {
+	var existing model.Workflow
+
+	result := repository.collection.Find(workflow.ID)
+	if err = result.One(&existing); err != nil {
+		return
+	}
+
+	existing.Name = workflow.Name
+	existing.Description = workflow.Description
+	existing.Active = workflow.Active
+	existing.Identifier = workflow.Identifier
+
+	return result.Update(existing)
 }
 
 func (repository *repository) insert(workflow *model.Workflow) (err error) {

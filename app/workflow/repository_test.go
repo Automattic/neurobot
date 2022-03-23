@@ -60,3 +60,31 @@ func TestInsert(t *testing.T) {
 		}
 	})
 }
+
+func TestUpdate(t *testing.T) {
+	database.Test(func(session db.Session) {
+		workflows := fixtures.Workflows(session)
+		repository := NewRepository(session)
+
+		workflow := workflows["QuickStart Demo"]
+		workflow.Name = "updated name"
+
+		if err := repository.Save(&workflow); err != nil {
+			t.Errorf("failed to update workflow: %s", err)
+		}
+
+		var got model.Workflow
+		result := session.Collection("workflows").Find(db.Cond{"id": workflow.ID})
+		if err := result.One(&got); err != nil {
+			t.Errorf("failed to find workflow: %s", err)
+		}
+
+		if got.Name != workflow.Name {
+			t.Errorf("failed to update workflow: name was not updated")
+		}
+
+		if !reflect.DeepEqual(got, workflow) {
+			t.Errorf("unexpected result update workflow")
+		}
+	})
+}
