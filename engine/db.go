@@ -2,11 +2,9 @@ package engine
 
 import (
 	"fmt"
+	"github.com/upper/db/v4"
 	wf "neurobot/app/workflow"
 	"strings"
-	"time"
-
-	"github.com/upper/db/v4"
 )
 
 type TriggerRow struct {
@@ -69,23 +67,6 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 				},
 				webhooktMeta: webhooktMeta{
 					urlSuffix: getTriggerMeta(dbs, row.ID, "urlSuffix"),
-				},
-			})
-
-		case "poll":
-			pollingInterval, _ := time.ParseDuration(getTriggerMeta(dbs, row.ID, "pollingInterval"))
-			t = append(t, &pollt{
-				trigger: trigger{
-					id:          row.ID,
-					variety:     row.Variety,
-					name:        row.Name,
-					description: row.Description,
-					workflowID:  row.WorkflowID,
-				},
-				polltMeta: polltMeta{
-					url:             getTriggerMeta(dbs, row.ID, "url"),
-					endpointType:    getTriggerMeta(dbs, row.ID, "endpointType"),
-					pollingInterval: pollingInterval,
 				},
 			})
 		}

@@ -2,6 +2,8 @@ package engine
 
 import (
 	"fmt"
+	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/sqlite"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -10,10 +12,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/upper/db/v4"
-	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 func TestGetConfiguredTriggers(t *testing.T) {
@@ -40,20 +38,6 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			workflowID:  11,
 		},
 		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
-	})
-	expected = append(expected, &pollt{
-		trigger: trigger{
-			id:          12,
-			variety:     "poll",
-			name:        "Blog RSS Feed Poller",
-			description: "",
-			workflowID:  12,
-		},
-		polltMeta: polltMeta{
-			url:             "https://wordpress.org/news/feed/",
-			endpointType:    "rss",
-			pollingInterval: time.Hour,
-		},
 	})
 	expected = append(expected, &webhookt{
 		trigger: trigger{
@@ -399,8 +383,6 @@ func getDataInsertsSQL() *[]string {
 		// Triggers
 		// 'webhook' variety (Active)
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
-		// 'poll' variety (Active)
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (12,'Blog RSS Feed Poller','','poll',12,1);`,
 		// InActive Trigger (soon to be removed)
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook',99,0);`,
 		// TOML imported workflow's trigger - 'webhook' variety
@@ -419,10 +401,6 @@ func getDataInsertsSQL() *[]string {
 		// Trigger Meta
 		// For 'webhook' variety trigger
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,
-		// For 'poll' variety trigger
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (12,12,'url','https://wordpress.org/news/feed/');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (13,12,'endpointType','rss');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (14,12,'pollingInterval','1h');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (15,14,'urlSuffix','unittest');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (16,15,'urlSuffix','unittest');`,
 
