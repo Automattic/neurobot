@@ -161,9 +161,7 @@ func (e *engine) ShutDown() {
 func (e *engine) Run() {
 	e.log("\nAt last, running the engine now..")
 
-	go e.runPoller()
-
-	e.WebhookListener.Run()
+	e.runPoller()
 }
 
 func (e *engine) log(m string) {

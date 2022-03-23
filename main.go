@@ -111,4 +111,6 @@ func main() {
 	defer e.ShutDown()
 
 	e.Run()
+
+	webhookListenerServer.Run() // blocking
 }
