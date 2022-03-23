@@ -5,4 +5,5 @@ type Workflow struct {
 	Name        string `db:"name"`
 	Description string `db:"description"`
 	Active      bool   `db:"active"`
+	Identifier  string
 }
