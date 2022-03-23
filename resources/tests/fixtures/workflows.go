@@ -6,6 +6,13 @@ import (
 	"neurobot/model/workflow"
 )
 
+type metaRow struct {
+	ID         uint64 `db:"id,omitempty"`
+	WorkflowID uint64 `db:"workflow_id"`
+	Key        string `db:"key"`
+	Value      string `db:"value"`
+}
+
 func Workflows(session db.Session) map[string]workflow.Workflow {
 	// Make sure there are no workflows configured elsewhere than these fixtures.
 	// TODO: Currently migrations insert the "QuickStart Demo" workflow in the workflows table.
@@ -39,12 +46,14 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 			Name:        "Toml imported Workflow",
 			Description: "",
 			Active:      true,
+			Identifier:  "TOMLTEST1",
 		},
 		"Toml imported Workflow 2": {
 			ID:          14,
 			Name:        "Toml imported Workflow 2",
 			Description: "",
 			Active:      false,
+			Identifier:  "TOMLTEST2",
 		},
 	}
 
@@ -52,6 +61,17 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 		_, err := session.Collection("workflows").Insert(fixture)
 		if err != nil {
 			log.Fatalf("Failed to insert fixtures for workflows: %s", err)
+		}
+
+		if fixture.Identifier != "" {
+			_, err := session.Collection("workflow_meta").Insert(metaRow{
+				WorkflowID: fixture.ID,
+				Key:        "toml_identifier",
+				Value:      fixture.Identifier,
+			})
+			if err != nil {
+				log.Fatalf("Failed to insert fixtures for workflow meta: %s", err)
+			}
 		}
 	}
 

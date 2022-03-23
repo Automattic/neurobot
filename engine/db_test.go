@@ -396,10 +396,6 @@ func getDBSchemaSQL() *[]string {
 
 func getDataInsertsSQL() *[]string {
 	return &[]string{
-		// Workflow meta for TOML identifier
-		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (11,13,'toml_identifier','TOMLTEST1');`,
-		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (12,14,'toml_identifier','TOMLTEST2');`,
-
 		// Triggers
 		// 'webhook' variety (Active)
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
