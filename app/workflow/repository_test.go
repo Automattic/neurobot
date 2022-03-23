@@ -34,3 +34,29 @@ func TestFindActive(t *testing.T) {
 		}
 	})
 }
+
+func TestInsert(t *testing.T) {
+	database.Test(func(session db.Session) {
+		repository := NewRepository(session)
+
+		workflow := model.Workflow{
+			Name:        "foobarbaz-12345",
+			Description: "foo",
+			Active:      true,
+		}
+
+		if err := repository.Save(&workflow); err != nil {
+			t.Errorf("failed to insert workflow: %s", err)
+		}
+
+		var got model.Workflow
+		result := session.Collection("workflows").Find(db.Cond{"id": workflow.ID})
+		if err := result.One(&got); err != nil {
+			t.Errorf("failed to find workflow: %s", err)
+		}
+
+		if !reflect.DeepEqual(got, workflow) {
+			t.Errorf("unexpected result insert workflow")
+		}
+	})
+}

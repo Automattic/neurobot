@@ -57,3 +57,24 @@ func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
 
 	return
 }
+
+func (repository *repository) Save(workflow *model.Workflow) error {
+	if workflow.ID > 0 {
+		return repository.update(workflow)
+	}
+
+	return repository.insert(workflow)
+}
+
+func (repository *repository) update(workflow *model.Workflow) error {
+	panic("implement me")
+}
+
+func (repository *repository) insert(workflow *model.Workflow) (err error) {
+	result, err := repository.collection.Insert(workflow)
+	if err == nil {
+		workflow.ID = uint64(result.ID().(int64))
+	}
+
+	return
+}
