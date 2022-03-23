@@ -5,23 +5,23 @@ import (
 	model "neurobot/model/bot"
 )
 
-type Repository struct {
+type repository struct {
 	collection db.Collection
 }
 
-func NewRepository(session db.Session) *Repository {
-	return &Repository{
+func NewRepository(session db.Session) *repository {
+	return &repository{
 		collection: session.Collection("bots"),
 	}
 }
 
-func (repository *Repository) FindActive() (bots []model.Bot, err error) {
+func (repository *repository) FindActive() (bots []model.Bot, err error) {
 	result := repository.collection.Find(db.Cond{"active": 1})
 	err = result.All(&bots)
 	return
 }
 
-func (repository *Repository) FindByIdentifier(identifier string) (bot model.Bot, err error) {
+func (repository *repository) FindByIdentifier(identifier string) (bot model.Bot, err error) {
 	result := repository.collection.Find(db.Cond{"identifier": identifier})
 	err = result.One(&bot)
 	return
