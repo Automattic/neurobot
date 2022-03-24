@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-type registeredRoute func(w http.ResponseWriter, val map[string]string)
+type requestHandler func(w http.ResponseWriter, val map[string]string)
 
 type httpError struct {
 	StatusCode int
@@ -19,14 +19,14 @@ type httpError struct {
 // Server holds the data for running a http server
 type Server struct {
 	port   int
-	routes map[string]registeredRoute
+	routes map[string]requestHandler
 }
 
 // NewServer returns a new instance of http server
 func NewServer(port int) *Server {
 	return &Server{
 		port:   port,
-		routes: make(map[string]registeredRoute),
+		routes: make(map[string]requestHandler),
 	}
 }
 
@@ -39,7 +39,7 @@ func (s *Server) Run() {
 }
 
 // RegisterRoute saves the callback func for a particular route
-func (s *Server) RegisterRoute(route string, fn registeredRoute) error {
+func (s *Server) RegisterRoute(route string, fn requestHandler) error {
 	if _, ok := s.routes[route]; ok {
 		return fmt.Errorf("route %s already registered", route)
 	}
