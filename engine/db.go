@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	wf "neurobot/app/workflow"
 	"strings"
 	"time"
 
@@ -21,12 +22,6 @@ type TriggerMetaRow struct {
 	TriggerID uint64 `db:"trigger_id"`
 	Key       string `db:"key"`
 	Value     string `db:"value"`
-}
-type WorkflowRow struct {
-	ID          uint64 `db:"id,omitempty"`
-	Name        string `db:"name"`
-	Description string `db:"description"`
-	Active      int    `db:"active"`
 }
 type WorkflowMetaRow struct {
 	ID         uint64 `db:"id,omitempty"`
@@ -99,11 +94,10 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 	return
 }
 
+// get all active workflows out of the database
 func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
-	// get all active workflows out of the database
-	var savedWorkflows []WorkflowRow
-	res := dbs.Collection("workflows").Find(db.Cond{"active": "1"})
-	err = res.All(&savedWorkflows)
+	repository := wf.NewRepository(dbs)
+	savedWorkflows, err := repository.FindActive()
 	if err != nil {
 		return
 	}

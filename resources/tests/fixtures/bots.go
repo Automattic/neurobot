@@ -2,6 +2,7 @@ package fixtures
 
 import (
 	"github.com/upper/db/v4"
+	"log"
 	"neurobot/model/bot"
 )
 
@@ -40,7 +41,10 @@ func Bots(session db.Session) map[string]bot.Bot {
 	}
 
 	for _, fixture := range fixtures {
-		_, _ = session.Collection("bots").Insert(fixture)
+		_, err := session.Collection("bots").Insert(fixture)
+		if err != nil {
+			log.Fatalf("Failed to insert fixtures for bots: %s", err)
+		}
 	}
 
 	return fixtures

@@ -3,6 +3,7 @@ package engine
 import (
 	"crypto/sha256"
 	"fmt"
+	model "neurobot/model/workflow"
 	"strconv"
 
 	"github.com/BurntSushi/toml"
@@ -130,10 +131,10 @@ func getTOMLMapping(dbs db.Session) (m tomlMapping, err error) {
 
 func insertTOMLWorkflow(dbs db.Session, w WorkflowTOML) error {
 	// insert workflow
-	iwr, err := dbs.Collection("workflows").Insert(WorkflowRow{
+	iwr, err := dbs.Collection("workflows").Insert(model.Workflow{
 		Name:        w.Name,
 		Description: w.Description,
-		Active:      boolToInt(w.Active),
+		Active:      w.Active,
 	})
 	if err != nil {
 		return err
@@ -172,11 +173,11 @@ func insertTOMLWorkflow(dbs db.Session, w WorkflowTOML) error {
 
 func updateTOMLWorkflow(dbs db.Session, id uint64, w WorkflowTOML) error {
 	// update workflow basic details
-	r := WorkflowRow{}
+	r := model.Workflow{}
 	res := dbs.Collection("workflows").Find(id)
 	res.One(&r)
 	r.Name = w.Name
-	r.Active = boolToInt(w.Active)
+	r.Active = w.Active
 	r.Description = w.Description
 	err := res.Update(r)
 	if err != nil {

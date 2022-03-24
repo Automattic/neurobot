@@ -342,15 +342,16 @@ func setUp() (db.Session, db.Session) {
 			log.Fatal(err)
 		}
 	}
+
+	fixtures.Bots(dbs)
+	fixtures.Workflows(dbs)
+
 	for _, sql := range *getDataInsertsSQL() {
 		_, err = dbs.SQL().Exec(sql)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-
-	// Create bot fixtures
-	fixtures.Bots(dbs)
 
 	// Setup empty database now
 	dbs2, err := sqlite.Open(sqlite.ConnectionURL{Database: "./db_empty.db"})
@@ -395,21 +396,6 @@ func getDBSchemaSQL() *[]string {
 
 func getDataInsertsSQL() *[]string {
 	return &[]string{
-
-		// Workflows
-		// Regular Workflow (Active)
-		`INSERT INTO "workflows" ("id","name","description","active") VALUES (11,'MVP','',1);`,
-		// Deactivated Workflow
-		`INSERT INTO "workflows" ("id","name","description","active") VALUES (12,'Deactivated Workflow','',0);`,
-		// Workflow imported via TOML (Active)
-		`INSERT INTO "workflows" ("id","name","description","active") VALUES (13,'Toml imported Workflow','',1);`,
-		// Workflow imported via TOML (InActive)
-		`INSERT INTO "workflows" ("id","name","description","active") VALUES (14,'Toml imported Workflow 2','',0);`,
-
-		// Workflow meta for TOML identifier
-		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (11,13,'toml_identifier','TOMLTEST1');`,
-		`INSERT INTO "workflow_meta" ("id","workflow_id","key","value") VALUES (12,14,'toml_identifier','TOMLTEST2');`,
-
 		// Triggers
 		// 'webhook' variety (Active)
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
