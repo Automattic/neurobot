@@ -28,7 +28,7 @@ func TestStdoutWorkflowStep(t *testing.T) {
 	e := NewMockEngine()
 	for _, table := range tables {
 		s := &stdoutWorkflowStep{}
-		s.run(payloadData{Message: table.input}, e)
+		s.run(map[string]string{"Message": table.input}, e)
 
 		got := out.(*bytes.Buffer).String()
 		if got != table.output+"\n" {

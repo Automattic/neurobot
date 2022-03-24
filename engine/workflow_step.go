@@ -1,7 +1,7 @@
 package engine
 
 type WorkflowStep interface {
-	run(payloadData, *engine) (payloadData, error) // accepts payload from workflow and returns after modification (if desired)
+	run(map[string]string, *engine) (map[string]string, error) // accepts payload from workflow and returns after modification (if desired)
 }
 
 type workflowStep struct {

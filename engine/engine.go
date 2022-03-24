@@ -70,11 +70,6 @@ type RunParams struct {
 	MatrixPassword       string
 }
 
-type payloadData struct {
-	Message string
-	Room    string
-}
-
 func (e *engine) StartUpLite() {
 	e.log("Starting up engine..")
 
@@ -196,9 +191,20 @@ func (e *engine) registerWebhookTrigger(t *Trigger) {
 		err := e.WebhookListener.RegisterRoute(
 			fmt.Sprintf("/webhooks-listener/%s", t.meta["urlSuffix"]),
 			func(w netHttp.ResponseWriter, val map[string]string) {
-				t.SetPayload(payloadData{
-					Message: val["message"],
-					Room:    val["room"],
+				// explicitly set expected payload values here, otherwise it would panic if a nonexistent key on map is accessed later down the pipeline
+				var message string
+				var room string
+				var ok bool
+				if message, ok = val["message"]; !ok {
+					message = ""
+				}
+				if room, ok = val["room"]; !ok {
+					room = ""
+				}
+
+				t.SetPayload(map[string]string{
+					"Message": message,
+					"Room":    room,
 				})
 				e.eventBus.Publish(event.TriggerTopic(), t)
 				// log.Printf("%+v\n", t)
