@@ -1,4 +1,4 @@
-package engine
+package trigger
 
 type Trigger struct {
 	id          uint64

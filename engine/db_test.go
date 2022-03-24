@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"neurobot/model/trigger"
 	"neurobot/resources/tests/fixtures"
 	"os"
 	"reflect"
@@ -19,9 +20,9 @@ func TestGetConfiguredTriggers(t *testing.T) {
 	dbs, dbs2 := setUp()
 	defer tearDown(dbs, dbs2)
 
-	var expected []Trigger
+	var expected []trigger.Trigger
 
-	expected = append(expected, Trigger{
+	expected = append(expected, trigger.Trigger{
 		id:          1,
 		variety:     "webhook",
 		name:        "CURL Request Catcher",
@@ -31,7 +32,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			"urlSuffix": "quickstart",
 		},
 	})
-	expected = append(expected, Trigger{
+	expected = append(expected, trigger.Trigger{
 		id:          11,
 		variety:     "webhook",
 		name:        "Matticspace CURL",
@@ -41,7 +42,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			"urlSuffix": "mcsp",
 		},
 	})
-	expected = append(expected, Trigger{
+	expected = append(expected, trigger.Trigger{
 		id:          14,
 		variety:     "webhook",
 		name:        "Regular webhook trigger",
@@ -51,7 +52,7 @@ func TestGetConfiguredTriggers(t *testing.T) {
 			"urlSuffix": "unittest",
 		},
 	})
-	expected = append(expected, Trigger{
+	expected = append(expected, trigger.Trigger{
 		id:          15,
 		variety:     "webhook",
 		name:        "Regular webhook trigger",

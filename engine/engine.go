@@ -8,6 +8,7 @@ import (
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	"neurobot/model/bot"
+	"neurobot/model/trigger"
 	"strings"
 	"sync"
 
@@ -49,7 +50,7 @@ type engine struct {
 	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
-	triggers  map[string]map[string]Trigger
+	triggers  map[string]map[string]trigger.Trigger
 
 	bots map[uint64]MatrixClient // All matrix client instances of bots
 
@@ -76,8 +77,8 @@ func (e *engine) StartUpLite() {
 	// Initialize maps
 	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
-	e.triggers = make(map[string]map[string]Trigger)
-	e.triggers["webhook"] = make(map[string]Trigger)
+	e.triggers = make(map[string]map[string]trigger.Trigger)
+	e.triggers["webhook"] = make(map[string]trigger.Trigger)
 
 	// Establish database connection
 	e.log("Attempting to establish database connection..")
@@ -94,17 +95,17 @@ func (e *engine) StartUpLite() {
 	e.loadData()
 
 	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
-		var trigger Trigger
+		var t trigger.Trigger
 
 		switch event.(type) {
 		default:
 			return
-		case Trigger:
-			trigger = event.(Trigger)
+		case trigger.Trigger:
+			t = event.(trigger.Trigger)
 		}
 
-		workflow := e.workflows[trigger.GetWorkflowId()]
-		workflow.run(trigger.GetPayload(), e)
+		workflow := e.workflows[t.GetWorkflowId()]
+		workflow.run(t.GetPayload(), e)
 	})
 
 	e.log("Finished starting up engine.")
@@ -184,7 +185,7 @@ func (e *engine) loadDB() (err error) {
 	return
 }
 
-func (e *engine) registerWebhookTrigger(t *Trigger) {
+func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
 	switch t.variety {
 	case "webhook":
 		// Register routes on webhook listener http server
