@@ -36,7 +36,7 @@ type MatrixClient interface {
 
 type engine struct {
 	debug                bool
-	WebhookListener      http.Server
+	WebhookListener      *http.Server
 	workflowsDefTOMLFile string
 
 	isMatrix         bool // Do we mean to run a matrix client?
@@ -62,7 +62,7 @@ type RunParams struct {
 	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
-	WebhookListener      http.Server
+	WebhookListener      *http.Server
 	WorkflowsDefTOMLFile string
 	IsMatrix             bool
 	MatrixServerName     string // domain in use, part of identity

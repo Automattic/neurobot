@@ -17,15 +17,15 @@ type Server struct {
 }
 
 // NewServer returns a new instance of http server
-func NewServer(port int) Server {
-	return Server{
+func NewServer(port int) *Server {
+	return &Server{
 		port:   port,
 		routes: make(map[string]registeredRoute),
 	}
 }
 
 // Run method starts the http server
-func (s Server) Run() {
+func (s *Server) Run() {
 	log.Printf("Starting webhook listener at port %d", s.port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", s.port), nil); err != nil {
 		log.Fatal(err)
@@ -33,7 +33,7 @@ func (s Server) Run() {
 }
 
 // RegisterRoute saves the callback func for a particular route
-func (s Server) RegisterRoute(route string, fn registeredRoute) error {
+func (s *Server) RegisterRoute(route string, fn registeredRoute) error {
 	if _, ok := s.routes[route]; ok {
 		return fmt.Errorf("route %s already registered", route)
 	}
