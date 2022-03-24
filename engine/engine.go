@@ -208,7 +208,6 @@ func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
 					"Room":    room,
 				})
 				e.eventBus.Publish(event.TriggerTopic(), t)
-				// log.Printf("%+v\n", t)
 			},
 		)
 		if err != nil {
