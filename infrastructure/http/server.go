@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-type requestHandler func(w http.ResponseWriter, val map[string]string)
+type requestHandler func(w http.ResponseWriter, r *http.Request, val map[string]string)
 
 type httpError struct {
 	StatusCode int
@@ -54,7 +54,7 @@ func (s *Server) RegisterRoute(route string, fn requestHandler) error {
 			return
 		}
 
-		fn(w, requestParameters)
+		fn(w, r, requestParameters)
 	})
 
 	return nil
