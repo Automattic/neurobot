@@ -10,6 +10,12 @@ import (
 
 type registeredRoute func(w http.ResponseWriter, val map[string]string)
 
+type httpError struct {
+	StatusCode int
+	Message    string
+	Error      error
+}
+
 // Server holds the data for running a http server
 type Server struct {
 	port   int
@@ -42,40 +48,61 @@ func (s *Server) RegisterRoute(route string, fn registeredRoute) error {
 
 	// handle the actual request
 	http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
-		values := make(map[string]string)
-		switch r.Method {
-		case "GET":
-			q := r.URL.Query()
-			for i, v := range q {
-				values[i] = v[0]
-			}
-		case "POST":
-			switch r.Header.Values("Content-Type")[0] {
-			case "application/json":
-				var jsonResult map[string]interface{}
-				body, err := ioutil.ReadAll(r.Body)
-				if err != nil {
-					log.Printf("error during json unmarshalling: %s\n", err)
-					http.Error(w, "400 bad request", http.StatusBadRequest)
-				}
-				if err := json.Unmarshal(body, &jsonResult); err != nil {
-					log.Printf("error during json unmarshalling: %s\n", err)
-					http.Error(w, "500 Server error: couldn't decode json", http.StatusInternalServerError)
-				}
-			case "application/x-www-form-urlencoded":
-				err := r.ParseForm()
-				if err != nil {
-					http.Error(w, "400 bad request", http.StatusBadRequest)
-				}
-				q := r.Form
-				for i, v := range q {
-					values[i] = v[0]
-				}
-			}
+		requestParameters, err := s.parseRequest(r)
+		if err != nil {
+			log.Printf("Failed to parse request: %s", err.Error)
+			http.Error(w, err.Message, err.StatusCode)
+			return
 		}
 
-		fn(w, values)
+		fn(w, requestParameters)
 	})
 
 	return nil
+}
+
+func (s Server) parseRequest(r *http.Request) (values map[string]string, err *httpError) {
+	values = make(map[string]string)
+	switch r.Method {
+	case "GET":
+		q := r.URL.Query()
+		for i, v := range q {
+			values[i] = v[0]
+		}
+	case "POST":
+		switch r.Header.Values("Content-Type")[0] {
+		case "application/json":
+			var jsonResult map[string]interface{}
+			body, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				return nil, &httpError{
+					StatusCode: http.StatusBadRequest,
+					Message:    "Failed to parse JSON request body",
+					Error:      err,
+				}
+			}
+			if err := json.Unmarshal(body, &jsonResult); err != nil {
+				return nil, &httpError{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to parse JSON request body",
+					Error:      err,
+				}
+			}
+		case "application/x-www-form-urlencoded":
+			err := r.ParseForm()
+			if err != nil {
+				return nil, &httpError{
+					StatusCode: http.StatusBadRequest,
+					Message:    "Failed to parse request body",
+					Error:      err,
+				}
+			}
+			q := r.Form
+			for i, v := range q {
+				values[i] = v[0]
+			}
+		}
+	}
+
+	return
 }
