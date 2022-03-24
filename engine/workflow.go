@@ -8,7 +8,7 @@ type workflow struct {
 	id          uint64
 	name        string
 	description string
-	payload     payloadData
+	payload     map[string]string
 	steps       []WorkflowStep
 }
 
@@ -20,7 +20,7 @@ func (w *workflow) run(payload interface{}, e *engine) {
 	e.log(fmt.Sprintf("\nRunning workflow #%d payload:%s\n", w.id, payload))
 
 	// save payload inside of workflow, as we rinse-repeat it within the loop below
-	w.payload = payload.(payloadData)
+	w.payload = payload.(map[string]string)
 
 	var err error
 	// loop through all the steps inside of this workflow

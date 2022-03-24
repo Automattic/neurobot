@@ -51,13 +51,13 @@ func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClie
 	return e.client, nil
 }
 
-func (s postMessageMatrixWorkflowStep) run(p payloadData, e *engine) (payloadData, error) {
-	msg := p.Message
+func (s postMessageMatrixWorkflowStep) run(p map[string]string, e *engine) (map[string]string, error) {
+	msg := p["Message"]
 
 	// Append message specified in definition of this step as a prefix to the payload
 	if s.messagePrefix != "" {
-		if p.Message != "" {
-			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p.Message)
+		if p["Message"] != "" {
+			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p["Message"])
 		} else {
 			msg = s.messagePrefix
 		}
@@ -65,8 +65,8 @@ func (s postMessageMatrixWorkflowStep) run(p payloadData, e *engine) (payloadDat
 
 	// Override room defined in meta, if provided in payload
 	room := s.room
-	if p.Room != "" {
-		room = p.Room
+	if p["Room"] != "" {
+		room = p["Room"]
 	}
 
 	// ensure we have data to work with

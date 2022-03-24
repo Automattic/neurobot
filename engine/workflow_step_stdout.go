@@ -16,11 +16,11 @@ type stdoutWorkflowStep struct {
 	workflowStep
 }
 
-func (s stdoutWorkflowStep) run(p payloadData, e *engine) (payloadData, error) {
-	if p.Message == "" {
-		p.Message = "[Empty line]"
+func (s stdoutWorkflowStep) run(p map[string]string, e *engine) (map[string]string, error) {
+	if p["Message"] == "" {
+		p["Message"] = "[Empty line]"
 	}
-	fmt.Fprintln(out, ">>"+p.Message)
+	fmt.Fprintln(out, ">>"+p["Message"])
 
 	return p, nil
 }

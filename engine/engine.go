@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 	netHttp "net/http"
-	"net/url"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	"neurobot/model/bot"
+	"neurobot/model/trigger"
 	"strings"
 	"sync"
 
@@ -50,7 +50,7 @@ type engine struct {
 	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
-	triggers  map[string]map[string]Trigger
+	triggers  map[string]map[string]trigger.Trigger
 
 	bots map[uint64]MatrixClient // All matrix client instances of bots
 
@@ -71,20 +71,14 @@ type RunParams struct {
 	MatrixPassword       string
 }
 
-type payloadData struct {
-	Message string
-	Room    string
-}
-
 func (e *engine) StartUpLite() {
 	e.log("Starting up engine..")
 
 	// Initialize maps
 	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
-	e.triggers = make(map[string]map[string]Trigger)
-	e.triggers["webhook"] = make(map[string]Trigger)
-	e.triggers["poll"] = make(map[string]Trigger)
+	e.triggers = make(map[string]map[string]trigger.Trigger)
+	e.triggers["webhook"] = make(map[string]trigger.Trigger)
 
 	// Establish database connection
 	e.log("Attempting to establish database connection..")
@@ -101,17 +95,17 @@ func (e *engine) StartUpLite() {
 	e.loadData()
 
 	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
-		var trigger Trigger
+		var t trigger.Trigger
 
 		switch event.(type) {
 		default:
 			return
-		case Trigger:
-			trigger = event.(Trigger)
+		case trigger.Trigger:
+			t = event.(trigger.Trigger)
 		}
 
-		workflow := e.workflows[trigger.GetWorkflowId()]
-		workflow.run(trigger.GetPayload(), e)
+		workflow := e.workflows[t.WorkflowID]
+		workflow.run(t.Payload, e)
 	})
 
 	e.log("Finished starting up engine.")
@@ -163,8 +157,6 @@ func (e *engine) ShutDown() {
 
 func (e *engine) Run() {
 	e.log("\nAt last, running the engine now..")
-
-	e.runPoller()
 }
 
 func (e *engine) log(m string) {
@@ -193,33 +185,37 @@ func (e *engine) loadDB() (err error) {
 	return
 }
 
-func (e *engine) registerWebhookTrigger(t *webhookt) {
-	// Add engine instance to inside of trigger, required for starting workflows
-	t.engine = e
+func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
+	switch t.Variety {
+	case "webhook":
+		// Register routes on webhook listener http server
+		err := e.WebhookListener.RegisterRoute(
+			fmt.Sprintf("/webhooks-listener/%s", t.Meta["urlSuffix"]),
+			func(w netHttp.ResponseWriter, val map[string]string) {
+				// explicitly set expected payload values here, otherwise it would panic if a nonexistent key on map is accessed later down the pipeline
+				var message string
+				var room string
+				var ok bool
+				if message, ok = val["message"]; !ok {
+					message = ""
+				}
+				if room, ok = val["room"]; !ok {
+					room = ""
+				}
 
-	// Register routes on webhook listener http server
-	err := e.WebhookListener.RegisterRoute(
-		fmt.Sprintf("/webhooks-listener/%s", t.urlSuffix),
-		func(w netHttp.ResponseWriter, val map[string]string) {
-			t.SetPayload(payloadData{
-				Message: val["message"],
-				Room:    val["room"],
-			})
-			e.eventBus.Publish(event.TriggerTopic(), t)
-		},
-	)
-	if err != nil {
-		log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
+				t.Payload = map[string]string{
+					"Message": message,
+					"Room":    room,
+				}
+				e.eventBus.Publish(event.TriggerTopic(), t)
+			},
+		)
+		if err != nil {
+			log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
+		}
+
+		e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.Name, t.Meta["urlSuffix"]))
 	}
-
-	e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.urlSuffix))
-}
-
-func (e *engine) registerPollTrigger(t *pollt) {
-	// Add engine instance to inside of trigger, required for starting workflows
-	t.engine = e
-
-	e.log(fmt.Sprintf("> Registered poll trigger: %s (pollingInterval: %s)", t.name, t.pollingInterval))
 }
 
 func (e *engine) loadData() {
@@ -229,12 +225,7 @@ func (e *engine) loadData() {
 		log.Fatalf("Error loading triggers from database: %s", err)
 	}
 	for _, t := range triggers {
-		switch t := t.(type) {
-		case *webhookt:
-			e.registerWebhookTrigger(t)
-		case *pollt:
-			e.registerPollTrigger(t)
-		}
+		e.registerWebhookTrigger(&t)
 	}
 
 	// load workflows
@@ -272,25 +263,6 @@ func (e *engine) loadData() {
 func (e *engine) handleTOMLDefinitions() {
 	if err := parseTOMLDefs(e); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func (e *engine) runPoller() {
-	e.log("> Running polls...")
-	for _, t := range e.triggers["poll"] {
-		// TODO: It's not currently possible to access the metadata of a trigger of type "poll".
-		// Since there aren't currently poller triggers implemented, we'll just hardcode some values
-		// here for now, for demonstrations purposes.
-		// In the future, the pollingInterval should be extracted from the trigger of type poller, since it's actually
-		// part of the poller configuration and not the trigger.
-		pollingInterval := "10m"
-		urlToPoll, _ := url.Parse("https://example.com")
-
-		// TODO: this is here just so the t variable is not unused
-		t.GetWorkflowId()
-
-		httpPoller := http.NewHttpPoller(pollingInterval, urlToPoll, e.eventBus)
-		go httpPoller.Run()
 	}
 }
 

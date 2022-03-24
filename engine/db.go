@@ -3,8 +3,8 @@ package engine
 import (
 	"fmt"
 	wf "neurobot/app/workflow"
+	"neurobot/model/trigger"
 	"strings"
-	"time"
 
 	"github.com/upper/db/v4"
 )
@@ -45,7 +45,7 @@ type WFStepMetaRow struct {
 	Value  string `db:"value"`
 }
 
-func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
+func getConfiguredTriggers(dbs db.Session) (t []trigger.Trigger, err error) {
 	// get all active triggers out of the database
 	var configuredTriggers []TriggerRow
 	res := dbs.Collection("triggers").Find(db.Cond{"active": "1"})
@@ -59,34 +59,15 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 
 		switch row.Variety {
 		case "webhook":
-			t = append(t, &webhookt{
-				trigger: trigger{
-					id:          row.ID,
-					variety:     row.Variety,
-					name:        row.Name,
-					description: row.Description,
-					workflowID:  row.WorkflowID,
-				},
-				webhooktMeta: webhooktMeta{
-					urlSuffix: getTriggerMeta(dbs, row.ID, "urlSuffix"),
-				},
-			})
-
-		case "poll":
-			pollingInterval, _ := time.ParseDuration(getTriggerMeta(dbs, row.ID, "pollingInterval"))
-			t = append(t, &pollt{
-				trigger: trigger{
-					id:          row.ID,
-					variety:     row.Variety,
-					name:        row.Name,
-					description: row.Description,
-					workflowID:  row.WorkflowID,
-				},
-				polltMeta: polltMeta{
-					url:             getTriggerMeta(dbs, row.ID, "url"),
-					endpointType:    getTriggerMeta(dbs, row.ID, "endpointType"),
-					pollingInterval: pollingInterval,
-				},
+			meta := make(map[string]string)
+			meta["urlSuffix"] = getTriggerMeta(dbs, row.ID, "urlSuffix")
+			t = append(t, trigger.Trigger{
+				ID:          row.ID,
+				Variety:     row.Variety,
+				Name:        row.Name,
+				Description: row.Description,
+				WorkflowID:  row.WorkflowID,
+				Meta:        meta,
 			})
 		}
 	}

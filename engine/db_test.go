@@ -5,12 +5,12 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"neurobot/model/trigger"
 	"neurobot/resources/tests/fixtures"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -20,60 +20,47 @@ func TestGetConfiguredTriggers(t *testing.T) {
 	dbs, dbs2 := setUp()
 	defer tearDown(dbs, dbs2)
 
-	var expected []Trigger
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          1,
-			variety:     "webhook",
-			name:        "CURL Request Catcher",
-			description: "This webhook trigger will receive your webhook request while showcasing the demo",
-			workflowID:  1,
-		},
-		webhooktMeta: webhooktMeta{urlSuffix: "quickstart"},
-	})
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          11,
-			variety:     "webhook",
-			name:        "Matticspace CURL",
-			description: "",
-			workflowID:  11,
-		},
-		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
-	})
-	expected = append(expected, &pollt{
-		trigger: trigger{
-			id:          12,
-			variety:     "poll",
-			name:        "Blog RSS Feed Poller",
-			description: "",
-			workflowID:  12,
-		},
-		polltMeta: polltMeta{
-			url:             "https://wordpress.org/news/feed/",
-			endpointType:    "rss",
-			pollingInterval: time.Hour,
+	var expected []trigger.Trigger
+
+	expected = append(expected, trigger.Trigger{
+		ID:          1,
+		Variety:     "webhook",
+		Name:        "CURL Request Catcher",
+		Description: "This webhook trigger will receive your webhook request while showcasing the demo",
+		WorkflowID:  1,
+		Meta: map[string]string{
+			"urlSuffix": "quickstart",
 		},
 	})
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          14,
-			variety:     "webhook",
-			name:        "Regular webhook trigger",
-			description: "regular description",
-			workflowID:  13,
+	expected = append(expected, trigger.Trigger{
+		ID:          11,
+		Variety:     "webhook",
+		Name:        "Matticspace CURL",
+		Description: "",
+		WorkflowID:  11,
+		Meta: map[string]string{
+			"urlSuffix": "mcsp",
 		},
-		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
 	})
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          15,
-			variety:     "webhook",
-			name:        "Regular webhook trigger",
-			description: "regular description",
-			workflowID:  14,
+	expected = append(expected, trigger.Trigger{
+		ID:          14,
+		Variety:     "webhook",
+		Name:        "Regular webhook trigger",
+		Description: "regular description",
+		WorkflowID:  13,
+		Meta: map[string]string{
+			"urlSuffix": "unittest",
 		},
-		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
+	})
+	expected = append(expected, trigger.Trigger{
+		ID:          15,
+		Variety:     "webhook",
+		Name:        "Regular webhook trigger",
+		Description: "regular description",
+		WorkflowID:  14,
+		Meta: map[string]string{
+			"urlSuffix": "unittest",
+		},
 	})
 
 	got, err := getConfiguredTriggers(dbs)
@@ -399,8 +386,6 @@ func getDataInsertsSQL() *[]string {
 		// Triggers
 		// 'webhook' variety (Active)
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
-		// 'poll' variety (Active)
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (12,'Blog RSS Feed Poller','','poll',12,1);`,
 		// InActive Trigger (soon to be removed)
 		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook',99,0);`,
 		// TOML imported workflow's trigger - 'webhook' variety
@@ -419,10 +404,6 @@ func getDataInsertsSQL() *[]string {
 		// Trigger Meta
 		// For 'webhook' variety trigger
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,
-		// For 'poll' variety trigger
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (12,12,'url','https://wordpress.org/news/feed/');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (13,12,'endpointType','rss');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (14,12,'pollingInterval','1h');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (15,14,'urlSuffix','unittest');`,
 		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (16,15,'urlSuffix','unittest');`,
 

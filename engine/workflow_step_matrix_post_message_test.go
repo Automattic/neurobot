@@ -259,7 +259,7 @@ func TestPostMessageMatrixWorkflowStep(t *testing.T) {
 			},
 		}
 
-		_, err := s.run(payloadData{Message: table.payload}, e)
+		_, err := s.run(map[string]string{"Message": table.payload}, e)
 		if err != nil {
 			if !table.isError {
 				t.Errorf("throwing error when it should not. payload: (%s) stepPrefixMessage: (%s)", table.payload, table.stepPrefixMessage)
