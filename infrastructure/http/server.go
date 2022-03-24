@@ -32,7 +32,6 @@ func NewServer(port int) *Server {
 
 // Run method starts the http server
 func (s *Server) Run() {
-	log.Printf("Starting webhook listener at port %d", s.port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", s.port), nil); err != nil {
 		log.Fatal(err)
 	}
