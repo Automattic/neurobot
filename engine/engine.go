@@ -186,11 +186,11 @@ func (e *engine) loadDB() (err error) {
 }
 
 func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
-	switch t.variety {
+	switch t.Variety {
 	case "webhook":
 		// Register routes on webhook listener http server
 		err := e.WebhookListener.RegisterRoute(
-			fmt.Sprintf("/webhooks-listener/%s", t.meta["urlSuffix"]),
+			fmt.Sprintf("/webhooks-listener/%s", t.Meta["urlSuffix"]),
 			func(w netHttp.ResponseWriter, val map[string]string) {
 				// explicitly set expected payload values here, otherwise it would panic if a nonexistent key on map is accessed later down the pipeline
 				var message string
@@ -215,7 +215,7 @@ func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
 			log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
 		}
 
-		e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.meta["urlSuffix"]))
+		e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.Name, t.Meta["urlSuffix"]))
 	}
 }
 

@@ -1,23 +1,23 @@
 package trigger
 
 type Trigger struct {
-	id          uint64
-	variety     string
-	name        string
-	description string
-	workflowID  uint64
-	payload     map[string]string
-	meta        map[string]string
+	ID          uint64
+	Variety     string
+	Name        string
+	Description string
+	WorkflowID  uint64
+	Payload     map[string]string
+	Meta        map[string]string
 }
 
 func (t *Trigger) GetWorkflowId() uint64 {
-	return t.workflowID
+	return t.WorkflowID
 }
 
 func (t *Trigger) GetPayload() map[string]string {
-	return t.payload
+	return t.Payload
 }
 
 func (t *Trigger) SetPayload(payload map[string]string) {
-	t.payload = payload
+	t.Payload = payload
 }

@@ -62,12 +62,12 @@ func getConfiguredTriggers(dbs db.Session) (t []trigger.Trigger, err error) {
 			meta := make(map[string]string)
 			meta["urlSuffix"] = getTriggerMeta(dbs, row.ID, "urlSuffix")
 			t = append(t, trigger.Trigger{
-				id:          row.ID,
-				variety:     row.Variety,
-				name:        row.Name,
-				description: row.Description,
-				workflowID:  row.WorkflowID,
-				meta:        meta,
+				ID:          row.ID,
+				Variety:     row.Variety,
+				Name:        row.Name,
+				Description: row.Description,
+				WorkflowID:  row.WorkflowID,
+				Meta:        meta,
 			})
 		}
 	}

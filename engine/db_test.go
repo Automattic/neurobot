@@ -23,42 +23,42 @@ func TestGetConfiguredTriggers(t *testing.T) {
 	var expected []trigger.Trigger
 
 	expected = append(expected, trigger.Trigger{
-		id:          1,
-		variety:     "webhook",
-		name:        "CURL Request Catcher",
-		description: "This webhook trigger will receive your webhook request while showcasing the demo",
-		workflowID:  1,
-		meta: map[string]string{
+		ID:          1,
+		Variety:     "webhook",
+		Name:        "CURL Request Catcher",
+		Description: "This webhook trigger will receive your webhook request while showcasing the demo",
+		WorkflowID:  1,
+		Meta: map[string]string{
 			"urlSuffix": "quickstart",
 		},
 	})
 	expected = append(expected, trigger.Trigger{
-		id:          11,
-		variety:     "webhook",
-		name:        "Matticspace CURL",
-		description: "",
-		workflowID:  11,
-		meta: map[string]string{
+		ID:          11,
+		Variety:     "webhook",
+		Name:        "Matticspace CURL",
+		Description: "",
+		WorkflowID:  11,
+		Meta: map[string]string{
 			"urlSuffix": "mcsp",
 		},
 	})
 	expected = append(expected, trigger.Trigger{
-		id:          14,
-		variety:     "webhook",
-		name:        "Regular webhook trigger",
-		description: "regular description",
-		workflowID:  13,
-		meta: map[string]string{
+		ID:          14,
+		Variety:     "webhook",
+		Name:        "Regular webhook trigger",
+		Description: "regular description",
+		WorkflowID:  13,
+		Meta: map[string]string{
 			"urlSuffix": "unittest",
 		},
 	})
 	expected = append(expected, trigger.Trigger{
-		id:          15,
-		variety:     "webhook",
-		name:        "Regular webhook trigger",
-		description: "regular description",
-		workflowID:  14,
-		meta: map[string]string{
+		ID:          15,
+		Variety:     "webhook",
+		Name:        "Regular webhook trigger",
+		Description: "regular description",
+		WorkflowID:  14,
+		Meta: map[string]string{
 			"urlSuffix": "unittest",
 		},
 	})
