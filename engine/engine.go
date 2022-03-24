@@ -104,8 +104,8 @@ func (e *engine) StartUpLite() {
 			t = event.(trigger.Trigger)
 		}
 
-		workflow := e.workflows[t.GetWorkflowId()]
-		workflow.run(t.GetPayload(), e)
+		workflow := e.workflows[t.WorkflowID]
+		workflow.run(t.Payload, e)
 	})
 
 	e.log("Finished starting up engine.")
@@ -203,10 +203,10 @@ func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
 					room = ""
 				}
 
-				t.SetPayload(map[string]string{
+				t.Payload = map[string]string{
 					"Message": message,
 					"Room":    room,
-				})
+				}
 				e.eventBus.Publish(event.TriggerTopic(), t)
 			},
 		)
