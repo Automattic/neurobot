@@ -189,23 +189,27 @@ func (e *engine) loadDB() (err error) {
 	return
 }
 
-func (e *engine) registerWebhookTrigger(t *webhookt) {
-	// Register routes on webhook listener http server
-	err := e.WebhookListener.RegisterRoute(
-		fmt.Sprintf("/webhooks-listener/%s", t.urlSuffix),
-		func(w netHttp.ResponseWriter, val map[string]string) {
-			t.SetPayload(payloadData{
-				Message: val["message"],
-				Room:    val["room"],
-			})
-			e.eventBus.Publish(event.TriggerTopic(), t)
-		},
-	)
-	if err != nil {
-		log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
-	}
+func (e *engine) registerWebhookTrigger(t *Trigger) {
+	switch t.variety {
+	case "webhook":
+		// Register routes on webhook listener http server
+		err := e.WebhookListener.RegisterRoute(
+			fmt.Sprintf("/webhooks-listener/%s", t.meta["urlSuffix"]),
+			func(w netHttp.ResponseWriter, val map[string]string) {
+				t.SetPayload(payloadData{
+					Message: val["message"],
+					Room:    val["room"],
+				})
+				e.eventBus.Publish(event.TriggerTopic(), t)
+				// log.Printf("%+v\n", t)
+			},
+		)
+		if err != nil {
+			log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
+		}
 
-	e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.urlSuffix))
+		e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.name, t.meta["urlSuffix"]))
+	}
 }
 
 func (e *engine) loadData() {
@@ -215,10 +219,7 @@ func (e *engine) loadData() {
 		log.Fatalf("Error loading triggers from database: %s", err)
 	}
 	for _, t := range triggers {
-		switch t := t.(type) {
-		case *webhookt:
-			e.registerWebhookTrigger(t)
-		}
+		e.registerWebhookTrigger(&t)
 	}
 
 	// load workflows

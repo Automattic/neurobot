@@ -2,8 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"github.com/upper/db/v4"
-	"github.com/upper/db/v4/adapter/sqlite"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -12,6 +10,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 func TestGetConfiguredTriggers(t *testing.T) {
@@ -19,45 +20,46 @@ func TestGetConfiguredTriggers(t *testing.T) {
 	defer tearDown(dbs, dbs2)
 
 	var expected []Trigger
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          1,
-			variety:     "webhook",
-			name:        "CURL Request Catcher",
-			description: "This webhook trigger will receive your webhook request while showcasing the demo",
-			workflowID:  1,
+
+	expected = append(expected, Trigger{
+		id:          1,
+		variety:     "webhook",
+		name:        "CURL Request Catcher",
+		description: "This webhook trigger will receive your webhook request while showcasing the demo",
+		workflowID:  1,
+		meta: map[string]string{
+			"urlSuffix": "quickstart",
 		},
-		webhooktMeta: webhooktMeta{urlSuffix: "quickstart"},
 	})
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          11,
-			variety:     "webhook",
-			name:        "Matticspace CURL",
-			description: "",
-			workflowID:  11,
+	expected = append(expected, Trigger{
+		id:          11,
+		variety:     "webhook",
+		name:        "Matticspace CURL",
+		description: "",
+		workflowID:  11,
+		meta: map[string]string{
+			"urlSuffix": "mcsp",
 		},
-		webhooktMeta: webhooktMeta{urlSuffix: "mcsp"},
 	})
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          14,
-			variety:     "webhook",
-			name:        "Regular webhook trigger",
-			description: "regular description",
-			workflowID:  13,
+	expected = append(expected, Trigger{
+		id:          14,
+		variety:     "webhook",
+		name:        "Regular webhook trigger",
+		description: "regular description",
+		workflowID:  13,
+		meta: map[string]string{
+			"urlSuffix": "unittest",
 		},
-		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
 	})
-	expected = append(expected, &webhookt{
-		trigger: trigger{
-			id:          15,
-			variety:     "webhook",
-			name:        "Regular webhook trigger",
-			description: "regular description",
-			workflowID:  14,
+	expected = append(expected, Trigger{
+		id:          15,
+		variety:     "webhook",
+		name:        "Regular webhook trigger",
+		description: "regular description",
+		workflowID:  14,
+		meta: map[string]string{
+			"urlSuffix": "unittest",
 		},
-		webhooktMeta: webhooktMeta{urlSuffix: "unittest"},
 	})
 
 	got, err := getConfiguredTriggers(dbs)

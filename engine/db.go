@@ -2,9 +2,10 @@ package engine
 
 import (
 	"fmt"
-	"github.com/upper/db/v4"
 	wf "neurobot/app/workflow"
 	"strings"
+
+	"github.com/upper/db/v4"
 )
 
 type TriggerRow struct {
@@ -57,17 +58,15 @@ func getConfiguredTriggers(dbs db.Session) (t []Trigger, err error) {
 
 		switch row.Variety {
 		case "webhook":
-			t = append(t, &webhookt{
-				trigger: trigger{
-					id:          row.ID,
-					variety:     row.Variety,
-					name:        row.Name,
-					description: row.Description,
-					workflowID:  row.WorkflowID,
-				},
-				webhooktMeta: webhooktMeta{
-					urlSuffix: getTriggerMeta(dbs, row.ID, "urlSuffix"),
-				},
+			meta := make(map[string]string)
+			meta["urlSuffix"] = getTriggerMeta(dbs, row.ID, "urlSuffix")
+			t = append(t, Trigger{
+				id:          row.ID,
+				variety:     row.Variety,
+				name:        row.Name,
+				description: row.Description,
+				workflowID:  row.WorkflowID,
+				meta:        meta,
 			})
 		}
 	}
