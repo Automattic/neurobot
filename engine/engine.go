@@ -190,7 +190,7 @@ func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
 	case "webhook":
 		// Register routes on webhook listener http server
 		err := e.WebhookListener.RegisterRoute(
-			fmt.Sprintf("/webhooks-listener/%s", t.Meta["urlSuffix"]),
+			t.Meta["urlSuffix"],
 			func(w netHttp.ResponseWriter, val map[string]string) {
 				// explicitly set expected payload values here, otherwise it would panic if a nonexistent key on map is accessed later down the pipeline
 				var message string

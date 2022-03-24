@@ -46,7 +46,7 @@ func (s *Server) RegisterRoute(route string, fn requestHandler) error {
 	s.routes[route] = fn
 
 	// handle the actual request
-	http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(fmt.Sprintf("/%s", route), func(w http.ResponseWriter, r *http.Request) {
 		requestParameters, err := s.parseRequest(r)
 		if err != nil {
 			log.Printf("Failed to parse request: %s", err.Error)

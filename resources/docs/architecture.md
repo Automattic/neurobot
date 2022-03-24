@@ -19,7 +19,7 @@ If you need to post message as a different bot, meaning a different name and pic
 
 Upon startup, engine would login as all bots individually and maintain a pool of matrix client instances and starts the `sync` process with the homeserver, giving each bot the chance of reacting to events as they come in. It also loads the triggers, workflows and workflow steps that are defined in the database. Do note that TOML file is only parsed once & imported at startup and then everything happens based on the data inside the database. Its only when the program starts again, that TOML file is reimported. In future, we would implement signalling the program to reload TOML file without requiring a reload of the main program itself.
 
-When triggers are loaded, it starts the monitoring process of defined triggers. For `webhook` variety of triggers, we start a single webhooks listener server, which handles all incoming HTTP requests from outside services. All endpoints share a common prefix `webhooks-listener`. For `poller` variety of triggers, it invokes setup mechanism of these triggers, based on which they can keep polling. This isn't well-built yet, just the skeleton of the mechanism exist.
+When triggers are loaded, it starts the monitoring process of defined triggers. For `webhook` variety of triggers, we start a single webhooks listener server, which handles all incoming HTTP requests from outside services. For `poller` variety of triggers, it invokes setup mechanism of these triggers, based on which they can keep polling. This isn't well-built yet, just the skeleton of the mechanism exist.
 
 More variety of triggers are planned such as:
 - Matrix based events (commands invoked, emoji reactions etc)
