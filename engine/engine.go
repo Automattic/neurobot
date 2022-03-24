@@ -190,9 +190,6 @@ func (e *engine) loadDB() (err error) {
 }
 
 func (e *engine) registerWebhookTrigger(t *webhookt) {
-	// Add engine instance to inside of trigger, required for starting workflows
-	t.engine = e
-
 	// Register routes on webhook listener http server
 	err := e.WebhookListener.RegisterRoute(
 		fmt.Sprintf("/webhooks-listener/%s", t.urlSuffix),

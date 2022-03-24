@@ -11,7 +11,6 @@ type trigger struct {
 	variety     string
 	name        string
 	description string
-	engine      *engine
 	workflowID  uint64
 	payload     payloadData
 }
