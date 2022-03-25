@@ -2,12 +2,14 @@ package app
 
 import (
 	"log"
+	netHttp "net/http"
 	r "neurobot/app/runner"
 	"neurobot/engine"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	b "neurobot/model/bot"
 	w "neurobot/model/workflow"
+	"strings"
 )
 
 type app struct {
@@ -35,7 +37,20 @@ func NewApp(
 }
 
 func (app app) Run() (err error) {
-	return err
+	err = app.webhookListener.RegisterRoute(
+		"/",
+		func(response netHttp.ResponseWriter, request *netHttp.Request, payload map[string]string) {
+			workflowIdentifier := strings.TrimPrefix(request.URL.Path, "/")
+			workflow, err := app.workflowRepository.FindByIdentifier(workflowIdentifier)
+			if err != nil {
+				netHttp.NotFound(response, request)
+				return
+			}
+
+			go app.runWorkflow(workflow, payload)
+		})
+
+	return
 }
 
 func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) {
