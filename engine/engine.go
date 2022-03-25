@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"log"
-	netHttp "net/http"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
@@ -188,49 +187,7 @@ func (e *engine) loadDB() (err error) {
 	return
 }
 
-func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
-	switch t.Variety {
-	case "webhook":
-		// Register routes on webhook listener http server
-		err := e.WebhookListener.RegisterRoute(
-			t.Meta["urlSuffix"],
-			func(w netHttp.ResponseWriter, request *netHttp.Request, val map[string]string) {
-				// explicitly set expected payload values here, otherwise it would panic if a nonexistent key on map is accessed later down the pipeline
-				var message string
-				var room string
-				var ok bool
-				if message, ok = val["message"]; !ok {
-					message = ""
-				}
-				if room, ok = val["room"]; !ok {
-					room = ""
-				}
-
-				t.Payload = map[string]string{
-					"Message": message,
-					"Room":    room,
-				}
-				e.eventBus.Publish(event.TriggerTopic(), t)
-			},
-		)
-		if err != nil {
-			log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
-		}
-
-		e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.Name, t.Meta["urlSuffix"]))
-	}
-}
-
 func (e *engine) loadData() {
-	// load triggers & registers them first
-	triggers, err := getConfiguredTriggers(e.db)
-	if err != nil {
-		log.Fatalf("Error loading triggers from database: %s", err)
-	}
-	for _, t := range triggers {
-		e.registerWebhookTrigger(&t)
-	}
-
 	// load workflows
 	workflows, err := getConfiguredWorkflows(e.db)
 	if err != nil {
