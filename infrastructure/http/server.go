@@ -49,7 +49,7 @@ func (s *Server) RegisterRoute(route string, fn requestHandler) error {
 	http.HandleFunc(fmt.Sprintf("/%s", route), func(w http.ResponseWriter, r *http.Request) {
 		requestParameters, err := s.parseRequest(r)
 		if err != nil {
-			log.Printf("Failed to parse request: %s", err.Error)
+			log.Printf("Failed to parse request: %s\n", err.Error)
 			http.Error(w, err.Message, err.StatusCode)
 			return
 		}
