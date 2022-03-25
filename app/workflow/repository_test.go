@@ -53,6 +53,24 @@ func TestFindByID(t *testing.T) {
 	})
 }
 
+func TestFindByIdentifier(t *testing.T) {
+	database.Test(func(session db.Session) {
+		workflows := fixtures.Workflows(session)
+		repository := NewRepository(session)
+
+		got, err := repository.FindByIdentifier("TOMLTEST1")
+		if err != nil {
+			t.Errorf("failed to get workflows by identifier: %s", err)
+		}
+
+		expected := workflows["Toml imported Workflow"]
+
+		if !reflect.DeepEqual(got, expected) {
+			t.Errorf("unexpected result active workflows")
+		}
+	})
+}
+
 func TestInsert(t *testing.T) {
 	database.Test(func(session db.Session) {
 		repository := NewRepository(session)

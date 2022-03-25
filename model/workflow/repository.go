@@ -10,4 +10,7 @@ type Repository interface {
 
 	// FindByID retrieves a workflow by its ID.
 	FindByID(ID uint64) (Workflow, error)
+
+	// FindByIdentifier retrieves a workflow by its unique identifier.
+	FindByIdentifier(identifier string) (Workflow, error)
 }

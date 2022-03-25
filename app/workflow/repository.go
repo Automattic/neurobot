@@ -53,6 +53,16 @@ func (repository *repository) FindByID(ID uint64) (workflow model.Workflow, err 
 	return
 }
 
+func (repository *repository) FindByIdentifier(identifier string) (workflow model.Workflow, err error) {
+	var meta meta
+	result := repository.collectionMeta.Find(db.Cond{"key": "toml_identifier", "value": identifier})
+	err = result.One(&meta)
+
+	workflow, err = repository.FindByID(meta.WorkflowID)
+
+	return
+}
+
 // Load information from workflow_meta table into a workflow object.
 func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
 	var metas []meta
