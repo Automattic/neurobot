@@ -155,10 +155,6 @@ func (e *engine) ShutDown() {
 	e.db.Close()
 }
 
-func (e *engine) Run() {
-	e.log("\nAt last, running the engine now..")
-}
-
 func (e *engine) log(m string) {
 	if e.debug {
 		fmt.Println(m)

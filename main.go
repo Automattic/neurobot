@@ -125,8 +125,6 @@ func main() {
 	}
 	defer e.ShutDown()
 
-	e.Run()
-
 	log.Printf("Starting webhook listener at port %d\n", webhookListenerPort)
 	webhookListenerServer.Run() // blocking
 }
