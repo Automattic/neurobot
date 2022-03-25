@@ -28,7 +28,7 @@ Simply change the value of `active` to `false`
 
 ##### `urlSuffix`
 
-This would be the url suffix in webhooks listening endpoint for your trigger. `https://example.com/webhooks-listener/{urlSuffix}`
+This would be the url suffix in webhooks listening endpoint for your trigger. `https://example.com/{urlSuffix}`
 
 ### Workflow Steps
 
