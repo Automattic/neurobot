@@ -61,12 +61,6 @@ func main() {
 	webhookListenerServer := http.NewServer(webhookListenerPort)
 
 	bus := event.NewMemoryBus()
-	app := application.NewApp(bus, botRepository, workflowRepository, webhookListenerServer)
-	if err := app.Run(); err != nil {
-		log.Fatalf("%s", err)
-	}
-
-	// TODO: Code from this point on should eventually be moved out of this file.
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
@@ -124,6 +118,11 @@ func main() {
 		e.StartUpLite()
 	}
 	defer e.ShutDown()
+
+	app := application.NewApp(bus, botRepository, workflowRepository, webhookListenerServer)
+	if err := app.Run(); err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	log.Printf("Starting webhook listener at port %d\n", webhookListenerPort)
 	webhookListenerServer.Run() // blocking
