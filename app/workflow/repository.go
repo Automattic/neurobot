@@ -41,6 +41,18 @@ func (repository *repository) FindActive() (workflows []model.Workflow, err erro
 	return
 }
 
+func (repository *repository) FindByID(ID uint64) (workflow model.Workflow, err error) {
+	result := repository.collection.Find(db.Cond{"id": ID})
+	err = result.One(&workflow)
+	if err != nil {
+		return
+	}
+
+	err = repository.loadMeta(&workflow)
+
+	return
+}
+
 // Load information from workflow_meta table into a workflow object.
 func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
 	var metas []meta
