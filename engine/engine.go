@@ -19,7 +19,7 @@ import (
 )
 
 type Engine interface {
-	StartUp()
+	StartUp(MatrixClient, mautrix.Syncer)
 	ShutDown()
 	Run()
 	log(string)
