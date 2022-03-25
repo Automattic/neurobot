@@ -53,8 +53,15 @@ func main() {
 	botRepository := bot.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
 
+	// set default port for running webhook listener server
+	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
+	if err != nil {
+		webhookListenerPort = 8080
+	}
+	webhookListenerServer := http.NewServer(webhookListenerPort)
+
 	bus := event.NewMemoryBus()
-	app := application.NewApp(bus, botRepository, workflowRepository)
+	app := application.NewApp(bus, botRepository, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -90,13 +97,6 @@ func main() {
 		}
 	}
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
-
-	// set default port for running webhook listener server
-	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
-	if err != nil {
-		webhookListenerPort = 8080
-	}
-	webhookListenerServer := http.NewServer(webhookListenerPort)
 
 	p := engine.RunParams{
 		EventBus:             bus,
