@@ -35,12 +35,6 @@ func NewApp(
 }
 
 func (app app) Run() (err error) {
-	// TODO
-
-	// go bus.Subscribe(event.TriggerTopic(), func(event interface{}) {
-	//	// do something with the event
-	// })
-
 	return err
 }
 
