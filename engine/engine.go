@@ -5,7 +5,6 @@ import (
 	"log"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
-	"neurobot/infrastructure/http"
 	"neurobot/model/bot"
 	"neurobot/model/trigger"
 	wf "neurobot/model/workflow"
@@ -36,7 +35,6 @@ type MatrixClient interface {
 
 type engine struct {
 	debug                bool
-	WebhookListener      *http.Server
 	workflowsDefTOMLFile string
 
 	isMatrix         bool // Do we mean to run a matrix client?
@@ -62,7 +60,6 @@ type RunParams struct {
 	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
-	WebhookListener      *http.Server
 	WorkflowsDefTOMLFile string
 	IsMatrix             bool
 	MatrixServerName     string // domain in use, part of identity
@@ -327,7 +324,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.WebhookListener = p.WebhookListener
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName

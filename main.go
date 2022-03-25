@@ -96,7 +96,6 @@ func main() {
 		EventBus:             bus,
 		BotRepository:        botRepository,
 		Debug:                debug,
-		WebhookListener:      webhookListenerServer,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
 		MatrixServerName:     serverName,
