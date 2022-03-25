@@ -5,7 +5,6 @@ import (
 	"log"
 	"neurobot/infrastructure/database"
 	"neurobot/model/bot"
-	"neurobot/model/trigger"
 	wf "neurobot/model/workflow"
 	"strings"
 	"sync"
@@ -46,9 +45,7 @@ type engine struct {
 	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
-	triggers  map[string]map[string]trigger.Trigger
-
-	bots map[uint64]MatrixClient // All matrix client instances of bots
+	bots      map[uint64]MatrixClient // All matrix client instances of bots
 
 	client MatrixClient
 }
@@ -71,8 +68,6 @@ func (e *engine) StartUpLite() {
 	// Initialize maps
 	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
-	e.triggers = make(map[string]map[string]trigger.Trigger)
-	e.triggers["webhook"] = make(map[string]trigger.Trigger)
 
 	// Establish database connection
 	e.log("Attempting to establish database connection..")
