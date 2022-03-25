@@ -1,6 +1,8 @@
 package app
 
 import (
+	"log"
+	r "neurobot/app/runner"
 	"neurobot/engine"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
@@ -40,4 +42,18 @@ func (app app) Run() (err error) {
 	// })
 
 	return err
+}
+
+func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) {
+	var runner r.Runner
+
+	switch workflow.Identifier {
+	default:
+		runner = app.engine
+	}
+
+	err := runner.Run(workflow, payload)
+	if err != nil {
+		log.Printf("Error running workflow: %s", err)
+	}
 }
