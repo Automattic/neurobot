@@ -93,7 +93,6 @@ func main() {
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	p := engine.RunParams{
-		EventBus:             bus,
 		BotRepository:        botRepository,
 		Debug:                debug,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,

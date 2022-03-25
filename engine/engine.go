@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"neurobot/infrastructure/database"
-	"neurobot/infrastructure/event"
 	"neurobot/model/bot"
 	"neurobot/model/trigger"
 	wf "neurobot/model/workflow"
@@ -44,7 +43,6 @@ type engine struct {
 	matrixpassword   string
 
 	db            db.Session
-	eventBus      event.Bus
 	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
@@ -56,7 +54,6 @@ type engine struct {
 }
 
 type RunParams struct {
-	EventBus             event.Bus
 	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
@@ -90,20 +87,6 @@ func (e *engine) StartUpLite() {
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.log("Loading data...")
 	e.loadData()
-
-	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
-		var t trigger.Trigger
-
-		switch event.(type) {
-		default:
-			return
-		case trigger.Trigger:
-			t = event.(trigger.Trigger)
-		}
-
-		workflow := e.workflows[t.WorkflowID]
-		workflow.run(t.Payload, e)
-	})
 
 	e.log("Finished starting up engine.")
 }
@@ -330,7 +313,6 @@ func NewEngine(p RunParams) *engine {
 	e.matrixServerURL = p.MatrixServerURL
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
-	e.eventBus = p.EventBus
 	e.botRepository = p.BotRepository
 
 	return &e
