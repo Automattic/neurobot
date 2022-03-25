@@ -1,6 +1,7 @@
 package app
 
 import (
+	"neurobot/engine"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	b "neurobot/model/bot"
@@ -8,6 +9,7 @@ import (
 )
 
 type app struct {
+	engine             engine.Engine
 	eventBus           event.Bus
 	botRepository      b.Repository
 	workflowRepository w.Repository
@@ -15,12 +17,14 @@ type app struct {
 }
 
 func NewApp(
+	engine engine.Engine,
 	eventBus event.Bus,
 	botRepository b.Repository,
 	workflowRepository w.Repository,
 	webhookListener *http.Server,
 ) *app {
 	return &app{
+		engine:             engine,
 		eventBus:           eventBus,
 		botRepository:      botRepository,
 		workflowRepository: workflowRepository,
