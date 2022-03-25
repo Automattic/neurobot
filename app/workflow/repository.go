@@ -19,7 +19,7 @@ type repository struct {
 	collectionMeta db.Collection
 }
 
-func NewRepository(session db.Session) *repository {
+func NewRepository(session db.Session) model.Repository {
 	return &repository{
 		collection:     session.Collection("workflows"),
 		collectionMeta: session.Collection("workflow_meta"),

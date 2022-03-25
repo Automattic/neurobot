@@ -9,7 +9,7 @@ type memoryBus struct {
 	delegate delegate.Bus
 }
 
-func NewMemoryBus() *memoryBus {
+func NewMemoryBus() Bus {
 	return &memoryBus{
 		delegate: delegate.New(),
 	}
