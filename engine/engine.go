@@ -9,6 +9,7 @@ import (
 	"neurobot/infrastructure/http"
 	"neurobot/model/bot"
 	"neurobot/model/trigger"
+	wf "neurobot/model/workflow"
 	"strings"
 	"sync"
 
@@ -20,8 +21,8 @@ import (
 
 type Engine interface {
 	StartUp(MatrixClient, mautrix.Syncer)
+	Run(wf.Workflow, map[string]string) error
 	ShutDown()
-	Run()
 	log(string)
 }
 
@@ -109,6 +110,12 @@ func (e *engine) StartUpLite() {
 	})
 
 	e.log("Finished starting up engine.")
+}
+
+func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
+	workflow := e.workflows[w.ID]
+	workflow.run(payload, e)
+	return nil
 }
 
 func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
