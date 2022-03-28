@@ -51,3 +51,11 @@ func TestIsAlias(t *testing.T) {
 		t.Error("id should be an alias")
 	}
 }
+
+func TestHomeserverDomain(t *testing.T) {
+	id, _ := NewID("#room:matrix.test")
+
+	if id.HomeserverDomain() != "matrix.test" {
+		t.Errorf("homeserver domain should be matrix.test, got %s", id.HomeserverDomain())
+	}
+}
