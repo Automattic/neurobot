@@ -2,7 +2,7 @@ package matrix
 
 import (
 	"maunium.net/go/mautrix"
-	"maunium.net/go/mautrix/event"
+	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
 	mautrixId "maunium.net/go/mautrix/id"
 	msg "neurobot/model/message"
@@ -13,7 +13,7 @@ type mautrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	JoinRoom(roomIDorAlias, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
-	SendMessageEvent(roomID mautrixId.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
+	SendMessageEvent(roomID mautrixId.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 }
 
@@ -63,7 +63,7 @@ func (client *client) SendMessage(roomID room.ID, message msg.Message) error {
 	switch message.ContentType() {
 	case msg.Markdown:
 		rendered := format.RenderMarkdown(message.String(), true, false)
-		_, err = client.mautrix.SendMessageEvent(resolvedRoomID, event.EventMessage, rendered)
+		_, err = client.mautrix.SendMessageEvent(resolvedRoomID, mautrixEvent.EventMessage, rendered)
 
 	case msg.PlainText:
 		_, err = client.mautrix.SendText(resolvedRoomID, message.String())
