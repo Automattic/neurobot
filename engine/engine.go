@@ -3,12 +3,9 @@ package engine
 import (
 	"fmt"
 	"log"
-	netHttp "net/http"
 	"neurobot/infrastructure/database"
-	"neurobot/infrastructure/event"
-	"neurobot/infrastructure/http"
 	"neurobot/model/bot"
-	"neurobot/model/trigger"
+	wf "neurobot/model/workflow"
 	"strings"
 	"sync"
 
@@ -19,9 +16,9 @@ import (
 )
 
 type Engine interface {
-	StartUp()
+	StartUp(MatrixClient, mautrix.Syncer)
+	Run(wf.Workflow, map[string]string) error
 	ShutDown()
-	Run()
 	log(string)
 }
 
@@ -36,7 +33,6 @@ type MatrixClient interface {
 
 type engine struct {
 	debug                bool
-	WebhookListener      *http.Server
 	workflowsDefTOMLFile string
 
 	isMatrix         bool // Do we mean to run a matrix client?
@@ -46,23 +42,18 @@ type engine struct {
 	matrixpassword   string
 
 	db            db.Session
-	eventBus      event.Bus
 	botRepository bot.Repository
 
 	workflows map[uint64]*workflow
-	triggers  map[string]map[string]trigger.Trigger
-
-	bots map[uint64]MatrixClient // All matrix client instances of bots
+	bots      map[uint64]MatrixClient // All matrix client instances of bots
 
 	client MatrixClient
 }
 
 type RunParams struct {
-	EventBus             event.Bus
 	BotRepository        bot.Repository
 	Debug                bool
 	Database             string
-	WebhookListener      *http.Server
 	WorkflowsDefTOMLFile string
 	IsMatrix             bool
 	MatrixServerName     string // domain in use, part of identity
@@ -77,8 +68,6 @@ func (e *engine) StartUpLite() {
 	// Initialize maps
 	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
-	e.triggers = make(map[string]map[string]trigger.Trigger)
-	e.triggers["webhook"] = make(map[string]trigger.Trigger)
 
 	// Establish database connection
 	e.log("Attempting to establish database connection..")
@@ -94,21 +83,13 @@ func (e *engine) StartUpLite() {
 	e.log("Loading data...")
 	e.loadData()
 
-	go e.eventBus.Subscribe(event.TriggerTopic(), func(event interface{}) {
-		var t trigger.Trigger
-
-		switch event.(type) {
-		default:
-			return
-		case trigger.Trigger:
-			t = event.(trigger.Trigger)
-		}
-
-		workflow := e.workflows[t.WorkflowID]
-		workflow.run(t.Payload, e)
-	})
-
 	e.log("Finished starting up engine.")
+}
+
+func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
+	workflow := e.workflows[w.ID]
+	workflow.run(payload, e)
+	return nil
 }
 
 func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
@@ -155,10 +136,6 @@ func (e *engine) ShutDown() {
 	e.db.Close()
 }
 
-func (e *engine) Run() {
-	e.log("\nAt last, running the engine now..")
-}
-
 func (e *engine) log(m string) {
 	if e.debug {
 		fmt.Println(m)
@@ -185,49 +162,7 @@ func (e *engine) loadDB() (err error) {
 	return
 }
 
-func (e *engine) registerWebhookTrigger(t *trigger.Trigger) {
-	switch t.Variety {
-	case "webhook":
-		// Register routes on webhook listener http server
-		err := e.WebhookListener.RegisterRoute(
-			t.Meta["urlSuffix"],
-			func(w netHttp.ResponseWriter, request *netHttp.Request, val map[string]string) {
-				// explicitly set expected payload values here, otherwise it would panic if a nonexistent key on map is accessed later down the pipeline
-				var message string
-				var room string
-				var ok bool
-				if message, ok = val["message"]; !ok {
-					message = ""
-				}
-				if room, ok = val["room"]; !ok {
-					room = ""
-				}
-
-				t.Payload = map[string]string{
-					"Message": message,
-					"Room":    room,
-				}
-				e.eventBus.Publish(event.TriggerTopic(), t)
-			},
-		)
-		if err != nil {
-			log.Printf("error while registering webhook trigger: duplicate route registered: %s\n", err)
-		}
-
-		e.log(fmt.Sprintf("> Registered webhook trigger: %s (urlSuffix: %s)", t.Name, t.Meta["urlSuffix"]))
-	}
-}
-
 func (e *engine) loadData() {
-	// load triggers & registers them first
-	triggers, err := getConfiguredTriggers(e.db)
-	if err != nil {
-		log.Fatalf("Error loading triggers from database: %s", err)
-	}
-	for _, t := range triggers {
-		e.registerWebhookTrigger(&t)
-	}
-
 	// load workflows
 	workflows, err := getConfiguredWorkflows(e.db)
 	if err != nil {
@@ -367,14 +302,12 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.WebhookListener = p.WebhookListener
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
 	e.matrixServerURL = p.MatrixServerURL
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
-	e.eventBus = p.EventBus
 	e.botRepository = p.BotRepository
 
 	return &e

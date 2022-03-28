@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"neurobot/app"
+	application "neurobot/app"
 	"neurobot/app/bot"
+	"neurobot/app/workflow"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
@@ -50,11 +51,16 @@ func main() {
 	}
 
 	botRepository := bot.NewRepository(databaseSession)
+	workflowRepository := workflow.NewRepository(databaseSession)
+
+	// set default port for running webhook listener server
+	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
+	if err != nil {
+		webhookListenerPort = 8080
+	}
+	webhookListenerServer := http.NewServer(webhookListenerPort)
 
 	bus := event.NewMemoryBus()
-	app.Run(bus)
-
-	// TODO: Code from this point on should eventually be moved out of this file.
 
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
@@ -86,18 +92,9 @@ func main() {
 	}
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
-	// set default port for running webhook listener server
-	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
-	if err != nil {
-		webhookListenerPort = 8080
-	}
-	webhookListenerServer := http.NewServer(webhookListenerPort)
-
 	p := engine.RunParams{
-		EventBus:             bus,
 		BotRepository:        botRepository,
 		Debug:                debug,
-		WebhookListener:      webhookListenerServer,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
 		MatrixServerName:     serverName,
@@ -120,7 +117,10 @@ func main() {
 	}
 	defer e.ShutDown()
 
-	e.Run()
+	app := application.NewApp(e, bus, botRepository, workflowRepository, webhookListenerServer)
+	if err := app.Run(); err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	log.Printf("Starting webhook listener at port %d\n", webhookListenerPort)
 	webhookListenerServer.Run() // blocking

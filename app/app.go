@@ -1,12 +1,68 @@
 package app
 
-import "neurobot/infrastructure/event"
+import (
+	"log"
+	netHttp "net/http"
+	r "neurobot/app/runner"
+	"neurobot/engine"
+	"neurobot/infrastructure/event"
+	"neurobot/infrastructure/http"
+	b "neurobot/model/bot"
+	w "neurobot/model/workflow"
+	"strings"
+)
 
-// Run contains all our app's entry points, e.g. a CLI, an incoming HTTP request, or an event coming from the event bus.
-func Run(bus event.Bus) {
-	// TODO
+type app struct {
+	engine             engine.Engine
+	eventBus           event.Bus
+	botRepository      b.Repository
+	workflowRepository w.Repository
+	webhookListener    *http.Server
+}
 
-	// go bus.Subscribe(event.TriggerTopic(), func(event interface{}) {
-	//	// do something with the event
-	// })
+func NewApp(
+	engine engine.Engine,
+	eventBus event.Bus,
+	botRepository b.Repository,
+	workflowRepository w.Repository,
+	webhookListener *http.Server,
+) *app {
+	return &app{
+		engine:             engine,
+		eventBus:           eventBus,
+		botRepository:      botRepository,
+		workflowRepository: workflowRepository,
+		webhookListener:    webhookListener,
+	}
+}
+
+func (app app) Run() (err error) {
+	err = app.webhookListener.RegisterRoute(
+		"/",
+		func(response netHttp.ResponseWriter, request *netHttp.Request, payload map[string]string) {
+			workflowIdentifier := strings.TrimPrefix(request.URL.Path, "/")
+			workflow, err := app.workflowRepository.FindByIdentifier(workflowIdentifier)
+			if err != nil {
+				netHttp.NotFound(response, request)
+				return
+			}
+
+			go app.runWorkflow(workflow, payload)
+		})
+
+	return
+}
+
+func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) {
+	var runner r.Runner
+
+	switch workflow.Identifier {
+	default:
+		runner = app.engine
+	}
+
+	err := runner.Run(workflow, payload)
+	if err != nil {
+		log.Printf("Error running workflow: %s", err)
+	}
 }

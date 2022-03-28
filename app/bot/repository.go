@@ -9,7 +9,7 @@ type repository struct {
 	collection db.Collection
 }
 
-func NewRepository(session db.Session) *repository {
+func NewRepository(session db.Session) model.Repository {
 	return &repository{
 		collection: session.Collection("bots"),
 	}

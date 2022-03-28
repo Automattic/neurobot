@@ -19,7 +19,7 @@ type repository struct {
 	collectionMeta db.Collection
 }
 
-func NewRepository(session db.Session) *repository {
+func NewRepository(session db.Session) model.Repository {
 	return &repository{
 		collection:     session.Collection("workflows"),
 		collectionMeta: session.Collection("workflow_meta"),
@@ -37,6 +37,28 @@ func (repository *repository) FindActive() (workflows []model.Workflow, err erro
 			return nil, err
 		}
 	}
+
+	return
+}
+
+func (repository *repository) FindByID(ID uint64) (workflow model.Workflow, err error) {
+	result := repository.collection.Find(db.Cond{"id": ID})
+	err = result.One(&workflow)
+	if err != nil {
+		return
+	}
+
+	err = repository.loadMeta(&workflow)
+
+	return
+}
+
+func (repository *repository) FindByIdentifier(identifier string) (workflow model.Workflow, err error) {
+	var meta meta
+	result := repository.collectionMeta.Find(db.Cond{"key": "toml_identifier", "value": identifier})
+	err = result.One(&meta)
+
+	workflow, err = repository.FindByID(meta.WorkflowID)
 
 	return
 }
