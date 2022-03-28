@@ -15,7 +15,7 @@ func makeClient() (*client, mocks.MautrixClientMock) {
 }
 
 func TestSendPlainTextMessage(t *testing.T) {
-	client, mockClient := makeClient()
+	client, mautrixMock := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewPlainTextMessage("foo")
 
@@ -24,13 +24,13 @@ func TestSendPlainTextMessage(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !mockClient.WasMessageSent("foo") {
+	if !mautrixMock.WasMessageSent("foo") {
 		t.Error("message: foo wasn't sent")
 	}
 }
 
 func TestSendMarkdownMessage(t *testing.T) {
-	client, mockClient := makeClient()
+	client, mautrixMock := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewMarkdownMessage("foo")
 
@@ -39,7 +39,7 @@ func TestSendMarkdownMessage(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !mockClient.WasMessageSent("foo") {
+	if !mautrixMock.WasMessageSent("foo") {
 		t.Errorf("message: %s wasn't sent", message.String())
 	}
 }
