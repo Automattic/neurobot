@@ -43,3 +43,17 @@ func TestSendMarkdownMessage(t *testing.T) {
 		t.Errorf("message: %s wasn't sent", message.String())
 	}
 }
+
+func TestJoinRoom(t *testing.T) {
+	client, mautrixMock := makeClient()
+	roomID, _ := room.NewID("!foo:matrix.test")
+
+	err := client.JoinRoom(roomID)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !mautrixMock.WasRoomJoined("!foo:matrix.test") {
+		t.Errorf("room wasn't joined")
+	}
+}

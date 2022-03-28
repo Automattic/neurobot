@@ -11,6 +11,7 @@ import (
 
 type mautrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
+	JoinRoom(roomIDorAlias, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID mautrixId.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
@@ -36,6 +37,12 @@ func (client *client) Login(username string, password string) error {
 	})
 
 	return err
+}
+
+func (client *client) JoinRoom(id room.ID) (err error) {
+	_, err = client.mautrix.JoinRoom(id.ID(), "", "")
+
+	return
 }
 
 func (client *client) SendMessage(roomID room.ID, message msg.Message) error {
