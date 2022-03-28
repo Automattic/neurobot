@@ -9,9 +9,12 @@ import (
 
 func makeClient() (*client, mocks.MautrixClientMock) {
 	mautrixMock := mocks.NewMockMatrixClient("bot")
-	client := NewMautrixClient(mautrixMock)
+	client := client{
+		homeserverURL: "matrix.test",
+		mautrix:       mautrixMock,
+	}
 
-	return client, mautrixMock
+	return &client, mautrixMock
 }
 
 func TestSendPlainTextMessage(t *testing.T) {

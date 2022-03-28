@@ -18,13 +18,22 @@ type mautrixClient interface {
 }
 
 type client struct {
-	mautrix mautrixClient
+	homeserverURL string
+	mautrix       mautrixClient
 }
 
-func NewMautrixClient(mautrix mautrixClient) *client {
-	return &client{
-		mautrix: mautrix,
+func NewMautrixClient(homeserverURL string) (*client, error) {
+	mautrixClient, err := mautrix.NewClient(homeserverURL, "", "")
+	if err != nil {
+		return nil, err
 	}
+
+	client := client{
+		homeserverURL: homeserverURL,
+		mautrix:       mautrixClient,
+	}
+
+	return &client, nil
 }
 
 func (client *client) Login(username string, password string) error {
