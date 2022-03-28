@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"neurobot/infrastructure/toml"
 	"os"
 	"reflect"
 	"testing"
@@ -187,12 +188,12 @@ func TestParseTOMLDefs(t *testing.T) {
 func TestInsertTOMLWorkflow(t *testing.T) {
 	dbs, dbs2 := setUp()
 
-	w := WorkflowTOML{
+	w := toml.WorkflowTOML{
 		Identifier:  "BRANDNEWWORKFLOW",
 		Active:      true,
 		Name:        "Something to test",
 		Description: "Some irregular description",
-		Trigger: WorkflowTriggerTOML{
+		Trigger: toml.WorkflowTriggerTOML{
 			Name:        "trigger wow",
 			Description: "amazing description",
 			Variety:     "webhook",
@@ -200,7 +201,7 @@ func TestInsertTOMLWorkflow(t *testing.T) {
 				"urlSuffix": "unittest",
 			},
 		},
-		Steps: []WorkflowStepTOML{
+		Steps: []toml.WorkflowStepTOML{
 			{
 				Active:      true,
 				Name:        "Baby Step",
@@ -266,12 +267,12 @@ func TestUpdateTOMLWorkflow(t *testing.T) {
 	dbs, dbs2 := setUp()
 
 	wid := uint64(13) // TOMLTEST1 identifier workflow is represented by ID 13 in test db
-	w := WorkflowTOML{
+	w := toml.WorkflowTOML{
 		Identifier:  "TOMLTEST1",
 		Active:      true,
 		Name:        "Changed Name",
 		Description: "Changed Description",
-		Trigger: WorkflowTriggerTOML{
+		Trigger: toml.WorkflowTriggerTOML{
 			Name:        "trigger wow",
 			Description: "amazing description",
 			Variety:     "webhook",
@@ -279,7 +280,7 @@ func TestUpdateTOMLWorkflow(t *testing.T) {
 				"urlSuffix": "unittests",
 			},
 		},
-		Steps: []WorkflowStepTOML{
+		Steps: []toml.WorkflowStepTOML{
 			{
 				Active:      true,
 				Name:        "Baby Step",
@@ -383,21 +384,21 @@ func TestGetTOMLMapping(t *testing.T) {
 
 func TestRunSemanticCheckOnTOML(t *testing.T) {
 	tables := []struct {
-		tomlDef   WorkflowDefintionTOML
+		tomlDef   toml.WorkflowDefintionTOML
 		shouldErr bool
 	}{
 		// empty toml is valid toml
 		{
-			tomlDef:   WorkflowDefintionTOML{},
+			tomlDef:   toml.WorkflowDefintionTOML{},
 			shouldErr: false,
 		},
 		// no trigger defined
 		{
-			tomlDef: WorkflowDefintionTOML{
-				Workflows: []WorkflowTOML{
+			tomlDef: toml.WorkflowDefintionTOML{
+				Workflows: []toml.WorkflowTOML{
 					{
 						Identifier: "Test1",
-						Steps: []WorkflowStepTOML{
+						Steps: []toml.WorkflowStepTOML{
 							{},
 						},
 					},
@@ -407,11 +408,11 @@ func TestRunSemanticCheckOnTOML(t *testing.T) {
 		},
 		// no workflow steps defined
 		{
-			tomlDef: WorkflowDefintionTOML{
-				Workflows: []WorkflowTOML{
+			tomlDef: toml.WorkflowDefintionTOML{
+				Workflows: []toml.WorkflowTOML{
 					{
 						Identifier: "Test1",
-						Trigger: WorkflowTriggerTOML{
+						Trigger: toml.WorkflowTriggerTOML{
 							Name:        "something",
 							Description: "something",
 							Variety:     "webhook",
@@ -423,27 +424,27 @@ func TestRunSemanticCheckOnTOML(t *testing.T) {
 		},
 		// duplicate identifier
 		{
-			tomlDef: WorkflowDefintionTOML{
-				Workflows: []WorkflowTOML{
+			tomlDef: toml.WorkflowDefintionTOML{
+				Workflows: []toml.WorkflowTOML{
 					{
 						Identifier: "Test1",
-						Trigger: WorkflowTriggerTOML{
+						Trigger: toml.WorkflowTriggerTOML{
 							Name:        "something",
 							Description: "something",
 							Variety:     "webhook",
 						},
-						Steps: []WorkflowStepTOML{
+						Steps: []toml.WorkflowStepTOML{
 							{},
 						},
 					},
 					{
 						Identifier: "Test1",
-						Trigger: WorkflowTriggerTOML{
+						Trigger: toml.WorkflowTriggerTOML{
 							Name:        "something",
 							Description: "something",
 							Variety:     "webhook",
 						},
-						Steps: []WorkflowStepTOML{
+						Steps: []toml.WorkflowStepTOML{
 							{},
 						},
 					},
@@ -453,27 +454,27 @@ func TestRunSemanticCheckOnTOML(t *testing.T) {
 		},
 		// valid toml
 		{
-			tomlDef: WorkflowDefintionTOML{
-				Workflows: []WorkflowTOML{
+			tomlDef: toml.WorkflowDefintionTOML{
+				Workflows: []toml.WorkflowTOML{
 					{
 						Identifier: "Test1",
-						Trigger: WorkflowTriggerTOML{
+						Trigger: toml.WorkflowTriggerTOML{
 							Name:        "something",
 							Description: "something",
 							Variety:     "webhook",
 						},
-						Steps: []WorkflowStepTOML{
+						Steps: []toml.WorkflowStepTOML{
 							{},
 						},
 					},
 					{
 						Identifier: "Test2",
-						Trigger: WorkflowTriggerTOML{
+						Trigger: toml.WorkflowTriggerTOML{
 							Name:        "something",
 							Description: "something",
 							Variety:     "webhook",
 						},
-						Steps: []WorkflowStepTOML{
+						Steps: []toml.WorkflowStepTOML{
 							{},
 						},
 					},
@@ -484,7 +485,7 @@ func TestRunSemanticCheckOnTOML(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		err := runSemanticCheckOnTOML(table.tomlDef)
+		err := toml.RunSemanticCheckOnTOML(table.tomlDef)
 		if err != nil {
 			if table.shouldErr == false {
 				t.Log(err)
