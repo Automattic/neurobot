@@ -1,8 +1,9 @@
 package workflow
 
 import (
-	"github.com/upper/db/v4"
 	model "neurobot/model/workflow"
+
+	"github.com/upper/db/v4"
 )
 
 const identifierKey = "toml_identifier"
@@ -111,4 +112,21 @@ func (repository *repository) insert(workflow *model.Workflow) (err error) {
 	}
 
 	return
+}
+
+func (repository *repository) GetTOMLMapping() (m map[string]uint64, err error) {
+	// get all workflow meta rows that have toml identifiers saved
+	var wfr []meta
+	res := repository.collectionMeta.Find(db.Cond{"key": "toml_identifier"})
+	err = res.All(&wfr)
+	if err != nil {
+		return
+	}
+
+	m = make(map[string]uint64)
+	for _, row := range wfr {
+		m[row.Value] = row.WorkflowID
+	}
+
+	return m, nil
 }
