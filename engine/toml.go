@@ -7,7 +7,6 @@ import (
 	model "neurobot/model/workflow"
 	"strconv"
 
-	"github.com/BurntSushi/toml"
 	"github.com/upper/db/v4"
 )
 
@@ -16,22 +15,10 @@ type tomlMapping map[string]uint64
 func parseTOMLDefs(e *engine) error {
 	e.log(fmt.Sprintf("Parsing TOML file at %s", e.workflowsDefTOMLFile))
 
-	var def ourTOML.WorkflowDefintionTOML
-	_, err := toml.DecodeFile(e.workflowsDefTOMLFile, &def)
+	def, err := ourTOML.Parse(e.workflowsDefTOMLFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing TOML: %w", err)
 	}
-
-	e.log("\nTOML Defs:")
-	for _, w := range def.Workflows {
-		e.log(fmt.Sprintf("\n[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active))
-		e.log(fmt.Sprintf("\n >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta))
-		for ws, s := range w.Steps {
-			e.log(fmt.Sprintf("\n\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active))
-			e.log(fmt.Sprintf("\n\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta))
-		}
-	}
-	e.log("\n")
 
 	// Semantic check on data
 	if err = runSemanticCheckOnTOML(def); err != nil {
