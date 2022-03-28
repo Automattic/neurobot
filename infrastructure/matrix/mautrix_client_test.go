@@ -7,10 +7,15 @@ import (
 	"testing"
 )
 
-func TestSendPlainTextMessage(t *testing.T) {
-	mockClient := mocks.NewMockMatrixClient("bot")
-	client := NewMautrixClient(mockClient)
+func makeClient() (*client, mocks.MautrixClientMock) {
+	mautrixMock := mocks.NewMockMatrixClient("bot")
+	client := NewMautrixClient(mautrixMock)
 
+	return client, mautrixMock
+}
+
+func TestSendPlainTextMessage(t *testing.T) {
+	client, mockClient := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewPlainTextMessage("foo")
 
@@ -25,9 +30,7 @@ func TestSendPlainTextMessage(t *testing.T) {
 }
 
 func TestSendMarkdownMessage(t *testing.T) {
-	mockClient := mocks.NewMockMatrixClient("bot")
-	client := NewMautrixClient(mockClient)
-
+	client, mockClient := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewMarkdownMessage("foo")
 
