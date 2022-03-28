@@ -10,6 +10,7 @@ import (
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
+	"neurobot/infrastructure/toml"
 	"os"
 	"strconv"
 	"strings"
@@ -53,6 +54,12 @@ func main() {
 	botRepository := bot.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
 
+	// import TOML
+	err = toml.Import(workflowRepository, workflowsDefTOMLFile)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
 	// set default port for running webhook listener server
 	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
 	if err != nil {
@@ -93,14 +100,13 @@ func main() {
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	p := engine.RunParams{
-		BotRepository:        botRepository,
-		Debug:                debug,
-		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
-		IsMatrix:             isMatrix,
-		MatrixServerName:     serverName,
-		MatrixServerURL:      serverURL,
-		MatrixUsername:       username,
-		MatrixPassword:       password,
+		BotRepository:    botRepository,
+		Debug:            debug,
+		IsMatrix:         isMatrix,
+		MatrixServerName: serverName,
+		MatrixServerURL:  serverURL,
+		MatrixUsername:   username,
+		MatrixPassword:   password,
 	}
 
 	e := engine.NewEngine(p)

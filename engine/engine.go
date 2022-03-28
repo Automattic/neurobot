@@ -32,8 +32,7 @@ type MatrixClient interface {
 }
 
 type engine struct {
-	debug                bool
-	workflowsDefTOMLFile string
+	debug bool
 
 	isMatrix         bool // Do we mean to run a matrix client?
 	matrixServerName string
@@ -51,15 +50,14 @@ type engine struct {
 }
 
 type RunParams struct {
-	BotRepository        bot.Repository
-	Debug                bool
-	Database             string
-	WorkflowsDefTOMLFile string
-	IsMatrix             bool
-	MatrixServerName     string // domain in use, part of identity
-	MatrixServerURL      string // actual URL to connect to, for a particular server
-	MatrixUsername       string
-	MatrixPassword       string
+	BotRepository    bot.Repository
+	Debug            bool
+	Database         string
+	IsMatrix         bool
+	MatrixServerName string // domain in use, part of identity
+	MatrixServerURL  string // actual URL to connect to, for a particular server
+	MatrixUsername   string
+	MatrixPassword   string
 }
 
 func (e *engine) StartUpLite() {
@@ -75,9 +73,6 @@ func (e *engine) StartUpLite() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Check for workflows defined in TOML
-	e.handleTOMLDefinitions()
 
 	// Load registered workflows from the database and initialize the right triggers for them
 	e.log("Loading data...")
@@ -195,12 +190,6 @@ func (e *engine) loadData() {
 	}
 }
 
-func (e *engine) handleTOMLDefinitions() {
-	if err := parseTOMLDefs(e); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
 	e.client = c
 
@@ -302,7 +291,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
 	e.matrixServerURL = p.MatrixServerURL
