@@ -12,9 +12,10 @@ func makeClient() (*client, mocks.MautrixClientMock, mocks.MautrixSyncerMock) {
 	syncerMock := mocks.NewMockMatrixSyncer()
 
 	client := client{
-		homeserverURL: "matrix.test",
-		mautrix:       mautrixMock,
-		syncer:        syncerMock,
+		homeserverURL:    "matrix.test",
+		mautrix:          mautrixMock,
+		syncer:           syncerMock,
+		listenersEnabled: false,
 	}
 
 	return &client, mautrixMock, syncerMock

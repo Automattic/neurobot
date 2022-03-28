@@ -1,6 +1,8 @@
 package matrix
 
 import (
+	"context"
+	"fmt"
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
@@ -15,6 +17,7 @@ type mautrixClient interface {
 	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID mautrixId.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
+	SyncWithContext(ctx context.Context) error
 }
 
 type mautrixSyncer interface {
@@ -23,24 +26,29 @@ type mautrixSyncer interface {
 }
 
 type client struct {
-	homeserverURL string
-	mautrix       mautrixClient
-	syncer        mautrixSyncer
+	homeserverURL    string
+	mautrix          mautrixClient
+	syncer           mautrixSyncer
+	listenersEnabled bool
 }
 
-func NewMautrixClient(homeserverURL string) (*client, error) {
+func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, error) {
 	mautrixClient, err := mautrix.NewClient(homeserverURL, "", "")
 	if err != nil {
 		return nil, err
 	}
 
-	syncer := mautrix.NewDefaultSyncer()
-	mautrixClient.Syncer = syncer
+	var syncer mautrixSyncer
+	if enableListeners {
+		syncer := mautrix.NewDefaultSyncer()
+		mautrixClient.Syncer = syncer
+	}
 
 	client := client{
-		homeserverURL: homeserverURL,
-		mautrix:       mautrixClient,
-		syncer:        syncer,
+		homeserverURL:    homeserverURL,
+		mautrix:          mautrixClient,
+		syncer:           syncer,
+		listenersEnabled: enableListeners,
 	}
 
 	return &client, nil
@@ -55,7 +63,19 @@ func (client *client) Login(username string, password string) error {
 		StoreCredentials: true,
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	if client.listenersEnabled {
+		go func() {
+			if err := client.mautrix.SyncWithContext(context.Background()); err != nil {
+				fmt.Printf("Error during sync: %s", err)
+			}
+		}()
+	}
+
+	return nil
 }
 
 func (client *client) JoinRoom(id room.ID) (err error) {

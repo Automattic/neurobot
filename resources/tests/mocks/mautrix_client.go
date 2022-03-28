@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -14,16 +15,18 @@ type MautrixClientMock interface {
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	WasMessageSent(text string) bool
-	Sync() error
 	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 	WasRoomJoined(roomIDorAlias string) bool
 	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
+	SyncWithContextWasCalled() bool
+	SyncWithContext(ctx context.Context) error
 }
 
 type mockMatrixClient struct {
-	instantiatedBy string
-	msgs           []string
-	roomsJoined    []string
+	instantiatedBy        string
+	msgs                  []string
+	roomsJoined           []string
+	syncWithContextCalled bool
 }
 
 func NewMockMatrixClient(creator string) MautrixClientMock {
@@ -79,10 +82,6 @@ func (m *mockMatrixClient) WasMessageSent(text string) bool {
 	return false
 }
 
-func (m *mockMatrixClient) Sync() error {
-	return nil
-}
-
 func (m *mockMatrixClient) JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error) {
 	if roomIDorAlias == "" {
 		return nil, errors.New("")
@@ -109,4 +108,13 @@ func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespA
 		RoomID:  id.RoomID(strings.Replace(alias.String(), "#", "!", 1)),
 		Servers: []string{"matrix.test"},
 	}, nil
+}
+
+func (m *mockMatrixClient) SyncWithContext(ctx context.Context) error {
+	m.syncWithContextCalled = true
+	return nil
+}
+
+func (m *mockMatrixClient) SyncWithContextWasCalled() bool {
+	return m.syncWithContextCalled
 }
