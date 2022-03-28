@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	wf "neurobot/app/workflow"
+	"neurobot/infrastructure/toml"
 	"strings"
 
 	"github.com/upper/db/v4"
@@ -96,7 +97,7 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
  * Insert functions for entities (workflow/trigger/step)
  */
 
-func insertWFSteps(dbs db.Session, wid uint64, steps []WorkflowStepTOML) error {
+func insertWFSteps(dbs db.Session, wid uint64, steps []toml.WorkflowStepTOML) error {
 	for i, ws := range steps {
 		// insert workflow step
 		isr, err := dbs.Collection("workflow_steps").Insert(WFStepRow{

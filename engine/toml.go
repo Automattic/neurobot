@@ -3,6 +3,7 @@ package engine
 import (
 	"crypto/sha256"
 	"fmt"
+	ourTOML "neurobot/infrastructure/toml"
 	model "neurobot/model/workflow"
 	"strconv"
 
@@ -10,40 +11,12 @@ import (
 	"github.com/upper/db/v4"
 )
 
-type WorkflowDefintionTOML struct {
-	Workflows []WorkflowTOML `toml:"Workflow"`
-}
-
-type WorkflowTOML struct {
-	Identifier  string
-	Active      bool
-	Name        string
-	Description string
-	Trigger     WorkflowTriggerTOML
-	Steps       []WorkflowStepTOML `toml:"Step"`
-}
-
-type WorkflowTriggerTOML struct {
-	Name        string
-	Description string
-	Variety     string
-	Meta        map[string]string
-}
-
-type WorkflowStepTOML struct {
-	Active      bool
-	Name        string
-	Description string
-	Variety     string
-	Meta        map[string]string
-}
-
 type tomlMapping map[string]uint64
 
 func parseTOMLDefs(e *engine) error {
 	e.log(fmt.Sprintf("Parsing TOML file at %s", e.workflowsDefTOMLFile))
 
-	var def WorkflowDefintionTOML
+	var def ourTOML.WorkflowDefintionTOML
 	_, err := toml.DecodeFile(e.workflowsDefTOMLFile, &def)
 	if err != nil {
 		return err
@@ -88,7 +61,7 @@ func parseTOMLDefs(e *engine) error {
 	return nil
 }
 
-func runSemanticCheckOnTOML(def WorkflowDefintionTOML) error {
+func runSemanticCheckOnTOML(def ourTOML.WorkflowDefintionTOML) error {
 	// > make sure Identifier is unique for each workflow and based on that realize what inserts/update needs to happen
 	// > make sure workflow has atleast a trigger and atleast a workflow step inside of it
 	uniqueIDs := make(map[string]bool)
@@ -129,7 +102,7 @@ func getTOMLMapping(dbs db.Session) (m tomlMapping, err error) {
 	return m, nil
 }
 
-func insertTOMLWorkflow(dbs db.Session, w WorkflowTOML) error {
+func insertTOMLWorkflow(dbs db.Session, w ourTOML.WorkflowTOML) error {
 	// insert workflow
 	iwr, err := dbs.Collection("workflows").Insert(model.Workflow{
 		Name:        w.Name,
@@ -151,7 +124,7 @@ func insertTOMLWorkflow(dbs db.Session, w WorkflowTOML) error {
 	return insertWFSteps(dbs, wid, w.Steps)
 }
 
-func updateTOMLWorkflow(dbs db.Session, id uint64, w WorkflowTOML) error {
+func updateTOMLWorkflow(dbs db.Session, id uint64, w ourTOML.WorkflowTOML) error {
 	// update workflow basic details
 	r := model.Workflow{}
 	res := dbs.Collection("workflows").Find(id)
