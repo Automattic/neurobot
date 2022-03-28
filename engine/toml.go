@@ -21,7 +21,7 @@ func parseTOMLDefs(e *engine) error {
 	}
 
 	// Semantic check on data
-	if err = runSemanticCheckOnTOML(def); err != nil {
+	if err = ourTOML.RunSemanticCheckOnTOML(def); err != nil {
 		return err
 	}
 
@@ -42,30 +42,6 @@ func parseTOMLDefs(e *engine) error {
 
 		if err != nil {
 			return err
-		}
-	}
-
-	return nil
-}
-
-func runSemanticCheckOnTOML(def ourTOML.WorkflowDefintionTOML) error {
-	// > make sure Identifier is unique for each workflow and based on that realize what inserts/update needs to happen
-	// > make sure workflow has atleast a trigger and atleast a workflow step inside of it
-	uniqueIDs := make(map[string]bool)
-	for _, w := range def.Workflows {
-		if _, exist := uniqueIDs[w.Identifier]; exist {
-			return fmt.Errorf("duplicate workflows defined in TOML with ID:%s", w.Identifier)
-		}
-		uniqueIDs[w.Identifier] = true // value is irrelevant for us
-
-		// no trigger defined?
-		if w.Trigger.Name == "" || w.Trigger.Description == "" || w.Trigger.Variety == "" {
-			return fmt.Errorf("no trigger defined for workflow in TOML with ID:%s", w.Identifier)
-		}
-
-		// no workflow steps defined?
-		if len(w.Steps) == 0 {
-			return fmt.Errorf("no workflow steps defined for workflow in TOML with ID:%s", w.Identifier)
 		}
 	}
 
