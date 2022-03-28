@@ -9,10 +9,23 @@ import (
 	"maunium.net/go/mautrix/id"
 )
 
+type MautrixClientMock interface {
+	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
+	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
+	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
+	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
+}
+
 type mockMatrixClient struct {
 	instantiatedBy string
 	msgs           []string
 	roomsJoined    []string
+}
+
+func NewMockMatrixClient(creator string) MautrixClientMock {
+	return &mockMatrixClient{
+		instantiatedBy: creator,
+	}
 }
 
 func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
@@ -92,10 +105,4 @@ func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespA
 		RoomID:  id.RoomID(strings.Replace(alias.String(), "#", "!", 1)),
 		Servers: []string{"matrix.test"},
 	}, nil
-}
-
-func NewMockMatrixClient(creator string) *mockMatrixClient {
-	return &mockMatrixClient{
-		instantiatedBy: creator,
-	}
 }
