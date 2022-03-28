@@ -17,9 +17,15 @@ type mautrixClient interface {
 	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 }
 
+type mautrixSyncer interface {
+	mautrix.Syncer
+	mautrix.ExtensibleSyncer
+}
+
 type client struct {
 	homeserverURL string
 	mautrix       mautrixClient
+	syncer        mautrixSyncer
 }
 
 func NewMautrixClient(homeserverURL string) (*client, error) {
@@ -28,9 +34,13 @@ func NewMautrixClient(homeserverURL string) (*client, error) {
 		return nil, err
 	}
 
+	syncer := mautrix.NewDefaultSyncer()
+	mautrixClient.Syncer = syncer
+
 	client := client{
 		homeserverURL: homeserverURL,
 		mautrix:       mautrixClient,
+		syncer:        syncer,
 	}
 
 	return &client, nil

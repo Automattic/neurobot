@@ -7,18 +7,21 @@ import (
 	"testing"
 )
 
-func makeClient() (*client, mocks.MautrixClientMock) {
+func makeClient() (*client, mocks.MautrixClientMock, mocks.MautrixSyncerMock) {
 	mautrixMock := mocks.NewMockMatrixClient("bot")
+	syncerMock := mocks.NewMockMatrixSyncer()
+
 	client := client{
 		homeserverURL: "matrix.test",
 		mautrix:       mautrixMock,
+		syncer:        syncerMock,
 	}
 
-	return &client, mautrixMock
+	return &client, mautrixMock, syncerMock
 }
 
 func TestSendPlainTextMessage(t *testing.T) {
-	client, mautrixMock := makeClient()
+	client, mautrixMock, _ := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewPlainTextMessage("foo")
 
@@ -33,7 +36,7 @@ func TestSendPlainTextMessage(t *testing.T) {
 }
 
 func TestSendMarkdownMessage(t *testing.T) {
-	client, mautrixMock := makeClient()
+	client, mautrixMock, _ := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewMarkdownMessage("foo")
 
@@ -48,7 +51,7 @@ func TestSendMarkdownMessage(t *testing.T) {
 }
 
 func TestJoinRoom(t *testing.T) {
-	client, mautrixMock := makeClient()
+	client, mautrixMock, _ := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 
 	err := client.JoinRoom(roomID)
