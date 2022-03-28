@@ -13,6 +13,10 @@ type MautrixClientMock interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
+	WasMessageSent(text string) bool
+	Sync() error
+	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
+	WasRoomJoined(roomIDorAlias string) bool
 	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 }
 
