@@ -2,6 +2,7 @@ package matrix
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
@@ -9,6 +10,7 @@ import (
 	mautrixId "maunium.net/go/mautrix/id"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
+	"strings"
 )
 
 type mautrixClient interface {
@@ -27,6 +29,7 @@ type mautrixSyncer interface {
 
 type client struct {
 	homeserverURL    string
+	homeserverDomain string
 	mautrix          mautrixClient
 	syncer           mautrixSyncer
 	listenersEnabled bool
@@ -44,8 +47,12 @@ func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, erro
 		mautrixClient.Syncer = syncer
 	}
 
+	// Remove protocol and port to get just the hostname
+	homeserverDomain := strings.Split(homeserverURL, ":")[0]
+
 	client := client{
 		homeserverURL:    homeserverURL,
+		homeserverDomain: homeserverDomain,
 		mautrix:          mautrixClient,
 		syncer:           syncer,
 		listenersEnabled: enableListeners,
@@ -74,6 +81,32 @@ func (client *client) Login(username string, password string) error {
 			}
 		}()
 	}
+
+	return nil
+}
+
+func (client *client) OnRoomInvite(handler func(roomID room.ID)) error {
+	if err := client.assertListenersEnabled(); err != nil {
+		return err
+	}
+
+	client.syncer.OnEventType(mautrixEvent.StateMember, func(source mautrix.EventSource, event *mautrixEvent.Event) {
+		if _, ok := event.Content.Raw["membership"]; !ok {
+			return
+		}
+
+		if event.Content.Raw["membership"] != "invite" {
+			return
+		}
+
+		roomID, err := room.NewID(event.RoomID.String())
+		if err != nil {
+			fmt.Printf("Invalid roomID: %s", err)
+			return
+		}
+
+		handler(roomID)
+	})
 
 	return nil
 }
@@ -113,4 +146,12 @@ func (client *client) resolveRoomAlias(roomID room.ID) (mautrixId.RoomID, error)
 	}
 
 	return mautrixId.RoomID(response.RoomID.String()), nil
+}
+
+func (client *client) assertListenersEnabled() error {
+	if !client.listenersEnabled {
+		return errors.New("listeners are not enabled. You can enable listeners through the enableListeners argument of NewMautrixClient()")
+	}
+
+	return nil
 }
