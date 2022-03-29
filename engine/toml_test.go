@@ -243,20 +243,6 @@ func TestInsertTOMLWorkflow(t *testing.T) {
 		t.Errorf("workflow's identifier didn't match. Got: %s Expected: %s", got, w.Identifier)
 	}
 
-	// check for trigger
-	tr := getWorkflowTrigger(dbs, lastWorkflow.id)
-	if tr.Name != w.Trigger.Name || tr.Description != w.Trigger.Description {
-		t.Errorf("trigger isn't what we expected. Got: [%s] Expected: [%s]", tr.Name, w.Trigger.Name)
-	}
-
-	// check for trigger meta
-	for key, expectedValue := range w.Trigger.Meta {
-		got := getTriggerMeta(dbs, tr.ID, key)
-		if expectedValue != got {
-			t.Errorf("trigger meta isn't what's expected. Key:%s Value:%s ExpectedValue:%s", key, got, expectedValue)
-		}
-	}
-
 	// check for workflow steps
 	steps := getWorkflowSteps(dbs, lastWorkflow.id)
 	for i, s := range steps {
@@ -348,20 +334,6 @@ func TestUpdateTOMLWorkflow(t *testing.T) {
 		got := getWorkflowMeta(dbs, workflow.id, "toml_identifier")
 		if w.Identifier != got {
 			t.Errorf("workflow's identifier didn't update. Got: %s Expected: %s", got, w.Identifier)
-		}
-
-		// check for trigger
-		tr := getWorkflowTrigger(dbs, workflow.id)
-		if tr.Name != w.Trigger.Name || tr.Description != w.Trigger.Description {
-			t.Errorf("trigger didn't update. Got: [%s] Expected: [%s]", tr.Name, w.Trigger.Name)
-		}
-
-		// check for trigger meta
-		for key, expectedValue := range w.Trigger.Meta {
-			got := getTriggerMeta(dbs, tr.ID, key)
-			if expectedValue != got {
-				t.Errorf("trigger meta didn't update. Key:%s Value:%s ExpectedValue:%s", key, got, expectedValue)
-			}
 		}
 
 		// check for workflow steps
