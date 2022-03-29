@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"neurobot/model/trigger"
 	"neurobot/resources/tests/fixtures"
 	"os"
 	"reflect"
@@ -15,68 +14,6 @@ import (
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
-
-func TestGetConfiguredTriggers(t *testing.T) {
-	dbs, dbs2 := setUp()
-	defer tearDown(dbs, dbs2)
-
-	var expected []trigger.Trigger
-
-	expected = append(expected, trigger.Trigger{
-		ID:          1,
-		Variety:     "webhook",
-		Name:        "CURL Request Catcher",
-		Description: "This webhook trigger will receive your webhook request while showcasing the demo",
-		WorkflowID:  1,
-		Meta: map[string]string{
-			"urlSuffix": "quickstart",
-		},
-	})
-	expected = append(expected, trigger.Trigger{
-		ID:          11,
-		Variety:     "webhook",
-		Name:        "Matticspace CURL",
-		Description: "",
-		WorkflowID:  11,
-		Meta: map[string]string{
-			"urlSuffix": "mcsp",
-		},
-	})
-	expected = append(expected, trigger.Trigger{
-		ID:          14,
-		Variety:     "webhook",
-		Name:        "Regular webhook trigger",
-		Description: "regular description",
-		WorkflowID:  13,
-		Meta: map[string]string{
-			"urlSuffix": "unittest",
-		},
-	})
-	expected = append(expected, trigger.Trigger{
-		ID:          15,
-		Variety:     "webhook",
-		Name:        "Regular webhook trigger",
-		Description: "regular description",
-		WorkflowID:  14,
-		Meta: map[string]string{
-			"urlSuffix": "unittest",
-		},
-	})
-
-	got, err := getConfiguredTriggers(dbs)
-	if err != nil {
-		t.Errorf("configured triggers returned an error with database + records")
-	} else {
-		if !reflect.DeepEqual(got, expected) {
-			t.Errorf("configured triggers did not match")
-		}
-	}
-
-	_, err = getConfiguredTriggers(dbs2)
-	if err == nil {
-		t.Errorf("configured triggers did not return an error with empty database")
-	}
-}
 
 func TestGetConfiguredWorkflows(t *testing.T) {
 	dbs, dbs2 := setUp()
@@ -228,46 +165,6 @@ func TestUpdateWorkflowMeta(t *testing.T) {
 	tearDown(dbs, dbs2)
 }
 
-func TestUpdateTriggerMeta(t *testing.T) {
-	dbs, dbs2 := setUp()
-
-	triggerID := uint64(11)
-
-	// insert a meta value that doesn't exist, testing insert
-	// then update the same meta value, testing update
-
-	key := fmt.Sprintf("neo%d", rand.Intn(100))
-	value := "matrix"
-
-	// issue insert
-	updateTriggerMeta(dbs, triggerID, key, value)
-	if value != getTriggerMeta(dbs, triggerID, key) {
-		t.Error("insert failed")
-	}
-
-	value = value + fmt.Sprintf("%d", rand.Intn(100))
-
-	// issue update
-	updateTriggerMeta(dbs, triggerID, key, value)
-	if value != getTriggerMeta(dbs, triggerID, key) {
-		t.Error("update failed")
-	}
-
-	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateTriggerMeta(dbs, triggerID, key, value)
-	if value != getTriggerMeta(dbs, triggerID, key) {
-		t.Error("update with same value failed")
-	}
-
-	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateTriggerMeta(dbs2, triggerID, key, value)
-	if err == nil {
-		t.Error("no error was returned with an empty database with no tables")
-	}
-
-	tearDown(dbs, dbs2)
-}
-
 func TestUpdateWFStepMeta(t *testing.T) {
 	dbs, dbs2 := setUp()
 
@@ -383,15 +280,6 @@ func getDBSchemaSQL() *[]string {
 
 func getDataInsertsSQL() *[]string {
 	return &[]string{
-		// Triggers
-		// 'webhook' variety (Active)
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (11,'Matticspace CURL','','webhook',11,1);`,
-		// InActive Trigger (soon to be removed)
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (13,'Disabled Trigger','','webhook',99,0);`,
-		// TOML imported workflow's trigger - 'webhook' variety
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (14,'Regular webhook trigger','regular description','webhook',13,1);`,
-		`INSERT INTO "triggers" ("id","name","description","variety","workflow_id","active") VALUES (15,'Regular webhook trigger','regular description','webhook',14,1);`,
-
 		// Workflow Steps
 		// 'postMatrixMessage' variety (Active)
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (11,'Post message to Matrix room','','postMatrixMessage',11,0,1);`,
@@ -400,12 +288,6 @@ func getDataInsertsSQL() *[]string {
 		// TOML imported workflow's step - 'postMatrixMessage' variety
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (13,'Post message in room 1','description here','postMatrixMessage',13,0,1);`,
 		`INSERT INTO "workflow_steps" ("id","name","description","variety","workflow_id","sort_order","active") VALUES (14,'Post message in room 2','description there','postMatrixMessage',13,1,1);`,
-
-		// Trigger Meta
-		// For 'webhook' variety trigger
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (11,11,'urlSuffix','mcsp');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (15,14,'urlSuffix','unittest');`,
-		`INSERT INTO "trigger_meta" ("id","trigger_id","key","value") VALUES (16,15,'urlSuffix','unittest');`,
 
 		// Workflow Step Meta
 		// For 'webhook' variety workflow step
