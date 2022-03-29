@@ -22,20 +22,20 @@ type MautrixClientMock interface {
 	SyncWithContext(ctx context.Context) error
 }
 
-type mockMatrixClient struct {
+type mautrixClientMock struct {
 	instantiatedBy        string
 	msgs                  []string
 	roomsJoined           []string
 	syncWithContextCalled bool
 }
 
-func NewMockMatrixClient(creator string) MautrixClientMock {
-	return &mockMatrixClient{
+func NewMautrixClientMock(creator string) MautrixClientMock {
+	return &mautrixClientMock{
 		instantiatedBy: creator,
 	}
 }
 
-func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
+func (m *mautrixClientMock) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) {
 	// assume the best for mock purposes
 	homeserverInfo := mautrix.HomeserverInfo{BaseURL: ""}
 	identityServerInfo := mautrix.IdentityServerInfo{BaseURL: ""}
@@ -51,7 +51,7 @@ func (m *mockMatrixClient) Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error) 
 	}, nil
 }
 
-func (m *mockMatrixClient) SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error) {
+func (m *mautrixClientMock) SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error) {
 	// a specific message is designed to return error
 	if text == "throwerr" {
 		return nil, errors.New("whatever")
@@ -64,7 +64,7 @@ func (m *mockMatrixClient) SendText(roomID id.RoomID, text string) (*mautrix.Res
 	}, nil
 }
 
-func (m *mockMatrixClient) SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error) {
+func (m *mautrixClientMock) SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error) {
 	m.msgs = append(m.msgs, contentJSON.(event.MessageEventContent).Body) // store internally for checking, whether this function was called or not
 
 	return &mautrix.RespSendEvent{
@@ -72,7 +72,7 @@ func (m *mockMatrixClient) SendMessageEvent(roomID id.RoomID, eventType event.Ty
 	}, nil
 }
 
-func (m *mockMatrixClient) WasMessageSent(text string) bool {
+func (m *mautrixClientMock) WasMessageSent(text string) bool {
 	for _, v := range m.msgs {
 		if v == text {
 			return true
@@ -82,7 +82,7 @@ func (m *mockMatrixClient) WasMessageSent(text string) bool {
 	return false
 }
 
-func (m *mockMatrixClient) JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error) {
+func (m *mautrixClientMock) JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error) {
 	if roomIDorAlias == "" {
 		return nil, errors.New("")
 	}
@@ -92,7 +92,7 @@ func (m *mockMatrixClient) JoinRoom(roomIDorAlias string, serverName string, con
 	return
 }
 
-func (m *mockMatrixClient) WasRoomJoined(roomIDorAlias string) bool {
+func (m *mautrixClientMock) WasRoomJoined(roomIDorAlias string) bool {
 	for _, v := range m.roomsJoined {
 		if v == roomIDorAlias {
 			return true
@@ -102,7 +102,7 @@ func (m *mockMatrixClient) WasRoomJoined(roomIDorAlias string) bool {
 	return false
 }
 
-func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error) {
+func (m *mautrixClientMock) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error) {
 	// convert #room:matrix.test to !room:matrix.test as part of mock resolution
 	return &mautrix.RespAliasResolve{
 		RoomID:  id.RoomID(strings.Replace(alias.String(), "#", "!", 1)),
@@ -110,11 +110,11 @@ func (m *mockMatrixClient) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespA
 	}, nil
 }
 
-func (m *mockMatrixClient) SyncWithContext(ctx context.Context) error {
+func (m *mautrixClientMock) SyncWithContext(ctx context.Context) error {
 	m.syncWithContextCalled = true
 	return nil
 }
 
-func (m *mockMatrixClient) SyncWithContextWasCalled() bool {
+func (m *mautrixClientMock) SyncWithContextWasCalled() bool {
 	return m.syncWithContextCalled
 }

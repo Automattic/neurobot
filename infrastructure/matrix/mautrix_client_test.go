@@ -8,7 +8,7 @@ import (
 )
 
 func makeClient() (*client, mocks.MautrixClientMock, mocks.MautrixSyncerMock) {
-	mautrixMock := mocks.NewMockMatrixClient("bot")
+	mautrixMock := mocks.NewMautrixClientMock("bot")
 	syncerMock := mocks.NewMockMatrixSyncer()
 
 	client := client{
