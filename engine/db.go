@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	wf "neurobot/app/workflow"
-	"neurobot/model/trigger"
 	"strings"
 
 	"github.com/upper/db/v4"
@@ -43,36 +42,6 @@ type WFStepMetaRow struct {
 	StepID uint64 `db:"step_id"`
 	Key    string `db:"key"`
 	Value  string `db:"value"`
-}
-
-func getConfiguredTriggers(dbs db.Session) (t []trigger.Trigger, err error) {
-	// get all active triggers out of the database
-	var configuredTriggers []TriggerRow
-	res := dbs.Collection("triggers").Find(db.Cond{"active": "1"})
-	err = res.All(&configuredTriggers)
-	if err != nil {
-		return
-	}
-
-	// range over all active triggers, collecting meta for each trigger and appending that to collect basket
-	for _, row := range configuredTriggers {
-
-		switch row.Variety {
-		case "webhook":
-			meta := make(map[string]string)
-			meta["urlSuffix"] = getTriggerMeta(dbs, row.ID, "urlSuffix")
-			t = append(t, trigger.Trigger{
-				ID:          row.ID,
-				Variety:     row.Variety,
-				Name:        row.Name,
-				Description: row.Description,
-				WorkflowID:  row.WorkflowID,
-				Meta:        meta,
-			})
-		}
-	}
-
-	return
 }
 
 // get all active workflows out of the database
