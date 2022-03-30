@@ -5,7 +5,6 @@ import (
 	"log"
 	"neurobot/model/workflow"
 	"neurobot/model/workflowstep"
-	"strconv"
 
 	"github.com/BurntSushi/toml"
 )
@@ -139,13 +138,4 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
-}
-
-func intSliceToStringSlice(a []uint64) []string {
-	b := make([]string, len(a))
-	for i, v := range a {
-		b[i] = strconv.FormatUint(v, 10)
-	}
-
-	return b
 }
