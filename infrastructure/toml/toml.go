@@ -1,14 +1,13 @@
 package toml
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"log"
 	"neurobot/model/workflow"
+	"neurobot/model/workflowstep"
 	"strconv"
 
 	"github.com/BurntSushi/toml"
-	"github.com/upper/db/v4"
 )
 
 type workflowDefintionTOML struct {
@@ -46,27 +45,14 @@ func Import(wfrepo workflow.Repository, tomlFilePath string) (err error) {
 		return fmt.Errorf("error while parsing toml file: %w", err)
 	}
 
-	err = runSemanticCheckOnTOML(def)
+	workflows, err := prepare(def, wfrepo)
 	if err != nil {
-		return fmt.Errorf("semantic checks failed on toml definition: %w", err)
+		return
 	}
 
-	m, err := wfrepo.GetTOMLMapping()
-	if err != nil {
-		return fmt.Errorf("toml mapping could not be retrieved: %w", err)
-	}
-
-	// Import data
-	for _, w := range def.Workflows {
-		id, exist := m[w.Identifier]
-		if exist {
-			err = updateTOMLWorkflow(e.db, id, w)
-		} else {
-			err = insertTOMLWorkflow(e.db, w)
-		}
-
-		if err != nil {
-			return err
+	for _, w := range workflows {
+		if err = wfrepo.Save(w); err != nil {
+			return
 		}
 	}
 
@@ -89,6 +75,11 @@ func parse(tomlFilePath string) (def workflowDefintionTOML, err error) {
 		}
 	}
 	log.Println("\n---TOML---")
+
+	err = runSemanticCheckOnTOML(def)
+	if err != nil {
+		return def, fmt.Errorf("semantic checks failed on toml definition: %w", err)
+	}
 
 	return
 }
@@ -117,79 +108,30 @@ func runSemanticCheckOnTOML(def workflowDefintionTOML) error {
 	return nil
 }
 
-func insertTOMLWorkflow(dbs db.Session, w workflowTOML) error {
-	// insert workflow
-	iwr, err := dbs.Collection("workflows").Insert(model.Workflow{
-		Name:        w.Name,
-		Description: w.Description,
-		Active:      w.Active,
-	})
-	if err != nil {
-		return err
-	}
-
-	// inserted workflow ID
-	wid := uint64(iwr.ID().(int64))
-
-	// insert workflow meta
-	insertWorkflowMeta(dbs, wid, "toml_identifier", w.Identifier)
-	insertWorkflowMeta(dbs, wid, "workflow_steps_hash", asSha256(w.Steps))
-
-	// lastly, insert workflow steps
-	return insertWFSteps(dbs, wid, w.Steps)
-}
-
-func updateTOMLWorkflow(dbs db.Session, id uint64, w workflowTOML) error {
-	// update workflow basic details
-	r := model.Workflow{}
-	res := dbs.Collection("workflows").Find(id)
-	res.One(&r)
-	r.Name = w.Name
-	r.Active = w.Active
-	r.Description = w.Description
-	err := res.Update(r)
-	if err != nil {
-		return err
-	}
-
-	// updating workflow steps is a little complicated, allow me to explain
-	//
-	// first we identify are there any updates to make
-	// if not, simply skip
-	//
-	// if there are updates, are number of steps still same?
-	// if there are more steps now, that requires overwrite + insert
-	// if there are less steps now, that requires overwrite + delete
-	// if there are same steps, that just requires overwrite
-	//
-	// in addition to that, when a step is changed, their meta needs to be changed as well
-	// detecting if just a order has changed, is even more code
-	//
-	// OR
-	//
-	// a simpler approach is to just purge all workflow step and step meta rows when there is an update and just insert them fresh
-	// this only happens at startup, so isn't really a performance concern, plus keeps the code quite simple
-	//
-	// code below is of latter approach
-	//
-	// has workflow steps changed since last time?
-	if asSha256(w.Steps) != getWorkflowMeta(dbs, id, "workflow_steps_hash") {
-		// delete old data
-		if err := deleteAllWFSteps(dbs, id); err != nil {
-			return err
+func prepare(def workflowDefintionTOML, wfrepo workflow.Repository) (prepared []*workflow.Workflow, err error) {
+	for _, workflow := range def.Workflows {
+		w, err := wfrepo.FindByIdentifier(workflow.Identifier)
+		if err != nil {
+			return nil, err
 		}
 
-		// insert fresh data
-		if err := insertWFSteps(dbs, id, w.Steps); err != nil {
-			return err
+		w.Name = workflow.Name
+		w.Description = workflow.Description
+		w.Active = workflow.Active
+		for index, s := range workflow.Steps {
+			w.Steps[index] = workflowstep.WorkflowStep{
+				Active:      boolToInt(s.Active),
+				Name:        s.Name,
+				Description: s.Description,
+				Variety:     s.Variety,
+				Meta:        s.Meta,
+			}
 		}
 
-		// update workflow meta
-		// Note: "toml_identifier" meta should never be updated
-		updateWorkflowMeta(dbs, id, "workflow_steps_hash", asSha256(w.Steps))
+		prepared = append(prepared, &w)
 	}
 
-	return nil
+	return
 }
 
 func boolToInt(b bool) int {
@@ -197,13 +139,6 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
-}
-
-func asSha256(o interface{}) string {
-	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%v", o)))
-
-	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func intSliceToStringSlice(a []uint64) []string {

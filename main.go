@@ -57,7 +57,7 @@ func main() {
 	// import TOML
 	err = toml.Import(workflowRepository, workflowsDefTOMLFile)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Fatalf("error while importing TOML workflows: %s", err)
 	}
 
 	// set default port for running webhook listener server
