@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"neurobot/infrastructure/matrix"
 	model "neurobot/model/bot"
+	"neurobot/model/room"
 	"strings"
 )
 
@@ -30,6 +31,23 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 	}
 
 	if err = client.Login(bot.Username, bot.Password); err != nil {
+		return
+	}
+
+	err = client.OnRoomInvite(func(roomID room.ID) {
+		// Only accept invitations to rooms in our homeserver
+		if roomID.HomeserverDomain() != r.homeserverDomain {
+			fmt.Printf("Ignoring invitation to room in another homeserver: %s", roomID)
+			return
+		}
+
+		if err := client.JoinRoom(roomID); err != nil {
+			fmt.Printf("Failed to join room %s", roomID)
+			return
+		}
+	})
+
+	if err != nil {
 		return
 	}
 
