@@ -135,26 +135,6 @@ func insertTOMLWorkflow(dbs db.Session, w workflowTOML) error {
 	insertWorkflowMeta(dbs, wid, "toml_identifier", w.Identifier)
 	insertWorkflowMeta(dbs, wid, "workflow_steps_hash", asSha256(w.Steps))
 
-	// insert trigger
-	itr, err := dbs.Collection("triggers").Insert(TriggerRow{
-		Name:        w.Trigger.Name,
-		Description: w.Trigger.Description,
-		Variety:     w.Trigger.Variety,
-		WorkflowID:  wid,
-		Active:      boolToInt(w.Active),
-	})
-	if err != nil {
-		return err
-	}
-
-	// inserted trigger ID
-	tid := uint64(itr.ID().(int64))
-
-	// insert trigger meta
-	for key, value := range w.Trigger.Meta {
-		insertTriggerMeta(dbs, tid, key, value)
-	}
-
 	// lastly, insert workflow steps
 	return insertWFSteps(dbs, wid, w.Steps)
 }
@@ -169,11 +149,6 @@ func updateTOMLWorkflow(dbs db.Session, id uint64, w workflowTOML) error {
 	r.Description = w.Description
 	err := res.Update(r)
 	if err != nil {
-		return err
-	}
-
-	// update trigger
-	if err := updateTrigger(dbs, id, w.Trigger); err != nil {
 		return err
 	}
 

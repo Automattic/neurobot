@@ -215,16 +215,6 @@ func getWorkflowMeta(dbs db.Session, workflowID uint64, key string) string {
 	return row["value"]
 }
 
-func getTriggerMeta(dbs db.Session, triggerID uint64, key string) string {
-	res := dbs.Collection("trigger_meta").Find(db.Cond{"trigger_id": triggerID, "key": key})
-	row := make(map[string]string)
-	res.One(&row)
-
-	// log.Printf("getTriggerMeta(): id:%d key:%s value:%s\n", trigger_id, key, row["value"])
-
-	return row["value"]
-}
-
 func getWFStepMeta(dbs db.Session, stepID uint64, key string) string {
 	res := dbs.Collection("workflow_step_meta").Find(db.Cond{"step_id": stepID, "key": key})
 	row := make(map[string]string)
