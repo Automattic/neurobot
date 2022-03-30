@@ -10,6 +10,8 @@ import (
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
+	"neurobot/infrastructure/matrix"
+	b "neurobot/model/bot"
 	"os"
 	"strconv"
 	"strings"
@@ -52,6 +54,11 @@ func main() {
 
 	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
+
+	botRegistry, err := makeBotRegistry(serverName, botRepository)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	// set default port for running webhook listener server
 	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
@@ -124,4 +131,22 @@ func main() {
 
 	log.Printf("Starting webhook listener at port %d\n", webhookListenerPort)
 	webhookListenerServer.Run() // blocking
+}
+
+func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry botApp.Registry, err error) {
+	bots, err := botRepository.FindActive()
+	if err != nil {
+		return
+	}
+
+	registry = botApp.NewRegistry(homeserverURL)
+
+	for _, bot := range bots {
+		client, err := matrix.NewMautrixClient(homeserverURL, true)
+		if err == nil {
+			err = registry.Append(bot, client)
+		}
+	}
+
+	return
 }
