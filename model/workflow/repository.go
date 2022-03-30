@@ -13,7 +13,4 @@ type Repository interface {
 
 	// FindByIdentifier retrieves a workflow by its unique identifier.
 	FindByIdentifier(identifier string) (Workflow, error)
-
-	// GetTOMLMapping returns mapping of toml identifiers with their respective database IDs
-	GetTOMLMapping() (map[string]uint64, error)
 }
