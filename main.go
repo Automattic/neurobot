@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	application "neurobot/app"
-	"neurobot/app/bot"
+	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
@@ -50,7 +50,7 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	botRepository := bot.NewRepository(databaseSession)
+	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
 
 	// set default port for running webhook listener server
