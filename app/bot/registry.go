@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"neurobot/infrastructure/matrix"
 	model "neurobot/model/bot"
+	"strings"
 )
 
 type Registry interface {
@@ -12,12 +13,15 @@ type Registry interface {
 }
 
 type registry struct {
-	homeserverURL string
-	clients       map[string]matrix.Client
+	homeserverDomain string
+	clients          map[string]matrix.Client
 }
 
 func NewRegistry(homeserverURL string) *registry {
-	return &registry{homeserverURL: homeserverURL}
+	return &registry{
+		// Remove port to get just the domain
+		homeserverDomain: strings.Split(homeserverURL, ":")[0],
+	}
 }
 
 func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
