@@ -124,7 +124,7 @@ func main() {
 	}
 	defer e.ShutDown()
 
-	app := application.NewApp(e, bus, botRepository, workflowRepository, webhookListenerServer)
+	app := application.NewApp(e, bus, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
 		log.Fatalf("%s", err)
 	}

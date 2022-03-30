@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	netHttp "net/http"
+	"neurobot/app/bot"
 	r "neurobot/app/runner"
 	"neurobot/engine"
 	"neurobot/infrastructure/event"
@@ -16,6 +17,7 @@ type app struct {
 	engine             engine.Engine
 	eventBus           event.Bus
 	botRepository      b.Repository
+	botRegistry        bot.Registry
 	workflowRepository w.Repository
 	webhookListener    *http.Server
 }
@@ -23,14 +25,14 @@ type app struct {
 func NewApp(
 	engine engine.Engine,
 	eventBus event.Bus,
-	botRepository b.Repository,
+	botRegistry bot.Registry,
 	workflowRepository w.Repository,
 	webhookListener *http.Server,
 ) *app {
 	return &app{
 		engine:             engine,
 		eventBus:           eventBus,
-		botRepository:      botRepository,
+		botRegistry:        botRegistry,
 		workflowRepository: workflowRepository,
 		webhookListener:    webhookListener,
 	}
