@@ -18,7 +18,7 @@ type registry struct {
 	clients          map[string]matrix.Client
 }
 
-func NewRegistry(homeserverURL string) *registry {
+func NewRegistry(homeserverURL string) Registry {
 	return &registry{
 		// Remove port to get just the domain
 		homeserverDomain: strings.Split(homeserverURL, ":")[0],
