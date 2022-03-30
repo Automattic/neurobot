@@ -8,4 +8,5 @@ type WorkflowStep struct {
 	WorkflowID  uint64 `db:"workflow_id"`
 	SortOrder   uint64 `db:"sort_order"`
 	Active      int    `db:"active"`
+	Meta        map[string]string
 }
