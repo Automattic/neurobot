@@ -7,6 +7,7 @@ import (
 	application "neurobot/app"
 	"neurobot/app/bot"
 	"neurobot/app/workflow"
+	"neurobot/app/workflowstep"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
@@ -53,9 +54,10 @@ func main() {
 
 	botRepository := bot.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
+	workflowStepsRepository := workflowstep.NewRepository(databaseSession)
 
 	// import TOML
-	err = toml.Import(workflowRepository, workflowsDefTOMLFile)
+	err = toml.Import(workflowsDefTOMLFile, workflowRepository, workflowStepsRepository)
 	if err != nil {
 		log.Fatalf("error while importing TOML workflows: %s", err)
 	}

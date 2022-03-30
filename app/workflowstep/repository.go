@@ -20,7 +20,7 @@ type repository struct {
 
 func NewRepository(session db.Session) model.Repository {
 	return &repository{
-		collection:     session.Collection("workflow_step"),
+		collection:     session.Collection("workflow_steps"),
 		collectionMeta: session.Collection("workflow_step_meta"),
 	}
 }

@@ -37,21 +37,29 @@ type workflowStepTOML struct {
 	Meta        map[string]string
 }
 
-// Import accepts a workflow repository where workflows are imported from the provided toml file
-func Import(wfrepo workflow.Repository, tomlFilePath string) (err error) {
-	def, err := parse(tomlFilePath)
+// Import accepts a workflow repository where workflows are to be imported from the provided toml file
+func Import(tomlFilePath string, wfRepo workflow.Repository, wfsRepo workflowstep.Repository) (err error) {
+	workflowDefs, err := parse(tomlFilePath)
 	if err != nil {
 		return fmt.Errorf("error while parsing toml file: %w", err)
 	}
 
-	workflows, err := prepare(def, wfrepo)
-	if err != nil {
-		return
-	}
+	for _, def := range workflowDefs.Workflows {
+		workflow, workflowSteps, err := prepare(def, wfRepo, wfsRepo)
+		if err != nil {
+			return fmt.Errorf("error while preparing toml def for import: %w", err)
+		}
 
-	for _, w := range workflows {
-		if err = wfrepo.Save(w); err != nil {
-			return
+		if err = wfRepo.Save(&workflow); err != nil {
+			return err
+		}
+
+		for _, step := range workflowSteps {
+			// now that we surely have the workflow ID, populate that in step
+			step.WorkflowID = workflow.ID
+			if err = wfsRepo.Save(&step); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -64,16 +72,16 @@ func parse(tomlFilePath string) (def workflowDefintionTOML, err error) {
 		return
 	}
 
-	log.Println("\nTOML Defs:")
+	log.Println("TOML Defs:")
 	for _, w := range def.Workflows {
-		log.Printf("\n[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active)
-		log.Printf("\n >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta)
+		log.Printf("[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active)
+		log.Printf(" >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta)
 		for ws, s := range w.Steps {
-			log.Printf("\n\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active)
-			log.Printf("\n\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta)
+			log.Printf("\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active)
+			log.Printf("\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta)
 		}
 	}
-	log.Println("\n---TOML---")
+	log.Println("---TOML---")
 
 	err = runSemanticCheckOnTOML(def)
 	if err != nil {
@@ -107,27 +115,24 @@ func runSemanticCheckOnTOML(def workflowDefintionTOML) error {
 	return nil
 }
 
-func prepare(def workflowDefintionTOML, wfrepo workflow.Repository) (prepared []*workflow.Workflow, err error) {
-	for _, workflow := range def.Workflows {
-		w, err := wfrepo.FindByIdentifier(workflow.Identifier)
-		if err != nil {
-			return nil, err
+func prepare(def workflowTOML, wfRepo workflow.Repository, wfsRepo workflowstep.Repository) (w workflow.Workflow, steps []workflowstep.WorkflowStep, err error) {
+	w, _ = wfRepo.FindByIdentifier(def.Identifier)
+
+	w.Name = def.Name
+	w.Description = def.Description
+	w.Active = def.Active
+
+	for _, step := range def.Steps {
+		s := workflowstep.WorkflowStep{
+			Active:      boolToInt(step.Active),
+			Name:        step.Name,
+			Description: step.Description,
+			Variety:     step.Variety,
+			WorkflowID:  w.ID,
+			Meta:        step.Meta,
 		}
 
-		w.Name = workflow.Name
-		w.Description = workflow.Description
-		w.Active = workflow.Active
-		for index, s := range workflow.Steps {
-			w.Steps[index] = workflowstep.WorkflowStep{
-				Active:      boolToInt(s.Active),
-				Name:        s.Name,
-				Description: s.Description,
-				Variety:     s.Variety,
-				Meta:        s.Meta,
-			}
-		}
-
-		prepared = append(prepared, &w)
+		steps = append(steps, s)
 	}
 
 	return
