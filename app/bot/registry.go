@@ -25,6 +25,10 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 		return fmt.Errorf("bot %s is already known", bot.Identifier)
 	}
 
+	if err = client.Login(bot.Username, bot.Password); err != nil {
+		return
+	}
+
 	r.clients[bot.Identifier] = client
 
 	return
