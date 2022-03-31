@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	application "neurobot/app"
-	"neurobot/app/bot"
+	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
+	"neurobot/infrastructure/matrix"
+	b "neurobot/model/bot"
 	"os"
 	"strconv"
 	"strings"
@@ -55,8 +57,13 @@ func main() {
 		log.Fatalf("db.Open(): %q\n", err)
 	}
 
-	botRepository := bot.NewRepository(databaseSession)
+	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
+
+	botRegistry, err := makeBotRegistry(serverName, botRepository)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 
 	// set default port for running webhook listener server
 	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
@@ -122,11 +129,29 @@ func main() {
 		e.StartUpLite()
 	}
 
-	app := application.NewApp(e, bus, botRepository, workflowRepository, webhookListenerServer)
+	app := application.NewApp(e, bus, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
 		log.Fatalf("%s", err)
 	}
 
 	log.Printf("Starting webhook listener at port %d\n", webhookListenerPort)
 	webhookListenerServer.Run() // blocking
+}
+
+func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry botApp.Registry, err error) {
+	bots, err := botRepository.FindActive()
+	if err != nil {
+		return
+	}
+
+	registry = botApp.NewRegistry(homeserverURL)
+
+	for _, bot := range bots {
+		client, err := matrix.NewMautrixClient(homeserverURL, true)
+		if err == nil {
+			err = registry.Append(bot, client)
+		}
+	}
+
+	return
 }
