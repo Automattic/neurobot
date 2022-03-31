@@ -124,7 +124,7 @@ func prepare(def workflowTOML, wfRepo workflow.Repository, wfsRepo workflowstep.
 
 	for _, step := range def.Steps {
 		s := workflowstep.WorkflowStep{
-			Active:      boolToInt(step.Active),
+			Active:      step.Active,
 			Name:        step.Name,
 			Description: step.Description,
 			Variety:     step.Variety,
@@ -136,11 +136,4 @@ func prepare(def workflowTOML, wfRepo workflow.Repository, wfsRepo workflowstep.
 	}
 
 	return
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }
