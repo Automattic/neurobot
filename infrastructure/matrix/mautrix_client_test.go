@@ -7,10 +7,23 @@ import (
 	"testing"
 )
 
-func TestSendPlainTextMessage(t *testing.T) {
-	mockClient := mocks.NewMockMatrixClient("bot")
-	client := NewMautrixClient(mockClient)
+func makeClient() (*client, mocks.MautrixClientMock, mocks.MautrixSyncerMock) {
+	mautrixMock := mocks.NewMautrixClientMock("bot")
+	syncerMock := mocks.NewMockMatrixSyncer()
 
+	client := client{
+		homeserverURL:    "matrix.test",
+		homeserverDomain: "matrix.test",
+		mautrix:          mautrixMock,
+		syncer:           syncerMock,
+		listenersEnabled: false,
+	}
+
+	return &client, mautrixMock, syncerMock
+}
+
+func TestSendPlainTextMessage(t *testing.T) {
+	client, mautrixMock, _ := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewPlainTextMessage("foo")
 
@@ -19,15 +32,13 @@ func TestSendPlainTextMessage(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !mockClient.WasMessageSent("foo") {
+	if !mautrixMock.WasMessageSent("foo") {
 		t.Error("message: foo wasn't sent")
 	}
 }
 
 func TestSendMarkdownMessage(t *testing.T) {
-	mockClient := mocks.NewMockMatrixClient("bot")
-	client := NewMautrixClient(mockClient)
-
+	client, mautrixMock, _ := makeClient()
 	roomID, _ := room.NewID("!foo:matrix.test")
 	message := msg.NewMarkdownMessage("foo")
 
@@ -36,7 +47,21 @@ func TestSendMarkdownMessage(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !mockClient.WasMessageSent("foo") {
+	if !mautrixMock.WasMessageSent("foo") {
 		t.Errorf("message: %s wasn't sent", message.String())
+	}
+}
+
+func TestJoinRoom(t *testing.T) {
+	client, mautrixMock, _ := makeClient()
+	roomID, _ := room.NewID("!foo:matrix.test")
+
+	err := client.JoinRoom(roomID)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !mautrixMock.WasRoomJoined("!foo:matrix.test") {
+		t.Errorf("room wasn't joined")
 	}
 }
