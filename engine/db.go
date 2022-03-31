@@ -2,6 +2,7 @@ package engine
 
 import (
 	wf "neurobot/app/workflow"
+	wfs "neurobot/app/workflowstep"
 
 	"github.com/upper/db/v4"
 )
@@ -47,41 +48,40 @@ func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
 	return
 }
 
+// get all active workflow steps out of the database
 func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
-	// get all active workflow steps out of the database
-	var configuredSteps []WFStepRow
-	res := dbs.Collection("workflow_steps").Find(db.Cond{"active": "1"})
-	err = res.All(&configuredSteps)
+	repository := wfs.NewRepository(dbs)
+	savedSteps, err := repository.FindActive()
 	if err != nil {
 		return
 	}
 
 	// range over all active steps, collecting meta for each step and appending that to collect basket
-	for _, row := range configuredSteps {
-		switch row.Variety {
+	for _, step := range savedSteps {
+		switch step.Variety {
 		case "postMatrixMessage":
 			s = append(s, &postMessageMatrixWorkflowStep{
 				workflowStep: workflowStep{
-					id:          row.ID,
-					name:        row.Name,
-					description: row.Description,
-					variety:     row.Variety,
-					workflowID:  row.WorkflowID,
+					id:          step.ID,
+					name:        step.Name,
+					description: step.Description,
+					variety:     step.Variety,
+					workflowID:  step.WorkflowID,
 				},
 				postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-					messagePrefix: getWFStepMeta(dbs, row.ID, "messagePrefix"),
-					room:          getWFStepMeta(dbs, row.ID, "matrixRoom"),
-					asBot:         getWFStepMeta(dbs, row.ID, "asBot"),
+					messagePrefix: getWFStepMeta(dbs, step.ID, "messagePrefix"),
+					room:          getWFStepMeta(dbs, step.ID, "matrixRoom"),
+					asBot:         getWFStepMeta(dbs, step.ID, "asBot"),
 				},
 			})
 		case "stdout":
 			s = append(s, &stdoutWorkflowStep{
 				workflowStep: workflowStep{
-					id:          row.ID,
-					name:        row.Name,
-					description: row.Description,
-					variety:     row.Variety,
-					workflowID:  row.WorkflowID,
+					id:          step.ID,
+					name:        step.Name,
+					description: step.Description,
+					variety:     step.Variety,
+					workflowID:  step.WorkflowID,
 				},
 			})
 		}
