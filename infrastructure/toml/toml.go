@@ -54,6 +54,10 @@ func Import(tomlFilePath string, wfRepo workflow.Repository, wfsRepo workflowste
 			return err
 		}
 
+		if err = wfRepo.SaveMeta(&workflow); err != nil {
+			return err
+		}
+
 		for _, step := range workflowSteps {
 			// now that we surely have the workflow ID, populate that in step
 			step.WorkflowID = workflow.ID
@@ -101,11 +105,6 @@ func runSemanticCheckOnTOML(def workflowDefintionTOML) error {
 		}
 		uniqueIDs[w.Identifier] = true // value is irrelevant for us
 
-		// no trigger defined?
-		if w.Trigger.Name == "" || w.Trigger.Description == "" || w.Trigger.Variety == "" {
-			return fmt.Errorf("no trigger defined for workflow in TOML with ID:%s", w.Identifier)
-		}
-
 		// no workflow steps defined?
 		if len(w.Steps) == 0 {
 			return fmt.Errorf("no workflow steps defined for workflow in TOML with ID:%s", w.Identifier)
@@ -115,9 +114,11 @@ func runSemanticCheckOnTOML(def workflowDefintionTOML) error {
 	return nil
 }
 
+// Prepares a workflow struct and an array of workflow steps struct from a TOML definition of a single workflow
 func prepare(def workflowTOML, wfRepo workflow.Repository, wfsRepo workflowstep.Repository) (w workflow.Workflow, steps []workflowstep.WorkflowStep, err error) {
 	w, _ = wfRepo.FindByIdentifier(def.Identifier)
 
+	w.Identifier = def.Identifier
 	w.Name = def.Name
 	w.Description = def.Description
 	w.Active = def.Active

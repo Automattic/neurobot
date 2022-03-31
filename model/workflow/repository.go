@@ -5,6 +5,10 @@ type Repository interface {
 	// Save persists a workflow
 	Save(workflow *Workflow) error
 
+	// Save identifier to workflow_meta table
+	// would be removed once workflow meta table is removed
+	SaveMeta(workflow *Workflow) error
+
 	// FindActive retrieves all active workflows.
 	FindActive() ([]Workflow, error)
 

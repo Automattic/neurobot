@@ -81,6 +81,28 @@ func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
 	return
 }
 
+// Save meta information to workflow_meta table from a workflow object.
+func (repository *repository) SaveMeta(workflow *model.Workflow) (err error) {
+	// remove and insert for now
+	// we would be removing the workflow meta table in a future PR anyway
+	result := repository.collectionMeta.Find(db.Cond{"workflow_id": workflow.ID})
+	if err = result.Delete(); err != nil {
+		return
+	}
+
+	m := meta{
+		WorkflowID: workflow.ID,
+		Key:        identifierKey,
+		Value:      workflow.Identifier,
+	}
+
+	if _, err := repository.collectionMeta.Insert(m); err != nil {
+		return err
+	}
+
+	return
+}
+
 func (repository *repository) Save(workflow *model.Workflow) error {
 	if workflow.ID > 0 {
 		return repository.update(workflow)
