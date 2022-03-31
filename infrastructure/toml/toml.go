@@ -2,7 +2,6 @@ package toml
 
 import (
 	"fmt"
-	"log"
 	"neurobot/model/workflow"
 	"neurobot/model/workflowstep"
 
@@ -18,15 +17,7 @@ type workflowTOML struct {
 	Active      bool
 	Name        string
 	Description string
-	Trigger     workflowTriggerTOML
 	Steps       []workflowStepTOML `toml:"Step"`
-}
-
-type workflowTriggerTOML struct {
-	Name        string
-	Description string
-	Variety     string
-	Meta        map[string]string
 }
 
 type workflowStepTOML struct {
@@ -75,17 +66,6 @@ func parse(tomlFilePath string) (def workflowDefintionTOML, err error) {
 	if err != nil {
 		return
 	}
-
-	log.Println("TOML Defs:")
-	for _, w := range def.Workflows {
-		log.Printf("[%s] %s (%s) Active=%t", w.Identifier, w.Name, w.Description, w.Active)
-		log.Printf(" >> %s %T %+v", w.Trigger.Variety, w.Trigger.Meta, w.Trigger.Meta)
-		for ws, s := range w.Steps {
-			log.Printf("\t[%d] %s (%s) Active=%t", ws, s.Name, s.Description, s.Active)
-			log.Printf("\t >> %s %T %+v\n", s.Variety, s.Meta, s.Meta)
-		}
-	}
-	log.Println("---TOML---")
 
 	err = runSemanticCheckOnTOML(def)
 	if err != nil {
