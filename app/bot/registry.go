@@ -10,7 +10,7 @@ import (
 
 type Registry interface {
 	Append(bot model.Bot, client matrix.Client) error
-	GetClient(identifier string) matrix.Client
+	GetClient(identifier string) (matrix.Client, error)
 }
 
 type registry struct {
@@ -56,10 +56,10 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 	return
 }
 
-func (r *registry) GetClient(identifier string) matrix.Client {
+func (r *registry) GetClient(identifier string) (matrix.Client, error) {
 	if client, ok := r.clients[identifier]; ok {
-		return client
+		return client, nil
 	}
 
-	return nil
+	return nil, fmt.Errorf("no matrix client was found for bot with identifier: %s", identifier)
 }
