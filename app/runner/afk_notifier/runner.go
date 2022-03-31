@@ -3,6 +3,8 @@ package afk_notifier
 import (
 	r "neurobot/app/runner"
 	"neurobot/infrastructure/matrix"
+	m "neurobot/model/message"
+	"neurobot/model/room"
 	"neurobot/model/workflow"
 )
 
@@ -15,6 +17,12 @@ func NewRunner(matrixClient matrix.Client) r.Runner {
 }
 
 func (r *runner) Run(workflow workflow.Workflow, payload map[string]string) error {
-	//TODO implement me
-	panic("implement me")
+	roomID, err := room.NewID(payload["room"])
+	if err != nil {
+		return err
+	}
+
+	message := m.NewPlainTextMessage(payload["message"])
+
+	return r.matrixClient.SendMessage(roomID, message)
 }
