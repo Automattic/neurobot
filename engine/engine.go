@@ -17,7 +17,6 @@ import (
 type Engine interface {
 	StartUp(MatrixClient, mautrix.Syncer)
 	Run(wf.Workflow, map[string]string) error
-	ShutDown()
 	log(string)
 }
 
@@ -121,10 +120,6 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 		wg.Wait()
 		e.log("Engine's matrix start up finished.")
 	}
-}
-
-func (e *engine) ShutDown() {
-	// Close database connection
 }
 
 func (e *engine) log(m string) {

@@ -121,7 +121,6 @@ func main() {
 		fmt.Println("engine:", "Lite mode")
 		e.StartUpLite()
 	}
-	defer e.ShutDown()
 
 	app := application.NewApp(e, bus, botRepository, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
