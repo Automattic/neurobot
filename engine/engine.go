@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"log"
-	"neurobot/infrastructure/database"
 	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
 	"strings"
@@ -53,7 +52,7 @@ type engine struct {
 type RunParams struct {
 	BotRepository        bot.Repository
 	Debug                bool
-	Database             string
+	DatabaseSession      db.Session
 	WorkflowsDefTOMLFile string
 	IsMatrix             bool
 	MatrixServerName     string // domain in use, part of identity
@@ -68,13 +67,6 @@ func (e *engine) StartUpLite() {
 	// Initialize maps
 	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
-
-	// Establish database connection
-	e.log("Attempting to establish database connection..")
-	err := e.loadDB()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// Check for workflows defined in TOML
 	e.handleTOMLDefinitions()
@@ -133,33 +125,12 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 
 func (e *engine) ShutDown() {
 	// Close database connection
-	e.db.Close()
 }
 
 func (e *engine) log(m string) {
 	if e.debug {
 		fmt.Println(m)
 	}
-}
-
-func (e *engine) loadDB() (err error) {
-	// Use upper.io ORM now
-	e.db, err = database.MakeDatabaseSession()
-	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
-	}
-
-	err = database.Migrate(e.db)
-	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
-	}
-
-	// Set database logging to Errors only when debug:false
-	if !e.debug {
-		db.LC().SetLevel(db.LogLevelError)
-	}
-
-	return
 }
 
 func (e *engine) loadData() {
@@ -303,6 +274,7 @@ func NewEngine(p RunParams) *engine {
 	// setting run parameters
 	e.debug = p.Debug
 	e.workflowsDefTOMLFile = p.WorkflowsDefTOMLFile
+	e.db = p.DatabaseSession
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
 	e.matrixServerURL = p.MatrixServerURL
