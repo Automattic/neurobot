@@ -3,14 +3,15 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
-	"os"
-	"path/filepath"
-	"runtime"
 )
 
 // The URL to the directory containing migrations
@@ -27,6 +28,7 @@ func MakeDatabaseSession() (db.Session, error) {
 	databasePath := os.Getenv("DB_FILE")
 	settings := sqlite.ConnectionURL{Database: databasePath}
 
+	db.LC().SetLevel(db.LogLevelError)
 	return sqlite.Open(settings)
 }
 

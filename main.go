@@ -49,6 +49,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
+	defer databaseSession.Close()
+	err = database.Migrate(databaseSession)
+	if err != nil {
+		log.Fatalf("db.Open(): %q\n", err)
+	}
 
 	botRepository := bot.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
@@ -97,6 +102,7 @@ func main() {
 		Debug:                debug,
 		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
 		IsMatrix:             isMatrix,
+		DatabaseSession:      databaseSession,
 		MatrixServerName:     serverName,
 		MatrixServerURL:      serverURL,
 		MatrixUsername:       username,
@@ -115,7 +121,6 @@ func main() {
 		fmt.Println("engine:", "Lite mode")
 		e.StartUpLite()
 	}
-	defer e.ShutDown()
 
 	app := application.NewApp(e, bus, botRepository, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
