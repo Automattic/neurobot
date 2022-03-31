@@ -1,7 +1,7 @@
 package app
 
 import (
-	"log"
+	"fmt"
 	netHttp "net/http"
 	"neurobot/app/bot"
 	r "neurobot/app/runner"
@@ -49,13 +49,18 @@ func (app app) Run() (err error) {
 				return
 			}
 
-			go app.runWorkflow(workflow, payload)
+			go func() {
+				err := app.runWorkflow(workflow, payload)
+				if err != nil {
+					fmt.Printf("Failed to run workflow: %s", err)
+				}
+			}()
 		})
 
 	return
 }
 
-func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) {
+func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error {
 	var runner r.Runner
 
 	switch workflow.Identifier {
@@ -63,8 +68,5 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) {
 		runner = app.engine
 	}
 
-	err := runner.Run(workflow, payload)
-	if err != nil {
-		log.Printf("Error running workflow: %s", err)
-	}
+	return runner.Run(workflow, payload)
 }
