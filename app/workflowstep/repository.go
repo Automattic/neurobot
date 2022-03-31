@@ -25,6 +25,33 @@ func NewRepository(session db.Session) model.Repository {
 	}
 }
 
+// FindActive returns all active workflow steps from the database
+func (repository *repository) FindActive() (steps []model.WorkflowStep, err error) {
+	result := repository.collection.Find(db.Cond{"active": 1})
+	err = result.All(&steps)
+	if err != nil {
+		return
+	}
+
+	for i := range steps {
+		repository.loadMeta(&steps[i])
+	}
+
+	return
+}
+
+func (repository *repository) FindByID(stepID uint64) (step model.WorkflowStep, err error) {
+	result := repository.collection.Find(db.Cond{"id": stepID})
+	err = result.One(&step)
+	if err != nil {
+		return
+	}
+
+	err = repository.loadMeta(&step)
+
+	return
+}
+
 func (repository *repository) Save(step *model.WorkflowStep) error {
 	if step.ID > 0 {
 		return repository.update(step)
@@ -41,9 +68,7 @@ func (repository *repository) insert(step *model.WorkflowStep) (err error) {
 
 	step.ID = uint64(result.ID().(int64))
 
-	repository.saveMeta(step)
-
-	return
+	return repository.saveMeta(step)
 }
 
 func (repository *repository) update(step *model.WorkflowStep) (err error) {
@@ -64,12 +89,9 @@ func (repository *repository) update(step *model.WorkflowStep) (err error) {
 		return
 	}
 
-	repository.saveMeta(step)
-
-	return
+	return repository.saveMeta(step)
 }
 
-// Load information from workflow_meta table into a workflow object.
 func (repository *repository) loadMeta(step *model.WorkflowStep) (err error) {
 	var metas []meta
 	result := repository.collectionMeta.Find(db.Cond{"step_id": step.ID})
@@ -77,6 +99,7 @@ func (repository *repository) loadMeta(step *model.WorkflowStep) (err error) {
 		return err
 	}
 
+	step.Meta = make(map[string]string)
 	for _, meta := range metas {
 		step.Meta[meta.Key] = meta.Value
 	}
