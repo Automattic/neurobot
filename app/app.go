@@ -5,6 +5,7 @@ import (
 	netHttp "net/http"
 	"neurobot/app/bot"
 	r "neurobot/app/runner"
+	"neurobot/app/runner/afk_notifier"
 	"neurobot/engine"
 	"neurobot/infrastructure/http"
 	w "neurobot/model/workflow"
@@ -60,6 +61,12 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 	switch workflow.Identifier {
 	default:
 		runner = app.engine
+	case "afk_notifier":
+		matrixClient, err := app.botRegistry.GetClient("afk")
+		if err != nil {
+			return err
+		}
+		runner = afk_notifier.NewRunner(matrixClient)
 	}
 
 	return runner.Run(workflow, payload)
