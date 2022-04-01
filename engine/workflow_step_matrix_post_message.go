@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	botApp "neurobot/app/bot"
+	"neurobot/infrastructure/matrix"
+	"neurobot/model/message"
+	r "neurobot/model/room"
 
 	"maunium.net/go/mautrix"
-	"maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/format"
-	"maunium.net/go/mautrix/id"
 )
 
 type postMessageMatrixWorkflowStepMeta struct {
@@ -32,25 +32,12 @@ var getMatrixClient = func(homeserver string) (MatrixClient, error) {
 	return mc, nil
 }
 
-func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc MatrixClient, err error) {
+func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc matrix.Client, err error) {
 	if s.asBot != "" {
-		modelBot, err := e.botRepository.FindByIdentifier(s.asBot)
-		if err != nil {
-			return nil, err
-		}
-
-		// Convert model/bot to engine/bot
-		// TODO: Remove once engine/bot has been replaced in favour of model/bot
-		b := MakeBotFromModelBot(modelBot)
-
-		if !b.IsHydrated() {
-			b.Hydrate(e)
-		}
-
-		return b.getMCInstance(), nil
+		return s.botRegistry.GetPrimaryClient()
 	}
 
-	return e.client, nil
+	return s.botRegistry.GetClient(s.asBot)
 }
 
 func (s postMessageMatrixWorkflowStep) run(p map[string]string, e *engine) (map[string]string, error) {
@@ -84,21 +71,12 @@ func (s postMessageMatrixWorkflowStep) run(p map[string]string, e *engine) (map[
 		return p, err
 	}
 
-	// resolve room alias
-	if room[0:1] == "#" {
-		resolve, err := mc.ResolveAlias(id.RoomAlias(room))
-		if err != nil {
-			return p, err
-		}
-
-		room = resolve.RoomID.String()
-	}
-
-	formattedText := format.RenderMarkdown(msg, true, false)
-	_, err = mc.SendMessageEvent(id.RoomID(room), event.EventMessage, &formattedText)
+	roomID, err := r.NewID(room)
 	if err != nil {
 		return p, err
 	}
 
-	return p, nil
+	err = mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
+
+	return p, err
 }
