@@ -12,8 +12,6 @@ type WorkflowStepTOML struct {
 	Meta        map[string]string
 }
 
-func parseTOMLDefs(e *engine) error { return nil }
-
 func boolToInt(b bool) int {
 	if b {
 		return 1
