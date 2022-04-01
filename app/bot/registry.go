@@ -10,12 +10,14 @@ import (
 
 type Registry interface {
 	Append(bot model.Bot, client matrix.Client) error
+	GetPrimaryClient() (matrix.Client, error)
 	GetClient(identifier string) (matrix.Client, error)
 }
 
 type registry struct {
-	homeserverDomain string
-	clients          map[string]matrix.Client
+	homeserverDomain  string
+	primaryIdentifier string
+	clients           map[string]matrix.Client
 }
 
 func NewRegistry(homeserverURL string) Registry {
@@ -26,6 +28,10 @@ func NewRegistry(homeserverURL string) Registry {
 }
 
 func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
+	if bot.Primary {
+		r.primaryIdentifier = bot.Identifier
+	}
+
 	if _, ok := r.clients[bot.Identifier]; ok {
 		return fmt.Errorf("bot %s is already known", bot.Identifier)
 	}
@@ -54,6 +60,14 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 	r.clients[bot.Identifier] = client
 
 	return
+}
+
+func (r *registry) GetPrimaryClient() (matrix.Client, error) {
+	if client, ok := r.clients[r.primaryIdentifier]; ok {
+		return client, nil
+	}
+
+	return nil, fmt.Errorf("no primary matrix client was found: %s", r.primaryIdentifier)
 }
 
 func (r *registry) GetClient(identifier string) (matrix.Client, error) {
