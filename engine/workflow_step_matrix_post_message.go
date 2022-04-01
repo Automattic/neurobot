@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	botApp "neurobot/app/bot"
 
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
@@ -19,6 +20,7 @@ type postMessageMatrixWorkflowStepMeta struct {
 type postMessageMatrixWorkflowStep struct {
 	workflowStep
 	postMessageMatrixWorkflowStepMeta
+	botRegistry botApp.Registry
 }
 
 var getMatrixClient = func(homeserver string) (MatrixClient, error) {

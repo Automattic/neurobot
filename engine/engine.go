@@ -154,6 +154,7 @@ func (e *engine) loadData() {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
 			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			ws.botRegistry = e.botRegistry
 			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		case *stdoutWorkflowStep:
 			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
