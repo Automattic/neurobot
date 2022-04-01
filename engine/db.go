@@ -1,9 +1,7 @@
 package engine
 
 import (
-	"fmt"
 	wf "neurobot/app/workflow"
-	"strings"
 
 	"github.com/upper/db/v4"
 )
@@ -90,37 +88,6 @@ func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
 	}
 
 	return
-}
-
-/**
- * Insert functions for entities (workflow/trigger/step)
- */
-
-func insertWFSteps(dbs db.Session, wid uint64, steps []WorkflowStepTOML) error {
-	for i, ws := range steps {
-		// insert workflow step
-		isr, err := dbs.Collection("workflow_steps").Insert(WFStepRow{
-			Name:        ws.Name,
-			Description: ws.Description,
-			Variety:     ws.Variety,
-			WorkflowID:  wid,
-			SortOrder:   uint64(i),
-			Active:      boolToInt(ws.Active),
-		})
-		if err != nil {
-			return err
-		}
-
-		// inserted step ID
-		sid := uint64(isr.ID().(int64))
-
-		// insert step meta
-		for key, value := range ws.Meta {
-			insertWFStepMeta(dbs, sid, key, value)
-		}
-	}
-
-	return nil
 }
 
 /**
@@ -237,40 +204,6 @@ func getWFStepMeta(dbs db.Session, stepID uint64, key string) string {
 /**
  * Delete functions for entities (workflow/trigger/step)
  */
-
-func deleteAllWFSteps(dbs db.Session, wid uint64) error {
-	rows := []WFStepRow{}
-	res := dbs.Collection("workflow_steps").Find(db.Cond{"workflow_id": wid})
-	res.All(&rows)
-
-	// find all ids for workflow steps, required to delete meta rows
-	var collect []uint64
-	for _, row := range rows {
-		collect = append(collect, row.ID)
-	}
-
-	// delete all workfow step rows
-	if err := res.Delete(); err != nil {
-		return err
-	}
-
-	// delete all workflow step meta rows
-	return deleteAllWFStepMeta(dbs, collect)
-}
-
-func deleteAllWFStepMeta(dbs db.Session, stepIDs []uint64) error {
-	_, err := dbs.SQL().Exec(
-		fmt.Sprintf(
-			"DELETE from workflow_step_meta WHERE step_id IN (%s)",
-			strings.Join(
-				intSliceToStringSlice(stepIDs),
-				",",
-			),
-		),
-	)
-
-	return err
-}
 
 func getWorkflowSteps(dbs db.Session, id uint64) []WFStepRow {
 	r := []WFStepRow{}
