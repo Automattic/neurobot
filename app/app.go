@@ -44,6 +44,7 @@ func (app app) Run() (err error) {
 				return
 			}
 
+			// Run in a goroutine so that we immediately respond to the request.
 			go func() {
 				err := app.runWorkflow(workflow, payload)
 				if err != nil {
