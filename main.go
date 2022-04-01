@@ -112,6 +112,7 @@ func main() {
 
 	p := engine.RunParams{
 		BotRepository:          botRepository,
+		BotRegistry:            botRegistry,
 		WorkflowRepository:     workflowRepository,
 		WorkflowStepRepository: workflowStepsRepository,
 
