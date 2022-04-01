@@ -8,7 +8,6 @@ import (
 	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
 	"neurobot/infrastructure/database"
-	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
 	"neurobot/infrastructure/matrix"
 	b "neurobot/model/bot"
@@ -72,8 +71,6 @@ func main() {
 	}
 	webhookListenerServer := http.NewServer(webhookListenerPort)
 
-	bus := event.NewMemoryBus()
-
 	// if either one matrix related env var is specified, make sure all of them are specified
 	isMatrix := false
 	if serverName != "" || username != "" || password != "" {
@@ -129,7 +126,7 @@ func main() {
 		e.StartUpLite()
 	}
 
-	app := application.NewApp(e, bus, botRegistry, workflowRepository, webhookListenerServer)
+	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
 		log.Fatalf("%s", err)
 	}

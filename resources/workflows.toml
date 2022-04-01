@@ -24,11 +24,10 @@
 #################################################################
 
 [[workflow]]
-identifier = "A8C-AFK"
+identifier = "afk_notifier"
 active = true
-
-name = "AFK Bot Workflow"
-description = "AFK Bot receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
+name = "AFK notifier"
+description = "Receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
 
 [workflow.trigger]
 name = "AFK pings from Matticspace"

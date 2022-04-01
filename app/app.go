@@ -1,22 +1,19 @@
 package app
 
 import (
-	"log"
+	"fmt"
 	netHttp "net/http"
 	"neurobot/app/bot"
 	r "neurobot/app/runner"
+	"neurobot/app/runner/afk_notifier"
 	"neurobot/engine"
-	"neurobot/infrastructure/event"
 	"neurobot/infrastructure/http"
-	b "neurobot/model/bot"
 	w "neurobot/model/workflow"
 	"strings"
 )
 
 type app struct {
 	engine             engine.Engine
-	eventBus           event.Bus
-	botRepository      b.Repository
 	botRegistry        bot.Registry
 	workflowRepository w.Repository
 	webhookListener    *http.Server
@@ -24,14 +21,12 @@ type app struct {
 
 func NewApp(
 	engine engine.Engine,
-	eventBus event.Bus,
 	botRegistry bot.Registry,
 	workflowRepository w.Repository,
 	webhookListener *http.Server,
 ) *app {
 	return &app{
 		engine:             engine,
-		eventBus:           eventBus,
 		botRegistry:        botRegistry,
 		workflowRepository: workflowRepository,
 		webhookListener:    webhookListener,
@@ -49,22 +44,30 @@ func (app app) Run() (err error) {
 				return
 			}
 
-			go app.runWorkflow(workflow, payload)
+			go func() {
+				err := app.runWorkflow(workflow, payload)
+				if err != nil {
+					fmt.Printf("Failed to run workflow: %s", err)
+				}
+			}()
 		})
 
 	return
 }
 
-func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) {
+func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error {
 	var runner r.Runner
 
 	switch workflow.Identifier {
 	default:
 		runner = app.engine
+	case "afk_notifier":
+		matrixClient, err := app.botRegistry.GetClient("afk")
+		if err != nil {
+			return err
+		}
+		runner = afk_notifier.NewRunner(matrixClient)
 	}
 
-	err := runner.Run(workflow, payload)
-	if err != nil {
-		log.Printf("Error running workflow: %s", err)
-	}
+	return runner.Run(workflow, payload)
 }
