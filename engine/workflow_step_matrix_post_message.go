@@ -32,7 +32,7 @@ var getMatrixClient = func(homeserver string) (MatrixClient, error) {
 	return mc, nil
 }
 
-func (s postMessageMatrixWorkflowStep) getMatrixClient(e *engine) (mc matrix.Client, err error) {
+func (s postMessageMatrixWorkflowStep) getMatrixClient() (mc matrix.Client, err error) {
 	if s.asBot != "" {
 		return s.botRegistry.GetPrimaryClient()
 	}
@@ -66,7 +66,7 @@ func (s postMessageMatrixWorkflowStep) run(p map[string]string, e *engine) (map[
 		return p, errors.New("no message to post")
 	}
 
-	mc, err := s.getMatrixClient(e)
+	mc, err := s.getMatrixClient()
 	if err != nil {
 		return p, err
 	}
