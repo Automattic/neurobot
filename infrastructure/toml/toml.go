@@ -45,10 +45,6 @@ func Import(tomlFilePath string, wfRepo workflow.Repository, wfsRepo workflowste
 			return err
 		}
 
-		if err = wfRepo.SaveMeta(&workflow); err != nil {
-			return err
-		}
-
 		for _, step := range workflowSteps {
 			// now that we surely have the workflow ID, populate that in step
 			step.WorkflowID = workflow.ID

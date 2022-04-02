@@ -81,24 +81,18 @@ func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
 	return
 }
 
-// Save meta information to workflow_meta table from a workflow object.
-func (repository *repository) SaveMeta(workflow *model.Workflow) (err error) {
-	// remove and insert for now
-	// we would be removing the workflow meta table in a future PR anyway
+func (repository *repository) saveMeta(workflow *model.Workflow) (err error) {
+	// delete existing entries
 	result := repository.collectionMeta.Find(db.Cond{"workflow_id": workflow.ID})
 	if err = result.Delete(); err != nil {
 		return
 	}
 
-	m := meta{
+	_, err = repository.collectionMeta.Insert(meta{
 		WorkflowID: workflow.ID,
-		Key:        identifierKey,
+		Key:        "toml_identifier",
 		Value:      workflow.Identifier,
-	}
-
-	if _, err := repository.collectionMeta.Insert(m); err != nil {
-		return err
-	}
+	})
 
 	return
 }
@@ -124,7 +118,11 @@ func (repository *repository) update(workflow *model.Workflow) (err error) {
 	existing.Active = workflow.Active
 	existing.Identifier = workflow.Identifier
 
-	return result.Update(existing)
+	if err = result.Update(existing); err != nil {
+		return
+	}
+
+	return repository.saveMeta(workflow)
 }
 
 func (repository *repository) insert(workflow *model.Workflow) (err error) {
@@ -133,5 +131,5 @@ func (repository *repository) insert(workflow *model.Workflow) (err error) {
 		workflow.ID = uint64(result.ID().(int64))
 	}
 
-	return
+	return repository.saveMeta(workflow)
 }

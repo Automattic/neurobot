@@ -141,10 +141,6 @@ func TestSaveMeta(t *testing.T) {
 			t.Errorf("could not save workflow: %s", err)
 		}
 
-		if err := repository.SaveMeta(w); err != nil {
-			t.Errorf("could not save workflow meta: %s", err)
-		}
-
 		got, err := repository.FindByIdentifier(w.Identifier)
 		if err != nil {
 			t.Errorf("could not find workflow in the database: %s", err)
