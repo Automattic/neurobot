@@ -56,7 +56,7 @@ func (repository *repository) FindByID(ID uint64) (workflow model.Workflow, err 
 
 func (repository *repository) FindByIdentifier(identifier string) (workflow model.Workflow, err error) {
 	var meta meta
-	result := repository.collectionMeta.Find(db.Cond{"key": "toml_identifier", "value": identifier})
+	result := repository.collectionMeta.Find(db.Cond{"key": identifierKey, "value": identifier})
 	err = result.One(&meta)
 
 	workflow, err = repository.FindByID(meta.WorkflowID)
@@ -90,7 +90,7 @@ func (repository *repository) saveMeta(workflow *model.Workflow) (err error) {
 
 	_, err = repository.collectionMeta.Insert(meta{
 		WorkflowID: workflow.ID,
-		Key:        "toml_identifier",
+		Key:        identifierKey,
 		Value:      workflow.Identifier,
 	})
 
