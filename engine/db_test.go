@@ -1,10 +1,8 @@
 package engine
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	wf "neurobot/app/workflow"
 	wfs "neurobot/app/workflowstep"
 	modelWorkflow "neurobot/model/workflow"
@@ -95,86 +93,6 @@ func TestGetConfiguredWFSteps(t *testing.T) {
 		// 	t.Errorf("output did not match\n%+v\n%+v", got, steps)
 		// }
 	})
-}
-
-func TestUpdateWorkflowMeta(t *testing.T) {
-	dbs, dbs2 := setUp()
-
-	wid := uint64(11)
-
-	// insert a meta value that doesn't exist, testing insert
-	// then update the same meta value, testing update
-
-	key := fmt.Sprintf("neo%d", rand.Intn(100))
-	value := "matrix"
-
-	// issue insert
-	updateWorkflowMeta(dbs, wid, key, value)
-	if value != getWorkflowMeta(dbs, wid, key) {
-		t.Error("insert failed")
-	}
-
-	value = value + fmt.Sprintf("%d", rand.Intn(100))
-
-	// issue update
-	updateWorkflowMeta(dbs, wid, key, value)
-	if value != getWorkflowMeta(dbs, wid, key) {
-		t.Error("update failed")
-	}
-
-	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWorkflowMeta(dbs, wid, key, value)
-	if value != getWorkflowMeta(dbs, wid, key) {
-		t.Error("update with same value failed")
-	}
-
-	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateWorkflowMeta(dbs2, wid, key, value)
-	if err == nil {
-		t.Error("no error was returned with an empty database with no tables")
-	}
-
-	tearDown(dbs, dbs2)
-}
-
-func TestUpdateWFStepMeta(t *testing.T) {
-	dbs, dbs2 := setUp()
-
-	stepID := uint64(11)
-
-	// insert a meta value that doesn't exist, testing insert
-	// then update the same meta value, testing update
-
-	key := fmt.Sprintf("neo%d", rand.Intn(100))
-	value := "matrix"
-
-	// issue insert
-	updateWFStepMeta(dbs, stepID, key, value)
-	if value != getWFStepMeta(dbs, stepID, key) {
-		t.Error("insert failed")
-	}
-
-	value = value + fmt.Sprintf("%d", rand.Intn(100))
-
-	// issue update
-	updateWFStepMeta(dbs, stepID, key, value)
-	if value != getWFStepMeta(dbs, stepID, key) {
-		t.Error("update failed")
-	}
-
-	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWFStepMeta(dbs, stepID, key, value)
-	if value != getWFStepMeta(dbs, stepID, key) {
-		t.Error("update with same value failed")
-	}
-
-	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateWFStepMeta(dbs2, stepID, key, value)
-	if err == nil {
-		t.Error("no error was returned with an empty database with no tables")
-	}
-
-	tearDown(dbs, dbs2)
 }
 
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass
