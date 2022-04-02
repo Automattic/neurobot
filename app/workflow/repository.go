@@ -1,8 +1,9 @@
 package workflow
 
 import (
-	"github.com/upper/db/v4"
 	model "neurobot/model/workflow"
+
+	"github.com/upper/db/v4"
 )
 
 const identifierKey = "toml_identifier"
@@ -55,7 +56,7 @@ func (repository *repository) FindByID(ID uint64) (workflow model.Workflow, err 
 
 func (repository *repository) FindByIdentifier(identifier string) (workflow model.Workflow, err error) {
 	var meta meta
-	result := repository.collectionMeta.Find(db.Cond{"key": "toml_identifier", "value": identifier})
+	result := repository.collectionMeta.Find(db.Cond{"key": identifierKey, "value": identifier})
 	err = result.One(&meta)
 
 	workflow, err = repository.FindByID(meta.WorkflowID)
@@ -76,6 +77,22 @@ func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
 			workflow.Identifier = meta.Value
 		}
 	}
+
+	return
+}
+
+func (repository *repository) saveMeta(workflow *model.Workflow) (err error) {
+	// delete existing entries
+	result := repository.collectionMeta.Find(db.Cond{"workflow_id": workflow.ID})
+	if err = result.Delete(); err != nil {
+		return
+	}
+
+	_, err = repository.collectionMeta.Insert(meta{
+		WorkflowID: workflow.ID,
+		Key:        identifierKey,
+		Value:      workflow.Identifier,
+	})
 
 	return
 }
@@ -101,7 +118,11 @@ func (repository *repository) update(workflow *model.Workflow) (err error) {
 	existing.Active = workflow.Active
 	existing.Identifier = workflow.Identifier
 
-	return result.Update(existing)
+	if err = result.Update(existing); err != nil {
+		return
+	}
+
+	return repository.saveMeta(workflow)
 }
 
 func (repository *repository) insert(workflow *model.Workflow) (err error) {
@@ -110,5 +131,5 @@ func (repository *repository) insert(workflow *model.Workflow) (err error) {
 		workflow.ID = uint64(result.ID().(int64))
 	}
 
-	return
+	return repository.saveMeta(workflow)
 }

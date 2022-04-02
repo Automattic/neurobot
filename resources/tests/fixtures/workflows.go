@@ -1,12 +1,13 @@
 package fixtures
 
 import (
-	"github.com/upper/db/v4"
 	"log"
 	"neurobot/model/workflow"
+
+	"github.com/upper/db/v4"
 )
 
-type metaRow struct {
+type workflowMetaRow struct {
 	ID         uint64 `db:"id,omitempty"`
 	WorkflowID uint64 `db:"workflow_id"`
 	Key        string `db:"key"`
@@ -64,7 +65,7 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 		}
 
 		if fixture.Identifier != "" {
-			_, err := session.Collection("workflow_meta").Insert(metaRow{
+			_, err := session.Collection("workflow_meta").Insert(workflowMetaRow{
 				WorkflowID: fixture.ID,
 				Key:        "toml_identifier",
 				Value:      fixture.Identifier,

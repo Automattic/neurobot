@@ -7,9 +7,11 @@ import (
 	application "neurobot/app"
 	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
+	"neurobot/app/workflowstep"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/http"
 	"neurobot/infrastructure/matrix"
+	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
 	"os"
 	"strconv"
@@ -58,6 +60,13 @@ func main() {
 
 	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
+	workflowStepsRepository := workflowstep.NewRepository(databaseSession)
+
+	// import TOML
+	err = toml.Import(workflowsDefTOMLFile, workflowRepository, workflowStepsRepository)
+	if err != nil {
+		log.Fatalf("error while importing TOML workflows: %s", err)
+	}
 
 	botRegistry, err := makeBotRegistry(serverName, botRepository)
 	if err != nil {
@@ -102,15 +111,14 @@ func main() {
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	p := engine.RunParams{
-		BotRepository:        botRepository,
-		Debug:                debug,
-		WorkflowsDefTOMLFile: workflowsDefTOMLFile,
-		IsMatrix:             isMatrix,
-		DatabaseSession:      databaseSession,
-		MatrixServerName:     serverName,
-		MatrixServerURL:      serverURL,
-		MatrixUsername:       username,
-		MatrixPassword:       password,
+		BotRepository:    botRepository,
+		Debug:            debug,
+		IsMatrix:         isMatrix,
+		DatabaseSession:  databaseSession,
+		MatrixServerName: serverName,
+		MatrixServerURL:  serverURL,
+		MatrixUsername:   username,
+		MatrixPassword:   password,
 	}
 
 	e := engine.NewEngine(p)

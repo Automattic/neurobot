@@ -1,12 +1,13 @@
 package workflow
 
 import (
-	"github.com/upper/db/v4"
 	model "neurobot/model/workflow"
 	"neurobot/resources/tests/database"
 	"neurobot/resources/tests/fixtures"
 	"reflect"
 	"testing"
+
+	"github.com/upper/db/v4"
 )
 
 func TestFindActive(t *testing.T) {
@@ -121,6 +122,32 @@ func TestUpdate(t *testing.T) {
 
 		if !reflect.DeepEqual(got, workflow) {
 			t.Errorf("unexpected result update workflow")
+		}
+	})
+}
+
+func TestSaveMeta(t *testing.T) {
+	database.Test(func(session db.Session) {
+		// workflows := fixtures.Workflows(session)
+		repository := NewRepository(session)
+
+		w := &model.Workflow{
+			Name:        "Toml imported Workflow 3",
+			Description: "",
+			Active:      true,
+			Identifier:  "TOMLTEST3",
+		}
+		if err := repository.Save(w); err != nil {
+			t.Errorf("could not save workflow: %s", err)
+		}
+
+		got, err := repository.FindByIdentifier(w.Identifier)
+		if err != nil {
+			t.Errorf("could not find workflow in the database: %s", err)
+		}
+
+		if got.Identifier != w.Identifier {
+			t.Errorf("output did not match\n%v\n%v", got, w)
 		}
 	})
 }
