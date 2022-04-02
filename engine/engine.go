@@ -44,6 +44,7 @@ type engine struct {
 
 	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
+
 	workflows map[uint64]*workflow
 	bots      map[uint64]MatrixClient // All matrix client instances of bots
 
@@ -54,6 +55,7 @@ type RunParams struct {
 	BotRepository          bot.Repository
 	WorkflowRepository     wf.Repository
 	WorkflowStepRepository wfs.Repository
+
 	Debug            bool
 	DatabaseSession  db.Session
 	IsMatrix         bool
@@ -130,7 +132,7 @@ func (e *engine) log(m string) {
 
 func (e *engine) loadData() {
 	// load workflows
-	workflows, err := getConfiguredWorkflows(e.db)
+	workflows, err := getConfiguredWorkflows(e.workflowRepository)
 	if err != nil {
 		log.Fatalf("Error loading workflows from database: %s", err)
 	}
@@ -142,7 +144,7 @@ func (e *engine) loadData() {
 	}
 
 	// load workflow steps
-	steps, err := getConfiguredWFSteps(e.db)
+	steps, err := getConfiguredWFSteps(e.workflowStepRepository)
 	if err != nil {
 		log.Fatalf("Error loading workflow steps from database: %s", err)
 	}

@@ -1,8 +1,8 @@
 package engine
 
 import (
-	wf "neurobot/app/workflow"
-	wfs "neurobot/app/workflowstep"
+	wf "neurobot/model/workflow"
+	wfs "neurobot/model/workflowstep"
 
 	"github.com/upper/db/v4"
 )
@@ -30,8 +30,7 @@ type WFStepMetaRow struct {
 }
 
 // get all active workflows out of the database
-func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
-	repository := wf.NewRepository(dbs)
+func getConfiguredWorkflows(repository wf.Repository) (w []workflow, err error) {
 	savedWorkflows, err := repository.FindActive()
 	if err != nil {
 		return
@@ -49,8 +48,7 @@ func getConfiguredWorkflows(dbs db.Session) (w []workflow, err error) {
 }
 
 // get all active workflow steps out of the database
-func getConfiguredWFSteps(dbs db.Session) (s []WorkflowStep, err error) {
-	repository := wfs.NewRepository(dbs)
+func getConfiguredWFSteps(repository wfs.Repository) (s []WorkflowStep, err error) {
 	savedSteps, err := repository.FindActive()
 	if err != nil {
 		return
