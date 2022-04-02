@@ -5,6 +5,7 @@ import (
 	"log"
 	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
+	wfs "neurobot/model/workflowstep"
 	"strings"
 	"sync"
 
@@ -41,6 +42,8 @@ type engine struct {
 	db            db.Session
 	botRepository bot.Repository
 
+	workflowRepository     wf.Repository
+	workflowStepRepository wfs.Repository
 	workflows map[uint64]*workflow
 	bots      map[uint64]MatrixClient // All matrix client instances of bots
 
@@ -48,7 +51,9 @@ type engine struct {
 }
 
 type RunParams struct {
-	BotRepository    bot.Repository
+	BotRepository          bot.Repository
+	WorkflowRepository     wf.Repository
+	WorkflowStepRepository wfs.Repository
 	Debug            bool
 	DatabaseSession  db.Session
 	IsMatrix         bool
@@ -264,6 +269,8 @@ func NewEngine(p RunParams) *engine {
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
 	e.botRepository = p.BotRepository
+	e.workflowRepository = p.WorkflowRepository
+	e.workflowStepRepository = p.WorkflowStepRepository
 
 	return &e
 }
