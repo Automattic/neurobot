@@ -57,7 +57,6 @@ type RunParams struct {
 	WorkflowStepRepository wfs.Repository
 
 	Debug            bool
-	DatabaseSession  db.Session
 	IsMatrix         bool
 	MatrixServerName string // domain in use, part of identity
 	MatrixServerURL  string // actual URL to connect to, for a particular server
@@ -264,7 +263,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.db = p.DatabaseSession
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
 	e.matrixServerURL = p.MatrixServerURL
