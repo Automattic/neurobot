@@ -2,24 +2,18 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
+	"embed"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/upper/db/v4"
-	"path/filepath"
-	"runtime"
+	"net/http"
 )
 
-// The URL to the directory containing migrations
-var migrationsUrl string
-
-func init() {
-	_, currentFile, _, _ := runtime.Caller(0)
-	currentDirectory := filepath.Dir(currentFile)
-
-	migrationsUrl = fmt.Sprintf("file://%s/migrations/", currentDirectory)
-}
+// Embed migrations in the binary.
+//go:embed migrations/*.sql
+var migrationsFilesystem embed.FS
 
 func Migrate(session db.Session) error {
 	database, err := sql.Open("sqlite3", session.ConnectionURL().String())
@@ -33,7 +27,13 @@ func Migrate(session db.Session) error {
 		return err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrationsUrl, "sqlite3", driver)
+	// Retrieve embedded migrations
+	migrations, err := httpfs.New(http.FS(migrationsFilesystem), "migrations")
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithInstance("httpfs", migrations, "sqlite3", driver)
 	if err != nil {
 		return err
 	}
