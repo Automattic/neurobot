@@ -111,10 +111,12 @@ func main() {
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	p := engine.RunParams{
-		BotRepository:    botRepository,
+		BotRepository:          botRepository,
+		WorkflowRepository:     workflowRepository,
+		WorkflowStepRepository: workflowStepsRepository,
+
 		Debug:            debug,
 		IsMatrix:         isMatrix,
-		DatabaseSession:  databaseSession,
 		MatrixServerName: serverName,
 		MatrixServerURL:  serverURL,
 		MatrixUsername:   username,

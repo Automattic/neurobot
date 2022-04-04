@@ -1,13 +1,15 @@
 package engine
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
+	wf "neurobot/app/workflow"
+	wfs "neurobot/app/workflowstep"
+	modelWorkflow "neurobot/model/workflow"
+	modelWorkflowStep "neurobot/model/workflowstep"
+	"neurobot/resources/tests/database"
 	"neurobot/resources/tests/fixtures"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -16,193 +18,81 @@ import (
 )
 
 func TestGetConfiguredWorkflows(t *testing.T) {
-	dbs, dbs2 := setUp()
-	defer tearDown(dbs, dbs2)
+	database.Test(func(session db.Session) {
+		workflows := fixtures.Workflows(session)
+		repository := wf.NewRepository(session)
 
-	var expected []workflow
-	expected = append(expected, workflow{
-		id:          1,
-		name:        "QuickStart Demo",
-		description: "This workflow is meant to show a quick demo",
-	})
-	expected = append(expected, workflow{
-		id:          11,
-		name:        "MVP",
-		description: "",
-	})
-	expected = append(expected, workflow{
-		id:          13,
-		name:        "Toml imported Workflow",
-		description: "",
-	})
-
-	got, err := getConfiguredWorkflows(dbs)
-	if err != nil {
-		t.Errorf("configured workflows returned an error with database + records")
-	} else {
-		if !reflect.DeepEqual(got, expected) {
-			t.Errorf("configured workflows did not match")
+		got, err := getConfiguredWorkflows(repository)
+		if err != nil {
+			t.Errorf("could not get configured workflows from database")
 		}
-	}
 
-	_, err = getConfiguredWorkflows(dbs2)
-	if err == nil {
-		t.Errorf("configured workflows did not return an error with empty database")
-	}
+		if len(got) != 3 {
+			t.Errorf("expected 3 workflows, got %d", len(got))
+		}
+
+		var expected []modelWorkflow.Workflow
+		expected = append(expected, workflows["QuickStart Demo"])
+		expected = append(expected, workflows["MVP"])
+		expected = append(expected, workflows["Toml imported Workflow"])
+
+		// have to check just for names, as currently Workflow type in engine is different from workflow model
+		// eventually this would be consolidated and a reflect.DeepEqual check should suffice
+		for _, w := range expected {
+			found := false
+			for _, g := range got {
+				if w.Name == g.name {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("output did not match, expected %s in the output", w.Name)
+			}
+		}
+
+		// if !reflect.DeepEqual(got, expected) {
+		// 	t.Errorf("output did not match\n%+v\n%+v", got, expected)
+		// }
+	})
 }
 
 func TestGetConfiguredWFSteps(t *testing.T) {
-	dbs, dbs2 := setUp()
-	defer tearDown(dbs, dbs2)
+	database.Test(func(session db.Session) {
+		steps := fixtures.WorkflowSteps(session)
+		repository := wfs.NewRepository(session)
 
-	var expected []WorkflowStep
-	expected = append(expected, &stdoutWorkflowStep{
-		workflowStep: workflowStep{
-			id:          1,
-			name:        "Log to stdout",
-			description: "This workflow step will show the payload to stdout while showcasing the demo",
-			variety:     "stdout",
-			workflowID:  1,
-		},
-	})
-	expected = append(expected, &postMessageMatrixWorkflowStep{
-		workflowStep: workflowStep{
-			id:          11,
-			name:        "Post message to Matrix room",
-			description: "",
-			variety:     "postMatrixMessage",
-			workflowID:  11,
-		},
-		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-			messagePrefix: "Alert!",
-			room:          "!tnmILBRzpgkBkwSyDY:matrix.test",
-		},
-	})
-	expected = append(expected, &postMessageMatrixWorkflowStep{
-		workflowStep: workflowStep{
-			id:          13,
-			name:        "Post message in room 1",
-			description: "description here",
-			variety:     "postMatrixMessage",
-			workflowID:  13,
-		},
-		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-			messagePrefix: "[Alert]",
-			room:          "",
-		},
-	})
-	expected = append(expected, &postMessageMatrixWorkflowStep{
-		workflowStep: workflowStep{
-			id:          14,
-			name:        "Post message in room 2",
-			description: "description there",
-			variety:     "postMatrixMessage",
-			workflowID:  13,
-		},
-		postMessageMatrixWorkflowStepMeta: postMessageMatrixWorkflowStepMeta{
-			messagePrefix: "[Announcement]",
-			room:          "",
-		},
-	})
-	//13,'Post message in room 1','description here','postMatrixMessage',13,0,1);`,
-	//14,'Post message in room 2','description there','postMatrixMessage',13,1,1);`,
+		got, err := getConfiguredWFSteps(repository)
+		if err != nil {
+			t.Errorf("could not get configured workflow steps from database")
+		}
 
-	got, err := getConfiguredWFSteps(dbs)
-	if err != nil {
-		t.Errorf("configured workflow steps returned an error with database + records")
-	} else {
-		if !reflect.DeepEqual(got, expected) {
-			t.Errorf("configured workflow steps did not match")
-			for _, pp := range got {
-				t.Log(pp)
+		if len(got) != 1 {
+			t.Errorf("expected 1 workflow step, got %d", len(got))
+		}
+
+		var expected []modelWorkflowStep.WorkflowStep
+		expected = append(expected, steps["PostMessage1"])
+
+		// have to check just for names, as currently Workflow step type in engine is different from workflow step model
+		// eventually this would be consolidated and a reflect.DeepEqual check should suffice
+		for _, w := range expected {
+			found := false
+			for _, g := range got {
+				// temporarily check for just this one type of workflow step
+				// getConfiguredWFSteps would be refactored into just return workflow steps and not the WorkflowStep interface, in a follow up PR
+				if w.Name == g.(*postMessageMatrixWorkflowStep).name {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("output did not match, expected %s in the output", w.Name)
 			}
 		}
-	}
 
-	_, err = getConfiguredWFSteps(dbs2)
-	if err == nil {
-		t.Errorf("configured workflow steps did not return an error with empty database")
-	}
-}
-
-func TestUpdateWorkflowMeta(t *testing.T) {
-	dbs, dbs2 := setUp()
-
-	wid := uint64(11)
-
-	// insert a meta value that doesn't exist, testing insert
-	// then update the same meta value, testing update
-
-	key := fmt.Sprintf("neo%d", rand.Intn(100))
-	value := "matrix"
-
-	// issue insert
-	updateWorkflowMeta(dbs, wid, key, value)
-	if value != getWorkflowMeta(dbs, wid, key) {
-		t.Error("insert failed")
-	}
-
-	value = value + fmt.Sprintf("%d", rand.Intn(100))
-
-	// issue update
-	updateWorkflowMeta(dbs, wid, key, value)
-	if value != getWorkflowMeta(dbs, wid, key) {
-		t.Error("update failed")
-	}
-
-	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWorkflowMeta(dbs, wid, key, value)
-	if value != getWorkflowMeta(dbs, wid, key) {
-		t.Error("update with same value failed")
-	}
-
-	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateWorkflowMeta(dbs2, wid, key, value)
-	if err == nil {
-		t.Error("no error was returned with an empty database with no tables")
-	}
-
-	tearDown(dbs, dbs2)
-}
-
-func TestUpdateWFStepMeta(t *testing.T) {
-	dbs, dbs2 := setUp()
-
-	stepID := uint64(11)
-
-	// insert a meta value that doesn't exist, testing insert
-	// then update the same meta value, testing update
-
-	key := fmt.Sprintf("neo%d", rand.Intn(100))
-	value := "matrix"
-
-	// issue insert
-	updateWFStepMeta(dbs, stepID, key, value)
-	if value != getWFStepMeta(dbs, stepID, key) {
-		t.Error("insert failed")
-	}
-
-	value = value + fmt.Sprintf("%d", rand.Intn(100))
-
-	// issue update
-	updateWFStepMeta(dbs, stepID, key, value)
-	if value != getWFStepMeta(dbs, stepID, key) {
-		t.Error("update failed")
-	}
-
-	// issue update with same value, which would bail out early (this step slightly increases test coverage)
-	updateWFStepMeta(dbs, stepID, key, value)
-	if value != getWFStepMeta(dbs, stepID, key) {
-		t.Error("update with same value failed")
-	}
-
-	// execute once with an empty database to cover returning error for absolute full coverage statistically
-	err := updateWFStepMeta(dbs2, stepID, key, value)
-	if err == nil {
-		t.Error("no error was returned with an empty database with no tables")
-	}
-
-	tearDown(dbs, dbs2)
+		// if !reflect.DeepEqual(got, steps) {
+		// 	t.Errorf("output did not match\n%+v\n%+v", got, steps)
+		// }
+	})
 }
 
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass

@@ -5,6 +5,7 @@ import (
 	"log"
 	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
+	wfs "neurobot/model/workflowstep"
 	"strings"
 	"sync"
 
@@ -41,6 +42,9 @@ type engine struct {
 	db            db.Session
 	botRepository bot.Repository
 
+	workflowRepository     wf.Repository
+	workflowStepRepository wfs.Repository
+
 	workflows map[uint64]*workflow
 	bots      map[uint64]MatrixClient // All matrix client instances of bots
 
@@ -48,9 +52,11 @@ type engine struct {
 }
 
 type RunParams struct {
-	BotRepository    bot.Repository
+	BotRepository          bot.Repository
+	WorkflowRepository     wf.Repository
+	WorkflowStepRepository wfs.Repository
+
 	Debug            bool
-	DatabaseSession  db.Session
 	IsMatrix         bool
 	MatrixServerName string // domain in use, part of identity
 	MatrixServerURL  string // actual URL to connect to, for a particular server
@@ -125,7 +131,7 @@ func (e *engine) log(m string) {
 
 func (e *engine) loadData() {
 	// load workflows
-	workflows, err := getConfiguredWorkflows(e.db)
+	workflows, err := getConfiguredWorkflows(e.workflowRepository)
 	if err != nil {
 		log.Fatalf("Error loading workflows from database: %s", err)
 	}
@@ -137,7 +143,7 @@ func (e *engine) loadData() {
 	}
 
 	// load workflow steps
-	steps, err := getConfiguredWFSteps(e.db)
+	steps, err := getConfiguredWFSteps(e.workflowStepRepository)
 	if err != nil {
 		log.Fatalf("Error loading workflow steps from database: %s", err)
 	}
@@ -257,13 +263,14 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.db = p.DatabaseSession
 	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
 	e.matrixServerURL = p.MatrixServerURL
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
 	e.botRepository = p.BotRepository
+	e.workflowRepository = p.WorkflowRepository
+	e.workflowStepRepository = p.WorkflowStepRepository
 
 	return &e
 }
