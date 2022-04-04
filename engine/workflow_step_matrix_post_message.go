@@ -33,7 +33,8 @@ var getMatrixClient = func(homeserver string) (MatrixClient, error) {
 }
 
 func (s postMessageMatrixWorkflowStep) getMatrixClient() (mc matrix.Client, err error) {
-	if s.asBot != "" {
+	if s.asBot == "" {
+		// If no bot was specified, use the primary one.
 		return s.botRegistry.GetPrimaryClient()
 	}
 
