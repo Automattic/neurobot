@@ -18,7 +18,7 @@ func init() {
 	_, currentFile, _, _ := runtime.Caller(0)
 	currentDirectory := filepath.Dir(currentFile)
 
-	migrationsUrl = fmt.Sprintf("file://%s/migration/", currentDirectory)
+	migrationsUrl = fmt.Sprintf("file://%s/migrations/", currentDirectory)
 }
 
 func Migrate(session db.Session) error {
