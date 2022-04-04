@@ -45,6 +45,11 @@ func Import(tomlFilePath string, wfRepo workflow.Repository, wfsRepo workflowste
 			return err
 		}
 
+		// remove all workflow steps for this workflow before freshly insert all workflow steps data (including step meta)
+		if err = wfsRepo.RemoveByWorkflowID(workflow.ID); err != nil {
+			return err
+		}
+
 		for _, step := range workflowSteps {
 			// now that we surely have the workflow ID, populate that in step
 			step.WorkflowID = workflow.ID

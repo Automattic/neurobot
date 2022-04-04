@@ -116,3 +116,35 @@ func TestUpdate(t *testing.T) {
 		}
 	})
 }
+
+func TestRemoveByWorkflowID(t *testing.T) {
+	database.Test(func(session db.Session) {
+		steps := fixtures.WorkflowSteps(session)
+		stepToBeDeleted := steps["PostMessage1"]
+
+		// t.Errorf("%+v", steps)
+		repository := NewRepository(session)
+
+		if err := repository.RemoveByWorkflowID(stepToBeDeleted.ID); err != nil {
+			t.Errorf("unable to remove workflow steps based on workflow ID")
+		}
+
+		got, err := repository.FindActive()
+		if err != nil {
+			t.Errorf("error querying for workflow steps")
+		}
+
+		if len(got) == 1 {
+			t.Errorf("workflow steps were not deleted")
+		}
+
+		gotCount, err := session.Collection(workflowStepMetaTableName).Find(db.Cond{"step_id": stepToBeDeleted.ID}).Count()
+		if err != nil {
+			t.Errorf("could not get data out of workflow step meta table")
+		}
+
+		if gotCount > 0 {
+			t.Errorf("workflow step meta was not deleted")
+		}
+	})
+}
