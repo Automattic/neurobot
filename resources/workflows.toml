@@ -7,14 +7,6 @@
 # name = "Demo Workflow"
 # description = "Send a HTTP request with a message and watch that gets logged to standard out"
 
-# [workflow.trigger]
-# name = "CURL Request Catcher"
-# description = "This webhook trigger will receive your webhook request while showcasing the demo"
-# variety = "webhook"
-
-# [workflow.trigger.meta]
-# urlSuffix = "quickstart"
-
 # [[workflow.step]]
 # active = true
 # variety = "stdout"
@@ -28,14 +20,6 @@ identifier = "afk_notifier"
 active = true
 name = "AFK notifier"
 description = "Receives a message from an incoming webhook and posts it to the specified room, if AFK bot is present in that room"
-
-[workflow.trigger]
-name = "AFK pings from Matticspace"
-description = "Matticspace pings this endpoint for AFK status updates"
-variety = "webhook"
-
-[workflow.trigger.meta]
-urlSuffix = "afkbot-8khwd7y1j3hdi8ahsda"
 
 [[workflow.step]]
 active = true
