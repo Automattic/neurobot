@@ -29,7 +29,7 @@ func WorkflowSteps(session db.Session) map[string]workflowstep.WorkflowStep {
 			Name:        "Post Message to Matrix Room 1",
 			Description: "Description",
 			Variety:     "postMatrixMessage",
-			WorkflowID:  1, // irrelevant
+			WorkflowID:  1,
 			SortOrder:   0,
 			Active:      true,
 			Meta: map[string]string{
@@ -42,7 +42,20 @@ func WorkflowSteps(session db.Session) map[string]workflowstep.WorkflowStep {
 			Name:        "Post Message to Matrix Room 2",
 			Description: "Some Description",
 			Variety:     "postMatrixMessage",
-			WorkflowID:  1, // irrelevant
+			WorkflowID:  2,
+			SortOrder:   1,
+			Active:      false,
+			Meta: map[string]string{
+				"matrixRoom":    "#neso",
+				"messagePrefix": "[FYI]",
+			},
+		},
+		"PostMessage3": {
+			ID:          3,
+			Name:        "Post Message to Matrix Room 2",
+			Description: "Some Description",
+			Variety:     "postMatrixMessage",
+			WorkflowID:  1,
 			SortOrder:   1,
 			Active:      false,
 			Meta: map[string]string{

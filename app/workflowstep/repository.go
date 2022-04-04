@@ -1,10 +1,15 @@
 package workflowstep
 
 import (
+	"fmt"
 	model "neurobot/model/workflowstep"
+	"strings"
 
 	"github.com/upper/db/v4"
 )
+
+const workflowStepTableName = "workflow_steps"
+const workflowStepMetaTableName = "workflow_step_meta"
 
 type meta struct {
 	ID     uint64 `db:"id,omitempty"`
@@ -20,8 +25,8 @@ type repository struct {
 
 func NewRepository(session db.Session) model.Repository {
 	return &repository{
-		collection:     session.Collection("workflow_steps"),
-		collectionMeta: session.Collection("workflow_step_meta"),
+		collection:     session.Collection(workflowStepTableName),
+		collectionMeta: session.Collection(workflowStepMetaTableName),
 	}
 }
 
@@ -125,6 +130,31 @@ func (repository *repository) saveMeta(step *model.WorkflowStep) (err error) {
 			return
 		}
 	}
+
+	return
+}
+
+func (repository *repository) RemoveByWorkflowID(ID uint64) (err error) {
+	var steps []model.WorkflowStep
+	res := repository.collection.Find(db.Cond{"workflow_id": ID})
+	err = res.All(&steps)
+	if err != nil {
+		return
+	}
+
+	var stepIDs []string // need string for SQL
+	for _, s := range steps {
+		stepIDs = append(stepIDs, fmt.Sprintf("%d", s.ID))
+	}
+
+	// Delete from workflow_steps table
+	if err = res.Delete(); err != nil {
+		return
+	}
+
+	// Delete from workflow_step_meta table
+	deleteStepMetaQuery := fmt.Sprintf("DELETE FROM "+workflowStepMetaTableName+" WHERE step_id IN (%s)", strings.Join(stepIDs, ","))
+	_, err = repository.collectionMeta.Session().SQL().Exec(deleteStepMetaQuery)
 
 	return
 }
