@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	b "neurobot/app/bot"
 	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
@@ -41,6 +42,7 @@ type engine struct {
 
 	db            db.Session
 	botRepository bot.Repository
+	botRegistry   b.Registry
 
 	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
@@ -53,6 +55,7 @@ type engine struct {
 
 type RunParams struct {
 	BotRepository          bot.Repository
+	BotRegistry            b.Registry
 	WorkflowRepository     wf.Repository
 	WorkflowStepRepository wfs.Repository
 
@@ -151,6 +154,7 @@ func (e *engine) loadData() {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
 			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			ws.botRegistry = e.botRegistry
 			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		case *stdoutWorkflowStep:
 			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
@@ -269,6 +273,7 @@ func NewEngine(p RunParams) *engine {
 	e.matrixusername = p.MatrixUsername
 	e.matrixpassword = p.MatrixPassword
 	e.botRepository = p.BotRepository
+	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
 	e.workflowStepRepository = p.WorkflowStepRepository
 

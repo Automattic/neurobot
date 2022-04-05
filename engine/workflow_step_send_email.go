@@ -15,7 +15,7 @@ type sendEmailWorkflowStep struct {
 	sendEmailWorkflowStepMeta
 }
 
-func (s sendEmailWorkflowStep) run(p map[string]string, e *engine) (map[string]string, error) {
+func (s sendEmailWorkflowStep) run(p map[string]string) (map[string]string, error) {
 	// @TODO: send email
 	// hack: only show decorated log for now
 	fmt.Println("====================")

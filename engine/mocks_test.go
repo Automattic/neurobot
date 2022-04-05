@@ -13,7 +13,7 @@ type mockWorkflowStep struct {
 	impact string
 }
 
-func (m *mockWorkflowStep) run(p map[string]string, e *engine) (map[string]string, error) {
+func (m *mockWorkflowStep) run(p map[string]string) (map[string]string, error) {
 	// a specific payload is designed to return error
 	if p["Message"] == "throwerr" {
 		return map[string]string{"Message": ""}, errors.New("whatever")

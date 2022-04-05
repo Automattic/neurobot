@@ -112,6 +112,7 @@ func main() {
 
 	p := engine.RunParams{
 		BotRepository:          botRepository,
+		BotRegistry:            botRegistry,
 		WorkflowRepository:     workflowRepository,
 		WorkflowStepRepository: workflowStepsRepository,
 
@@ -150,6 +151,17 @@ func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry
 	if err != nil {
 		return
 	}
+
+	bots = append(bots, b.Bot{
+		ID:          0,
+		Identifier:  os.Getenv("MATRIX_USERNAME"),
+		Name:        "Neurobot",
+		Description: "Primary bot",
+		Username:    os.Getenv("MATRIX_USERNAME"),
+		Password:    os.Getenv("MATRIX_PASSWORD"),
+		Active:      true,
+		Primary:     true,
+	})
 
 	registry = botApp.NewRegistry(homeserverURL)
 

@@ -16,7 +16,7 @@ type stdoutWorkflowStep struct {
 	workflowStep
 }
 
-func (s stdoutWorkflowStep) run(p map[string]string, e *engine) (map[string]string, error) {
+func (s stdoutWorkflowStep) run(p map[string]string) (map[string]string, error) {
 	if p["Message"] == "" {
 		p["Message"] = "[Empty line]"
 	}

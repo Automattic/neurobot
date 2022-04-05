@@ -10,4 +10,5 @@ type Bot struct {
 	Password    string `db:"password"`
 	CreatedBy   string `db:"created_by"`
 	Active      bool   `db:"active"`
+	Primary     bool
 }
