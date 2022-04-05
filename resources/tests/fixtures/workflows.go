@@ -63,17 +63,6 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 		if err != nil {
 			log.Fatalf("Failed to insert fixtures for workflows: %s", err)
 		}
-
-		if fixture.Identifier != "" {
-			_, err := session.Collection("workflow_meta").Insert(workflowMetaRow{
-				WorkflowID: fixture.ID,
-				Key:        "toml_identifier",
-				Value:      fixture.Identifier,
-			})
-			if err != nil {
-				log.Fatalf("Failed to insert fixtures for workflow meta: %s", err)
-			}
-		}
 	}
 
 	return fixtures

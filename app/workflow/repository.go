@@ -6,24 +6,13 @@ import (
 	"github.com/upper/db/v4"
 )
 
-const identifierKey = "toml_identifier"
-
-type meta struct {
-	ID         uint64 `db:"id,omitempty"`
-	WorkflowID uint64 `db:"workflow_id"`
-	Key        string `db:"key"`
-	Value      string `db:"value"`
-}
-
 type repository struct {
-	collection     db.Collection
-	collectionMeta db.Collection
+	collection db.Collection
 }
 
 func NewRepository(session db.Session) model.Repository {
 	return &repository{
-		collection:     session.Collection("workflows"),
-		collectionMeta: session.Collection("workflow_meta"),
+		collection: session.Collection("workflows"),
 	}
 }
 
@@ -33,66 +22,19 @@ func (repository *repository) FindActive() (workflows []model.Workflow, err erro
 		return nil, err
 	}
 
-	for index := range workflows {
-		if err := repository.loadMeta(&workflows[index]); err != nil {
-			return nil, err
-		}
-	}
-
 	return
 }
 
 func (repository *repository) FindByID(ID uint64) (workflow model.Workflow, err error) {
 	result := repository.collection.Find(db.Cond{"id": ID})
 	err = result.One(&workflow)
-	if err != nil {
-		return
-	}
-
-	err = repository.loadMeta(&workflow)
 
 	return
 }
 
 func (repository *repository) FindByIdentifier(identifier string) (workflow model.Workflow, err error) {
-	var meta meta
-	result := repository.collectionMeta.Find(db.Cond{"key": identifierKey, "value": identifier})
-	err = result.One(&meta)
-
-	workflow, err = repository.FindByID(meta.WorkflowID)
-
-	return
-}
-
-// Load information from workflow_meta table into a workflow object.
-func (repository *repository) loadMeta(workflow *model.Workflow) (err error) {
-	var metas []meta
-	result := repository.collectionMeta.Find(db.Cond{"workflow_id": workflow.ID})
-	if err := result.All(&metas); err != nil {
-		return err
-	}
-
-	for _, meta := range metas {
-		if meta.Key == identifierKey {
-			workflow.Identifier = meta.Value
-		}
-	}
-
-	return
-}
-
-func (repository *repository) saveMeta(workflow *model.Workflow) (err error) {
-	// delete existing entries
-	result := repository.collectionMeta.Find(db.Cond{"workflow_id": workflow.ID})
-	if err = result.Delete(); err != nil {
-		return
-	}
-
-	_, err = repository.collectionMeta.Insert(meta{
-		WorkflowID: workflow.ID,
-		Key:        identifierKey,
-		Value:      workflow.Identifier,
-	})
+	result := repository.collection.Find(db.Cond{"identifier": identifier})
+	err = result.One(&workflow)
 
 	return
 }
@@ -118,11 +60,9 @@ func (repository *repository) update(workflow *model.Workflow) (err error) {
 	existing.Active = workflow.Active
 	existing.Identifier = workflow.Identifier
 
-	if err = result.Update(existing); err != nil {
-		return
-	}
+	err = result.Update(existing)
 
-	return repository.saveMeta(workflow)
+	return
 }
 
 func (repository *repository) insert(workflow *model.Workflow) (err error) {
@@ -131,5 +71,5 @@ func (repository *repository) insert(workflow *model.Workflow) (err error) {
 		workflow.ID = uint64(result.ID().(int64))
 	}
 
-	return repository.saveMeta(workflow)
+	return
 }
