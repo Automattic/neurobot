@@ -22,7 +22,7 @@ func (r *runner) Run(workflow workflow.Workflow, payload map[string]string) erro
 		return err
 	}
 
-	message := m.NewPlainTextMessage(payload["message"])
+	message := m.NewMarkdownMessage(payload["message"])
 
 	return r.matrixClient.SendMessage(roomID, message)
 }
