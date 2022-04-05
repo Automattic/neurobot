@@ -29,18 +29,21 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 			Name:        "QuickStart Demo",
 			Description: "This workflow is meant to show a quick demo",
 			Active:      true,
+			Identifier:  "QUICKSTART",
 		},
 		"MVP": {
 			ID:          11,
 			Name:        "MVP",
 			Description: "",
 			Active:      true,
+			Identifier:  "MVP",
 		},
 		"Deactivated Workflow": {
 			ID:          12,
 			Name:        "Deactivated Workflow",
 			Description: "",
 			Active:      false,
+			Identifier:  "DEACTIVATED",
 		},
 		"Toml imported Workflow": {
 			ID:          13,
