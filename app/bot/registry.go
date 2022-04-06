@@ -24,6 +24,7 @@ func NewRegistry(homeserverURL string) Registry {
 	return &registry{
 		// Remove port to get just the domain
 		homeserverDomain: strings.Split(homeserverURL, ":")[0],
+		clients:          make(map[string]matrix.Client),
 	}
 }
 
