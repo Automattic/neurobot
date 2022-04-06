@@ -17,7 +17,6 @@ type Bot struct {
 	Description string `db:"description"`
 	Username    string `db:"username"`
 	Password    string `db:"password"`
-	CreatedBy   string `db:"created_by"`
 	Active      bool   `db:"active"`
 
 	hydrated bool
@@ -33,7 +32,6 @@ func MakeBotFromModelBot(bot model.Bot) Bot {
 		Description: bot.Description,
 		Username:    bot.Username,
 		Password:    bot.Password,
-		CreatedBy:   bot.CreatedBy,
 		Active:      bot.Active,
 	}
 }

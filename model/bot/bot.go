@@ -8,7 +8,6 @@ type Bot struct {
 	Description string `db:"description"`
 	Username    string `db:"username"`
 	Password    string `db:"password"`
-	CreatedBy   string `db:"created_by"`
 	Active      bool   `db:"active"`
 	Primary     bool
 }

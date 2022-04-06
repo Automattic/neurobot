@@ -15,7 +15,6 @@ func Bots(session db.Session) map[string]bot.Bot {
 			Description: "Foo description",
 			Username:    "foo_username",
 			Password:    "foo_password",
-			CreatedBy:   "foo_creator",
 			Active:      true,
 		},
 		"active 2": {
@@ -25,7 +24,6 @@ func Bots(session db.Session) map[string]bot.Bot {
 			Description: "Bar description",
 			Username:    "bar_username",
 			Password:    "bar_password",
-			CreatedBy:   "bar_creator",
 			Active:      true,
 		},
 		"inactive": {
@@ -35,7 +33,6 @@ func Bots(session db.Session) map[string]bot.Bot {
 			Description: "Baz description",
 			Username:    "baz_username",
 			Password:    "baz_password",
-			CreatedBy:   "baz_creator",
 			Active:      false,
 		},
 	}
