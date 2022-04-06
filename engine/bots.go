@@ -49,7 +49,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	// hydrate bot
 	b.Hydrate(e)
 
-	b.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Name, b.Identifier))
+	b.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Username, b.Identifier))
 	client, err := mautrix.NewClient(e.matrixServerURL, "", "")
 	if err != nil {
 		return
@@ -68,7 +68,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	if err != nil {
 		return
 	}
-	b.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Name, b.Identifier))
+	b.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Username, b.Identifier))
 
 	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
@@ -92,7 +92,7 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 				// join the room
 				_, err := b.JoinRoom(evt.RoomID.String())
 				if err != nil {
-					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s err:%s", b.Name, evt.RoomID, err))
+					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s err:%s", b.Username, evt.RoomID, err))
 				} else {
 					b.log("accepted invitation, if it wasn't accepted already")
 				}
