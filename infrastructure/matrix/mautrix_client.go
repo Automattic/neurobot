@@ -8,9 +8,12 @@ import (
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
 	mautrixId "maunium.net/go/mautrix/id"
+	"net/http"
+	"net/url"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
 	"strings"
+	"time"
 )
 
 type mautrixClient interface {
@@ -36,15 +39,34 @@ type client struct {
 }
 
 func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, error) {
-	mautrixClient, err := mautrix.NewClient(homeserverURL, "", "")
+	hsURL, err := url.Parse(homeserverURL)
 	if err != nil {
 		return nil, err
 	}
+	if hsURL.Scheme == "" {
+		hsURL.Scheme = "https"
+	}
 
-	var syncer mautrixSyncer
+	var syncer *mautrix.DefaultSyncer
 	if enableListeners {
-		syncer := mautrix.NewDefaultSyncer()
-		mautrixClient.Syncer = syncer
+		syncer = mautrix.NewDefaultSyncer()
+	} else {
+		// TODO: stub syncer?
+	}
+
+	mautrixClient := mautrix.Client{
+		AccessToken:   "",
+		UserAgent:     mautrix.DefaultUserAgent,
+		HomeserverURL: hsURL,
+		UserID:        "",
+		Client:        &http.Client{Timeout: 180 * time.Second},
+		Prefix:        mautrix.URLPath{"_matrix", "client", "r0"},
+		Syncer:        syncer,
+		Logger:        &mautrix.StubLogger{},
+		// By default, use an in-memory store which will never save filter ids / next batch tokens to disk.
+		// The client will work with this storer: it just won't remember across restarts.
+		// In practice, a database backend should be used.
+		Store: mautrix.NewInMemoryStore(),
 	}
 
 	// Remove protocol and port to get just the hostname
@@ -53,7 +75,7 @@ func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, erro
 	client := client{
 		homeserverURL:    homeserverURL,
 		homeserverDomain: homeserverDomain,
-		mautrix:          mautrixClient,
+		mautrix:          &mautrixClient,
 		syncer:           syncer,
 		listenersEnabled: enableListeners,
 	}
