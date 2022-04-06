@@ -4,7 +4,6 @@ package bot
 type Bot struct {
 	ID          uint64 `db:"id,omitempty"`
 	Identifier  string `db:"identifier"`
-	Name        string `db:"name"`
 	Description string `db:"description"`
 	Username    string `db:"username"`
 	Password    string `db:"password"`
