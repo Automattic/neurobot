@@ -70,7 +70,7 @@ func main() {
 
 	botRegistry, err := makeBotRegistry(serverName, botRepository)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Fatalf("Failed to make bot registry: %s", err)
 	}
 
 	// set default port for running webhook listener server
@@ -166,9 +166,15 @@ func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry
 	registry = botApp.NewRegistry(homeserverURL)
 
 	for _, bot := range bots {
-		client, err := matrix.NewMautrixClient(homeserverURL, true)
-		if err == nil {
-			err = registry.Append(bot, client)
+		var client matrix.Client
+		client, err = matrix.NewMautrixClient(homeserverURL, true)
+		if err != nil {
+			return
+		}
+
+		err = registry.Append(bot, client)
+		if err != nil {
+			return
 		}
 	}
 
