@@ -12,7 +12,6 @@ import (
 	"net/url"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
-	"strings"
 	"time"
 )
 
@@ -32,7 +31,6 @@ type mautrixSyncer interface {
 
 type client struct {
 	homeserverURL    string
-	homeserverDomain string
 	mautrix          mautrixClient
 	syncer           mautrixSyncer
 	listenersEnabled bool
@@ -69,12 +67,8 @@ func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, erro
 		Store: mautrix.NewInMemoryStore(),
 	}
 
-	// Remove protocol and port to get just the hostname
-	homeserverDomain := strings.Split(homeserverURL, ":")[0]
-
 	client := client{
 		homeserverURL:    homeserverURL,
-		homeserverDomain: homeserverDomain,
 		mautrix:          &mautrixClient,
 		syncer:           syncer,
 		listenersEnabled: enableListeners,
