@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"log"
 	netHttp "net/http"
 	"neurobot/app/bot"
 	r "neurobot/app/runner"
@@ -48,6 +49,7 @@ func (app app) Run() (err error) {
 			err = app.runWorkflow(workflow, payload)
 			if err != nil {
 				netHttp.Error(response, "something went wrong", netHttp.StatusInternalServerError)
+				log.Printf("Error when attempting to run workflow: %s, payload: %+v", err, payload)
 				return
 			}
 		})
