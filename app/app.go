@@ -72,6 +72,7 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 	}
 
 	go func() {
+		log.Printf("Starting workflow with identifier %s, payload: %+v", workflow.Identifier, payload)
 		err := runner.Run(workflow, payload)
 		if err != nil {
 			log.Printf("Failed to run workflow: %s", err)
