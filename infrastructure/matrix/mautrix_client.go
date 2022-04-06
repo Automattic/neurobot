@@ -12,6 +12,7 @@ import (
 	"net/url"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
+	"strings"
 	"time"
 )
 
@@ -36,13 +37,34 @@ type client struct {
 	listenersEnabled bool
 }
 
-func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, error) {
-	hsURL, err := url.Parse(homeserverURL)
+func DiscoverServerURL(serverName string) (serverURL string) {
+	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
+	// Both wellKnown and err can be nil for hosts that have https but are not a matrix server.
+
+	if err != nil {
+		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
+			serverURL = "http://" + serverName
+		} else {
+			serverURL = "https://" + serverName
+		}
+	} else {
+		if wellKnown != nil {
+			serverURL = wellKnown.Homeserver.BaseURL
+		} else {
+			serverURL = "https://" + serverName
+		}
+	}
+
+	return serverURL
+}
+
+func NewMautrixClient(serverName string, enableListeners bool) (*client, error) {
+	homeserverURL, err := url.Parse(DiscoverServerURL(serverName))
 	if err != nil {
 		return nil, err
 	}
-	if hsURL.Scheme == "" {
-		hsURL.Scheme = "https"
+	if homeserverURL.Scheme == "" {
+		homeserverURL.Scheme = "https"
 	}
 
 	var syncer *mautrix.DefaultSyncer
@@ -55,7 +77,7 @@ func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, erro
 	mautrixClient := mautrix.Client{
 		AccessToken:   "",
 		UserAgent:     mautrix.DefaultUserAgent,
-		HomeserverURL: hsURL,
+		HomeserverURL: homeserverURL,
 		UserID:        "",
 		Client:        &http.Client{Timeout: 180 * time.Second},
 		Prefix:        mautrix.URLPath{"_matrix", "client", "r0"},
@@ -68,7 +90,7 @@ func NewMautrixClient(homeserverURL string, enableListeners bool) (*client, erro
 	}
 
 	client := client{
-		homeserverURL:    homeserverURL,
+		homeserverURL:    homeserverURL.String(),
 		mautrix:          &mautrixClient,
 		syncer:           syncer,
 		listenersEnabled: enableListeners,

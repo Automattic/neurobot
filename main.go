@@ -8,6 +8,7 @@ import (
 	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
 	"neurobot/app/workflowstep"
+	"neurobot/engine"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/http"
 	"neurobot/infrastructure/matrix"
@@ -15,9 +16,6 @@ import (
 	b "neurobot/model/bot"
 	"os"
 	"strconv"
-	"strings"
-
-	"neurobot/engine"
 
 	"github.com/joho/godotenv"
 	"maunium.net/go/mautrix"
@@ -91,23 +89,8 @@ func main() {
 	}
 
 	// resolve .well-known to find our server URL to connect
-	var serverURL string
 	log.Printf("Discovering Client API for %s\n", serverName)
-	wellKnown, err := mautrix.DiscoverClientAPI(serverName) // both can be nil for hosts that have https but are not a matrix server
-	if err != nil {
-		log.Println(err)
-		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
-			serverURL = "http://" + serverName
-		} else {
-			serverURL = "https://" + serverName
-		}
-	} else {
-		if wellKnown != nil {
-			serverURL = wellKnown.Homeserver.BaseURL
-		} else {
-			serverURL = "https://" + serverName
-		}
-	}
+	serverURL := matrix.DiscoverServerURL(serverName)
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	p := engine.RunParams{
