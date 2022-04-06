@@ -45,13 +45,11 @@ func (app app) Run() (err error) {
 				return
 			}
 
-			// Run in a goroutine so that we immediately respond to the request.
-			go func() {
-				err := app.runWorkflow(workflow, payload)
-				if err != nil {
-					fmt.Printf("Failed to run workflow: %s", err)
-				}
-			}()
+			err = app.runWorkflow(workflow, payload)
+			if err != nil {
+				netHttp.Error(response, "something went wrong", netHttp.StatusInternalServerError)
+				return
+			}
 		})
 
 	return
@@ -71,5 +69,12 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 		runner = afk_notifier.NewRunner(matrixClient)
 	}
 
-	return runner.Run(workflow, payload)
+	go func() {
+		err := runner.Run(workflow, payload)
+		if err != nil {
+			log.Printf("Failed to run workflow: %s", err)
+		}
+	}()
+
+	return nil
 }
