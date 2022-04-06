@@ -29,11 +29,11 @@ func NewRegistry(homeserverURL string) Registry {
 
 func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 	if bot.Primary {
-		r.primaryIdentifier = bot.Identifier
+		r.primaryIdentifier = bot.Username
 	}
 
-	if _, ok := r.clients[bot.Identifier]; ok {
-		return fmt.Errorf("bot %s is already known", bot.Identifier)
+	if _, ok := r.clients[bot.Username]; ok {
+		return fmt.Errorf("bot %s is already known", bot.Username)
 	}
 
 	if err = client.Login(bot.Username, bot.Password); err != nil {
@@ -57,7 +57,7 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 		return
 	}
 
-	r.clients[bot.Identifier] = client
+	r.clients[bot.Username] = client
 
 	return
 }

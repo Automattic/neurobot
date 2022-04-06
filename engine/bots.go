@@ -47,7 +47,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	// hydrate bot
 	b.Hydrate(e)
 
-	b.log(fmt.Sprintf("Matrix: Activating Bot: %s [%s]", b.Username, b.Identifier))
+	b.log(fmt.Sprintf("Matrix: Activating Bot: %s", b.Username))
 	client, err := mautrix.NewClient(e.matrixServerURL, "", "")
 	if err != nil {
 		return
@@ -66,7 +66,7 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	if err != nil {
 		return
 	}
-	b.log(fmt.Sprintf("Matrix: Bot %s [%s] login successful", b.Username, b.Identifier))
+	b.log(fmt.Sprintf("Matrix: Bot %s login successful", b.Username))
 
 	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
