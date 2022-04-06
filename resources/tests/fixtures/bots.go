@@ -10,7 +10,6 @@ func Bots(session db.Session) map[string]bot.Bot {
 	fixtures := map[string]bot.Bot{
 		"active 1": {
 			ID:          1,
-			Identifier:  "foo",
 			Description: "Foo description",
 			Username:    "foo_username",
 			Password:    "foo_password",
@@ -18,7 +17,6 @@ func Bots(session db.Session) map[string]bot.Bot {
 		},
 		"active 2": {
 			ID:          2,
-			Identifier:  "bar",
 			Description: "Bar description",
 			Username:    "bar_username",
 			Password:    "bar_password",
@@ -26,7 +24,6 @@ func Bots(session db.Session) map[string]bot.Bot {
 		},
 		"inactive": {
 			ID:          3,
-			Identifier:  "baz",
 			Description: "Baz description",
 			Username:    "baz_username",
 			Password:    "baz_password",

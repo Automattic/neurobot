@@ -12,7 +12,6 @@ import (
 
 type Bot struct {
 	ID          uint64 `db:"id,omitempty"`
-	Identifier  string `db:"identifier"`
 	Description string `db:"description"`
 	Username    string `db:"username"`
 	Password    string `db:"password"`
@@ -26,7 +25,6 @@ type Bot struct {
 func MakeBotFromModelBot(bot model.Bot) Bot {
 	return Bot{
 		ID:          bot.ID,
-		Identifier:  bot.Identifier,
 		Description: bot.Description,
 		Username:    bot.Username,
 		Password:    bot.Password,
