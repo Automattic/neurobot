@@ -21,8 +21,8 @@ func (repository *repository) FindActive() (bots []model.Bot, err error) {
 	return
 }
 
-func (repository *repository) FindByIdentifier(identifier string) (bot model.Bot, err error) {
-	result := repository.collection.Find(db.Cond{"identifier": identifier})
+func (repository *repository) FindByUsername(username string) (bot model.Bot, err error) {
+	result := repository.collection.Find(db.Cond{"username": username})
 	err = result.One(&bot)
 	return
 }
