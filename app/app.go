@@ -40,7 +40,8 @@ func (app app) Run() (err error) {
 			workflowIdentifier := strings.TrimPrefix(request.URL.Path, "/")
 			workflow, err := app.workflowRepository.FindByIdentifier(workflowIdentifier)
 			if err != nil {
-				netHttp.NotFound(response, request)
+				errorMessage := fmt.Sprintf("no workflow found for `%s`", workflowIdentifier)
+				netHttp.Error(response, errorMessage, netHttp.StatusNotFound)
 				return
 			}
 
