@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"github.com/apex/log"
+	"github.com/joho/godotenv"
+	"maunium.net/go/mautrix"
 	application "neurobot/app"
 	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
@@ -17,19 +19,18 @@ import (
 	"neurobot/resources/seeds"
 	"os"
 	"strconv"
-
-	"github.com/joho/godotenv"
-	"maunium.net/go/mautrix"
+	"time"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
 
 func main() {
+	logger := log.Log
 	flag.Parse()
 
 	err := godotenv.Load(*envFile)
 	if err != nil {
-		log.Fatalf("Error loading .env file at %s. Err: %s\n", *envFile, err)
+		logger.WithError(err).Fatal("Error loading .env file")
 	}
 
 	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
@@ -43,18 +44,20 @@ func main() {
 	password := os.Getenv("MATRIX_PASSWORD")
 	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
 
-	log.Println("Debug:", debug)
-	log.Printf("Loaded environment variables from %s\n", *envFile)
-	log.Printf("Using database file %s\n", dbFile)
+	logger.WithField("path", *envFile).Info("Loaded environment variables from .env")
+	logger.Infof("Enabling debug? %t", debug)
+	logger.Infof("Using database file: %s", dbFile)
 
 	databaseSession, err := database.MakeDatabaseSession()
 	if err != nil {
-		log.Fatalf("%s", err)
+		logger.WithError(err).WithFields(log.Fields{
+			"path": dbFile,
+		}).Fatal("Failed to connect to database")
 	}
 	defer databaseSession.Close()
 	err = database.Migrate(databaseSession)
 	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
+		logger.WithError(err).Fatal("Failed to migrate database")
 	}
 
 	botRepository := botApp.NewRepository(databaseSession)
@@ -67,12 +70,14 @@ func main() {
 	// import TOML
 	err = toml.Import(workflowsDefTOMLFile, workflowRepository, workflowStepsRepository)
 	if err != nil {
-		log.Fatalf("error while importing TOML workflows: %s", err)
+		logger.WithError(err).WithFields(log.Fields{
+			"path": workflowsDefTOMLFile,
+		}).Fatal("Failed to import TOML workflows")
 	}
 
 	botRegistry, err := makeBotRegistry(serverName, botRepository)
 	if err != nil {
-		log.Fatalf("Failed to make bot registry: %s", err)
+		logger.WithError(err).Fatal("Failed to make bot registry")
 	}
 
 	// set default port for running webhook listener server
@@ -86,16 +91,19 @@ func main() {
 	isMatrix := false
 	if serverName != "" || username != "" || password != "" {
 		if serverName == "" || username == "" || password == "" {
-			log.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
+			logger.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
 		} else {
 			isMatrix = true
 		}
 	}
 
 	// resolve .well-known to find our server URL to connect
-	log.Printf("Discovering Client API for %s\n", serverName)
+	start := time.Now()
 	serverURL := matrix.DiscoverServerURL(serverName)
-	log.Printf("Server URL for %s: %s", serverName, serverURL)
+	logger.WithFields(log.Fields{
+		"serverName": serverName,
+		"serverURL":  serverURL,
+	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
 	p := engine.RunParams{
 		BotRepository:          botRepository,
@@ -116,7 +124,9 @@ func main() {
 	if isMatrix {
 		mc, err := mautrix.NewClient(p.MatrixServerURL, "", "")
 		if err != nil {
-			log.Fatal(err)
+			logger.WithError(err).WithFields(log.Fields{
+				"URL": p.MatrixServerURL,
+			}).Fatal("Failed to connect to matrix server")
 		}
 		e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
 	} else {
@@ -126,10 +136,12 @@ func main() {
 
 	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
-		log.Fatalf("%s", err)
+		logger.WithError(err).Fatal("Failed to run application")
 	}
 
-	log.Printf("Starting webhook listener at port %d\n", webhookListenerPort)
+	logger.WithFields(log.Fields{
+		"port": webhookListenerPort,
+	}).Infof("Starting webhook listener")
 	webhookListenerServer.Run() // blocking
 }
 
