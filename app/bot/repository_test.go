@@ -9,6 +9,62 @@ import (
 	"testing"
 )
 
+func TestInsert(t *testing.T) {
+	database.Test(func(session db.Session) {
+		repository := NewRepository(session)
+
+		bot := model.Bot{
+			Username:    "username-12345",
+			Password:    "password-12345",
+			Description: "foo",
+			Active:      true,
+			Primary:     false,
+		}
+
+		if err := repository.Save(&bot); err != nil {
+			t.Errorf("failed to insert bot: %s", err)
+		}
+
+		var got model.Bot
+		result := session.Collection("bots").Find(db.Cond{"id": bot.ID})
+		if err := result.One(&got); err != nil {
+			t.Errorf("failed to find bot: %s", err)
+		}
+
+		if !reflect.DeepEqual(got, bot) {
+			t.Errorf("unexpected result insert bot")
+		}
+	})
+}
+
+func TestUpdate(t *testing.T) {
+	database.Test(func(session db.Session) {
+		bots := fixtures.Bots(session)
+		repository := NewRepository(session)
+
+		bot := bots["active 1"]
+		bot.Username = "updated username"
+		bot.Password = "updated password"
+		bot.Description = "updated description"
+		bot.Active = false
+		bot.Primary = false
+
+		if err := repository.Save(&bot); err != nil {
+			t.Errorf("failed to update bot: %s", err)
+		}
+
+		var got model.Bot
+		result := session.Collection("bots").Find(db.Cond{"id": bot.ID})
+		if err := result.One(&got); err != nil {
+			t.Errorf("failed to find bot: %s", err)
+		}
+
+		if !reflect.DeepEqual(got, bot) {
+			t.Errorf("unexpected result update bot")
+		}
+	})
+}
+
 func TestFindActive(t *testing.T) {
 	database.Test(func(session db.Session) {
 		bots := fixtures.Bots(session)
