@@ -13,6 +13,7 @@ import (
 	"neurobot/infrastructure/matrix"
 	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
+	"neurobot/resources/seeds"
 	"os"
 	"strconv"
 	"strings"
@@ -61,6 +62,9 @@ func main() {
 	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
 	workflowStepsRepository := workflowstep.NewRepository(databaseSession)
+
+	// Seed database.
+	seeds.Bots(botRepository)
 
 	// import TOML
 	err = toml.Import(workflowsDefTOMLFile, workflowRepository, workflowStepsRepository)
