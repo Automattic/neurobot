@@ -1,8 +1,6 @@
 package engine
 
-import (
-	"fmt"
-)
+import "github.com/apex/log"
 
 type workflow struct {
 	id          uint64
@@ -17,7 +15,11 @@ func (w *workflow) addWorkflowStep(s WorkflowStep) {
 }
 
 func (w *workflow) run(payload interface{}, e *engine) {
-	e.log(fmt.Sprintf("\nRunning workflow #%d payload:%s\n", w.id, payload))
+	logger := log.WithFields(log.Fields{
+		"workflow": w.id,
+		"payload":  payload,
+	})
+	logger.Info("Running workflow")
 
 	// save payload inside of workflow, as we rinse-repeat it within the loop below
 	w.payload = payload.(map[string]string)
@@ -28,7 +30,7 @@ func (w *workflow) run(payload interface{}, e *engine) {
 		w.payload, err = s.run(w.payload) // overwrite payload with each step execution and keep on passing this payload to each step
 		if err != nil {
 			// For now, we don't halt the workflow if a step encounters an error
-			e.log(fmt.Sprintf("Workflow Step execution error: WorkflowID:%d Error:%s", w.id, err))
+			logger.WithError(err).Error("Workflow step execution error")
 		}
 	}
 }
