@@ -74,7 +74,7 @@ func NewMautrixClient(serverName string, enableListeners bool) (*client, error) 
 		// TODO: stub syncer?
 	}
 
-	mautrixClient := mautrix.Client{
+	mautrixClient := &mautrix.Client{
 		AccessToken:   "",
 		UserAgent:     mautrix.DefaultUserAgent,
 		HomeserverURL: homeserverURL,
@@ -89,14 +89,14 @@ func NewMautrixClient(serverName string, enableListeners bool) (*client, error) 
 		Store: mautrix.NewInMemoryStore(),
 	}
 
-	client := client{
+	client := &client{
 		homeserverURL:    homeserverURL.String(),
-		mautrix:          &mautrixClient,
+		mautrix:          mautrixClient,
 		syncer:           syncer,
 		listenersEnabled: enableListeners,
 	}
 
-	return &client, nil
+	return client, nil
 }
 
 func (client *client) Login(username string, password string) error {
