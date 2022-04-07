@@ -125,29 +125,3 @@ func TestUpdate(t *testing.T) {
 		}
 	})
 }
-
-func TestSaveMeta(t *testing.T) {
-	database.Test(func(session db.Session) {
-		// workflows := fixtures.Workflows(session)
-		repository := NewRepository(session)
-
-		w := &model.Workflow{
-			Name:        "Toml imported Workflow 3",
-			Description: "",
-			Active:      true,
-			Identifier:  "TOMLTEST3",
-		}
-		if err := repository.Save(w); err != nil {
-			t.Errorf("could not save workflow: %s", err)
-		}
-
-		got, err := repository.FindByIdentifier(w.Identifier)
-		if err != nil {
-			t.Errorf("could not find workflow in the database: %s", err)
-		}
-
-		if got.Identifier != w.Identifier {
-			t.Errorf("output did not match\n%v\n%v", got, w)
-		}
-	})
-}

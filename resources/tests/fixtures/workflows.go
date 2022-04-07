@@ -29,18 +29,21 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 			Name:        "QuickStart Demo",
 			Description: "This workflow is meant to show a quick demo",
 			Active:      true,
+			Identifier:  "QUICKSTART",
 		},
 		"MVP": {
 			ID:          11,
 			Name:        "MVP",
 			Description: "",
 			Active:      true,
+			Identifier:  "MVP",
 		},
 		"Deactivated Workflow": {
 			ID:          12,
 			Name:        "Deactivated Workflow",
 			Description: "",
 			Active:      false,
+			Identifier:  "DEACTIVATED",
 		},
 		"Toml imported Workflow": {
 			ID:          13,
@@ -62,17 +65,6 @@ func Workflows(session db.Session) map[string]workflow.Workflow {
 		_, err := session.Collection("workflows").Insert(fixture)
 		if err != nil {
 			log.Fatalf("Failed to insert fixtures for workflows: %s", err)
-		}
-
-		if fixture.Identifier != "" {
-			_, err := session.Collection("workflow_meta").Insert(workflowMetaRow{
-				WorkflowID: fixture.ID,
-				Key:        "toml_identifier",
-				Value:      fixture.Identifier,
-			})
-			if err != nil {
-				log.Fatalf("Failed to insert fixtures for workflow meta: %s", err)
-			}
 		}
 	}
 
