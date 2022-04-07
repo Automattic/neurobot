@@ -8,6 +8,7 @@ import (
 	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
 	"neurobot/app/workflowstep"
+	"neurobot/engine"
 	"neurobot/infrastructure/database"
 	"neurobot/infrastructure/http"
 	"neurobot/infrastructure/matrix"
@@ -15,9 +16,6 @@ import (
 	b "neurobot/model/bot"
 	"os"
 	"strconv"
-	"strings"
-
-	"neurobot/engine"
 
 	"github.com/joho/godotenv"
 	"maunium.net/go/mautrix"
@@ -70,7 +68,7 @@ func main() {
 
 	botRegistry, err := makeBotRegistry(serverName, botRepository)
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Fatalf("Failed to make bot registry: %s", err)
 	}
 
 	// set default port for running webhook listener server
@@ -91,23 +89,8 @@ func main() {
 	}
 
 	// resolve .well-known to find our server URL to connect
-	var serverURL string
 	log.Printf("Discovering Client API for %s\n", serverName)
-	wellKnown, err := mautrix.DiscoverClientAPI(serverName) // both can be nil for hosts that have https but are not a matrix server
-	if err != nil {
-		log.Println(err)
-		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
-			serverURL = "http://" + serverName
-		} else {
-			serverURL = "https://" + serverName
-		}
-	} else {
-		if wellKnown != nil {
-			serverURL = wellKnown.Homeserver.BaseURL
-		} else {
-			serverURL = "https://" + serverName
-		}
-	}
+	serverURL := matrix.DiscoverServerURL(serverName)
 	log.Printf("Server URL for %s: %s", serverName, serverURL)
 
 	p := engine.RunParams{
@@ -166,9 +149,15 @@ func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry
 	registry = botApp.NewRegistry(homeserverURL)
 
 	for _, bot := range bots {
-		client, err := matrix.NewMautrixClient(homeserverURL, true)
-		if err == nil {
-			err = registry.Append(bot, client)
+		var client matrix.Client
+		client, err = matrix.NewMautrixClient(homeserverURL, true)
+		if err != nil {
+			return
+		}
+
+		err = registry.Append(bot, client)
+		if err != nil {
+			return
 		}
 	}
 

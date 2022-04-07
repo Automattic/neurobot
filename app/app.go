@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"log"
 	netHttp "net/http"
 	"neurobot/app/bot"
 	r "neurobot/app/runner"
@@ -40,17 +41,17 @@ func (app app) Run() (err error) {
 			workflowIdentifier := strings.TrimPrefix(request.URL.Path, "/")
 			workflow, err := app.workflowRepository.FindByIdentifier(workflowIdentifier)
 			if err != nil {
-				netHttp.NotFound(response, request)
+				errorMessage := fmt.Sprintf("no workflow found for `%s`", workflowIdentifier)
+				netHttp.Error(response, errorMessage, netHttp.StatusNotFound)
 				return
 			}
 
-			// Run in a goroutine so that we immediately respond to the request.
-			go func() {
-				err := app.runWorkflow(workflow, payload)
-				if err != nil {
-					fmt.Printf("Failed to run workflow: %s", err)
-				}
-			}()
+			err = app.runWorkflow(workflow, payload)
+			if err != nil {
+				netHttp.Error(response, "something went wrong", netHttp.StatusInternalServerError)
+				log.Printf("Error when attempting to run workflow: %s, payload: %+v", err, payload)
+				return
+			}
 		})
 
 	return
@@ -70,5 +71,13 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 		runner = afk_notifier.NewRunner(matrixClient)
 	}
 
-	return runner.Run(workflow, payload)
+	go func() {
+		log.Printf("Starting workflow with identifier %s, payload: %+v", workflow.Identifier, payload)
+		err := runner.Run(workflow, payload)
+		if err != nil {
+			log.Printf("Failed to run workflow: %s", err)
+		}
+	}()
+
+	return nil
 }

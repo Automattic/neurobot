@@ -13,7 +13,6 @@ func makeClient() (*client, mocks.MautrixClientMock, mocks.MautrixSyncerMock) {
 
 	client := client{
 		homeserverURL:    "matrix.test",
-		homeserverDomain: "matrix.test",
 		mautrix:          mautrixMock,
 		syncer:           syncerMock,
 		listenersEnabled: false,
