@@ -6,7 +6,7 @@ CREATE TABLE "workflow_meta" (
 );
 
 INSERT INTO workflow_meta ('workflow_id','key','value')
-SELECT id,'toml_identifier',identifier FROM workflows where identifier <> ""
+SELECT id,'toml_identifier',identifier FROM workflows as w where identifier <> "" w AND w.id != 1
 
 CREATE TABLE "workflows_tmp" (
 "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
