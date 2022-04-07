@@ -5,6 +5,6 @@ type Repository interface {
 	// FindActive retrieves all active bots.
 	FindActive() ([]Bot, error)
 
-	// FindByIdentifier retrieves a bot by its unique identifier (aka slug).
-	FindByIdentifier(identifier string) (Bot, error)
+	// FindByUsername retrieves a bot by its unique username.
+	FindByUsername(username string) (Bot, error)
 }
