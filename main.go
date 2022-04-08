@@ -38,6 +38,10 @@ func main() {
 		debug = false // default
 	}
 
+	if debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
 	dbFile := os.Getenv("DB_FILE")
 	serverName := os.Getenv("MATRIX_SERVER_NAME")
 	username := os.Getenv("MATRIX_USERNAME")
