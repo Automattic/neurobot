@@ -56,45 +56,6 @@ func TestGetConfiguredWorkflows(t *testing.T) {
 	})
 }
 
-func TestGetConfiguredWFSteps(t *testing.T) {
-	database.Test(func(session db.Session) {
-		steps := fixtures.WorkflowSteps(session)
-		repository := wfs.NewRepository(session)
-
-		got, err := getConfiguredWFSteps(repository)
-		if err != nil {
-			t.Errorf("could not get configured workflow steps from database")
-		}
-
-		if len(got) != 1 {
-			t.Errorf("expected 1 workflow step, got %d", len(got))
-		}
-
-		var expected []modelWorkflowStep.WorkflowStep
-		expected = append(expected, steps["PostMessage1"])
-
-		// have to check just for names, as currently Workflow step type in engine is different from workflow step model
-		// eventually this would be consolidated and a reflect.DeepEqual check should suffice
-		for _, w := range expected {
-			found := false
-			for _, g := range got {
-				// temporarily check for just this one type of workflow step
-				// getConfiguredWFSteps would be refactored into just return workflow steps and not the WorkflowStep interface, in a follow up PR
-				if w.Name == g.(*postMessageMatrixWorkflowStep).name {
-					found = true
-				}
-			}
-			if !found {
-				t.Errorf("output did not match, expected %s in the output", w.Name)
-			}
-		}
-
-		// if !reflect.DeepEqual(got, steps) {
-		// 	t.Errorf("output did not match\n%+v\n%+v", got, steps)
-		// }
-	})
-}
-
 // Function returns two db sessions, first one of a proper database with which tests are meant to pass
 // and second one of an empty database with no tables, meant to test errors
 func setUp() (db.Session, db.Session) {
