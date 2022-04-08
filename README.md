@@ -35,30 +35,7 @@ You can compile the program by `make build`, which will generate the `neurobot` 
 
 ### Matrix bot
 
-You can skip this section for a quick demo below, but in order to test by posting a message to a Matrix room, you would need to create a bot user (a user that's meant to be programmatically controlled is a bot, there is no other difference between a regular user and bot user) on your Matrix homeserver and supply its access token in the `.env` file. You don't have to name it `neurobot` but for documentation, that's the name we will assume, you have chosen. If your workflows would require matrix actions that require admin priveleges, you can promote `neurobot` to be an admin on the server as well. For a deep understanding, we suggest reading more on [neurobot's Architecture](resources/docs/architecture.md).
-
-### Quick Demo
-
-Copy `.env.sample` file as `.env` file and run the program using this command:
-
-`go run main.go`
-
-First run, inserts some data into the sqlite database `neurobot.db` which will enable you to send it a HTTP request with payload `?message=hello` which will trigger the workflow that makes it log to `stdout`.
-
-After running the program, you can send a HTTP request using CURL like this:
-
-`curl localhost:8080/quickstart?message=Hello`
-
-You should see these lines in output:
-
-```
-Request received on webhook listener! /quickstart
-suffix: quickstart registered: true
-
-Running workflow #1 payload:{Hello }
-
->>Hello
-```
+You would need to create a bot user (a user that's meant to be programmatically controlled is a bot, there is no other difference between a regular user and bot user) on your Matrix homeserver and supply its access token in the `.env` file. You don't have to name it `neurobot` but for documentation, that's the name we will assume, you have chosen. If your workflows would require matrix actions that require admin priveleges, you can promote `neurobot` to be an admin on the server as well. For a deep understanding, we suggest reading more on [neurobot's Architecture](resources/docs/architecture.md).
 
 ### Adding your own workflow
 

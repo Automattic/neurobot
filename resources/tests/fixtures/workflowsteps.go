@@ -15,14 +15,6 @@ type workflowStepMetaRow struct {
 }
 
 func WorkflowSteps(session db.Session) map[string]workflowstep.WorkflowStep {
-	// Make sure there are no workflow steps configured elsewhere than these fixtures.
-	// TODO: Currently migrations insert the "QuickStart Demo" workflow in the workflow_steps table.
-	//       Once that is no longer the case, this truncate can be removed.
-	err := session.Collection("workflow_steps").Truncate()
-	if err != nil {
-		log.Fatalf("Failed to truncate workflow_steps table: %s", err)
-	}
-
 	fixtures := map[string]workflowstep.WorkflowStep{
 		"PostMessage1": {
 			ID:          1,
