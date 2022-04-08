@@ -89,6 +89,8 @@ func (e *engine) StartUpLite() {
 }
 
 func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
+	logger := log.Log
+
 	// loop through all the steps inside of the workflow
 	steps, err := e.workflowStepRepository.FindByWorkflowID(w.ID)
 	if err != nil {
@@ -110,7 +112,9 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 		payload, err = r.run(payload)
 		if err != nil {
 			// For now, we don't halt the workflow if a workflow step encounters an error
-			e.log(fmt.Sprintf("workflow step execution error: WorkflowID:%d Error:%s", w.ID, err))
+			logger.WithError(err).WithFields(log.Fields{
+				"workflowID": w.ID,
+			}).Info("workflow step execution error")
 		}
 	}
 
