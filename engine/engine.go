@@ -1,14 +1,15 @@
 package engine
 
 import (
-	"fmt"
-	"log"
+	"errors"
+	"github.com/apex/log"
 	b "neurobot/app/bot"
 	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
@@ -19,7 +20,6 @@ import (
 type Engine interface {
 	StartUp(MatrixClient, mautrix.Syncer)
 	Run(wf.Workflow, map[string]string) error
-	log(string)
 }
 
 type MatrixClient interface {
@@ -68,17 +68,18 @@ type RunParams struct {
 }
 
 func (e *engine) StartUpLite() {
-	e.log("Starting up engine..")
+	logger := log.Log
+	logger.Info("Starting up engine")
 
 	// Initialize maps
 	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*workflow)
 
 	// Load registered workflows from the database and initialize the right triggers for them
-	e.log("Loading data...")
+	logger.Info("Loading data")
 	e.loadData()
 
-	e.log("Finished starting up engine.")
+	logger.Info("Finished starting up engine.")
 }
 
 func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
@@ -88,12 +89,13 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 }
 
 func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
+	logger := log.Log
 	e.StartUpLite()
 
 	// Start Matrix client, if desired
 	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
 	if e.isMatrix {
-		e.log("Starting up Matrix client(s)..")
+		logger.Info("Starting up Matrix client(s)")
 
 		var wg sync.WaitGroup
 		wg.Add(2)
@@ -104,9 +106,9 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 
 			err := e.initMatrixClient(mc, s)
 			if err != nil {
-				log.Fatal(err)
+				logger.WithError(err).Fatal("Failed to init matrix client")
 			}
-			e.log("Finished loading up God bot.")
+			logger.Info("Finished starting primary bot")
 		}()
 
 		// This creates the matrix instances of all other bots
@@ -115,28 +117,24 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 
 			err := e.wakeUpMatrixBots()
 			if err != nil {
-				log.Fatal(err) // fatal error for now
+				logger.WithError(err).Fatal("Failed to wake up bots")
 			}
-			e.log("Finished waking up all Matrix bots.")
+			logger.Info("Finished waking up all Matrix bots")
 		}()
 
 		// allow the matrix client(s) to sync and be ready,
 		wg.Wait()
-		e.log("Engine's matrix start up finished.")
-	}
-}
-
-func (e *engine) log(m string) {
-	if e.debug {
-		fmt.Println(m)
+		logger.Info("Engine's matrix start up finished")
 	}
 }
 
 func (e *engine) loadData() {
+	logger := log.Log
+
 	// load workflows
 	workflows, err := getConfiguredWorkflows(e.workflowRepository)
 	if err != nil {
-		log.Fatalf("Error loading workflows from database: %s", err)
+		logger.WithError(err).Fatal("Failed to load workflows from database")
 	}
 	for _, w := range workflows {
 		// copy over the value in a separate variable because we need to store a pointer
@@ -148,29 +146,29 @@ func (e *engine) loadData() {
 	// load workflow steps
 	steps, err := getConfiguredWFSteps(e.workflowStepRepository)
 	if err != nil {
-		log.Fatalf("Error loading workflow steps from database: %s", err)
+		logger.WithError(err).Fatal("Failed to load steps from database")
 	}
 	for _, ws := range steps {
 		switch ws := ws.(type) {
 		case *postMessageMatrixWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			logger.Infof("Adding %s to workflow #%d", ws.name, ws.workflowID)
 			ws.botRegistry = e.botRegistry
 			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		case *stdoutWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			logger.Infof("Adding %s to workflow #%d", ws.name, ws.workflowID)
 			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		case *sendEmailWorkflowStep:
-			fmt.Printf("Adding %s to workflow #%d\n", ws.name, ws.workflowID)
+			logger.Infof("Adding %s to workflow #%d", ws.name, ws.workflowID)
 			e.workflows[ws.workflowID].addWorkflowStep(ws)
 		}
 	}
 }
 
 func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
+	logger := log.Log
 	e.client = c
 
-	e.log(fmt.Sprintf("Matrix: Logging into %s as %s", e.matrixServerName, e.matrixusername))
-
+	start := time.Now()
 	_, err = e.client.Login(&mautrix.ReqLogin{
 		Type:             "m.login.password",
 		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: e.matrixusername},
@@ -182,16 +180,27 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 		return
 	}
 
-	e.log("Matrix: Login successful!")
+	logger.WithDuration(time.Since(start)).WithFields(log.Fields{
+		"serverName": e.matrixServerName,
+		"username":   e.matrixusername,
+	}).Info("Logged in to homeserver")
 
 	syncer := s.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(mautrixEvent.EventMessage, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
-		e.log(fmt.Sprintf("<%[1]s> %[4]s (%[2]s/%[3]s)\n", evt.Sender, evt.Type.String(), evt.ID, evt.Content.AsMessage().Body))
+		logger.WithFields(log.Fields{
+			"sender": evt.Sender,
+			"type":   evt.Type.String(),
+			"body":   evt.Content.AsMessage().Body,
+		}).Info("Matrix event")
 	})
 	syncer.OnEventType(mautrixEvent.StateMember, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
+		logger := log.WithFields(log.Fields{
+			"room": evt.RoomID,
+		})
+
 		if membership, ok := evt.Content.Raw["membership"]; ok {
 			if membership == "invite" {
-				e.log(fmt.Sprintf("neurobot got invitation for %s\n", evt.RoomID))
+				logger.Info("Neurobot was invited to room")
 
 				// ensure the invitation is for a room within our homeserver only
 				matrixHSHost := strings.Split(e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
@@ -199,12 +208,12 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 					// join the room
 					_, err := e.client.JoinRoom(evt.RoomID.String(), "", "")
 					if err != nil {
-						e.log(fmt.Sprintf("neurobot couldn't join the invitation: %s", evt.RoomID))
+						logger.WithError(err).Error("Neurobot could not accept invitation")
 					} else {
-						e.log("neurobot accepted invitation, if it wasn't accepted already")
+						logger.Info("Neurobot accepted invitation, if it wasn't accepted already")
 					}
 				} else {
-					e.log(fmt.Sprintf("neurobot whaat? %v", strings.Split(evt.RoomID.String(), ":")))
+					logger.Warn("Neurobot was invited to a room in another homeserver")
 				}
 			}
 		}
@@ -212,7 +221,8 @@ func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) 
 
 	// Fire 'sync' in another go routine since its blocking
 	go func() {
-		e.log(e.client.Sync().Error())
+		err := e.client.Sync().Error()
+		logger.WithField("error", err).Error("Sync failed")
 	}()
 
 	return
@@ -256,7 +266,11 @@ func (e *engine) wakeUpMatrixBots() (err error) {
 	wg.Wait()
 
 	if len(failedWakeUps) > 0 {
-		return fmt.Errorf("one or more bots could not wake up. ids: %v", failedWakeUps)
+		err = errors.New("one or more bots could not wake up")
+		log.WithFields(log.Fields{
+			"failedBots": failedWakeUps,
+		}).Error("Failed to wake up bots")
+		return err
 	}
 
 	return nil

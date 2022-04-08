@@ -2,10 +2,10 @@ package engine
 
 import (
 	"errors"
-	"fmt"
 	model "neurobot/model/bot"
 	"strings"
 
+	"github.com/apex/log"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
 )
@@ -45,7 +45,9 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	// hydrate bot
 	b.Hydrate(e)
 
-	b.log(fmt.Sprintf("Matrix: Activating Bot: %s", b.Username))
+	logger := log.WithFields(log.Fields{"username": b.Username})
+	logger.Info("Activating bot")
+
 	client, err := mautrix.NewClient(e.matrixServerURL, "", "")
 	if err != nil {
 		return
@@ -64,23 +66,32 @@ func (b *Bot) WakeUp(e *engine) (err error) {
 	if err != nil {
 		return
 	}
-	b.log(fmt.Sprintf("Matrix: Bot %s login successful", b.Username))
+	logger.Info("Bot login successful")
 
 	syncer := client.Syncer.(*mautrix.DefaultSyncer)
 	syncer.OnEventType(event.StateMember, b.HandleStateMemberEvent)
 
 	// Fire 'sync' in another go routine since its blocking
 	go func() {
-		e.log(client.Sync().Error())
+		logger.Error(client.Sync().Error())
 	}()
 
 	return
 }
 
 func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Event) {
+	logger := log.WithFields(log.Fields{
+		"username": b.Username,
+		"room":     evt.RoomID,
+		"source":   source,
+		"type":     evt.Type.Type,
+		"content":  evt.Content.Raw,
+	})
+	logger.Debug("State member event")
+
 	if membership, ok := evt.Content.Raw["membership"]; ok {
 		if membership == "invite" {
-			b.log(fmt.Sprintf("Invitation for %s\n", evt.RoomID))
+			logger.Info("Bot was invited to room. Will now attempt to join.")
 
 			// ensure the invitation is for a room within our homeserver only
 			matrixHSHost := strings.Split(b.e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
@@ -88,16 +99,15 @@ func (b *Bot) HandleStateMemberEvent(source mautrix.EventSource, evt *event.Even
 				// join the room
 				_, err := b.JoinRoom(evt.RoomID.String())
 				if err != nil {
-					b.log(fmt.Sprintf("Bot couldn't join the invitation bot:%s invitation:%s err:%s", b.Username, evt.RoomID, err))
+					logger.WithError(err).Error("Bot couldn't join room")
 				} else {
-					b.log("accepted invitation, if it wasn't accepted already")
+					logger.Info("Accepted invitation, if it wasn't already accepted")
 				}
 			} else {
-				b.log(fmt.Sprintf("whaat? %v", strings.Split(evt.RoomID.String(), ":")))
+				logger.Warn("Bot was invited to room in another homeserver. Not accepting invitation.")
 			}
 		}
 	}
-	b.log(fmt.Sprintf("\nSource: %d\n%s  %s\n%+v\n", source, evt.Type.Type, evt.RoomID, evt.Content.Raw))
 }
 
 func (b *Bot) getMCInstance() MatrixClient {
@@ -114,8 +124,4 @@ func (b *Bot) JoinRoom(roomIDorAlias string) (resp *mautrix.RespJoinRoom, err er
 	}
 
 	return nil, errors.New("bot instance not hydrated")
-}
-
-func (b *Bot) log(m string) {
-	b.e.log(m)
 }
