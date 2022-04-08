@@ -8,7 +8,7 @@ import (
 	"neurobot/infrastructure/database"
 )
 
-const testDatabasePath = "../../neurobot-test.db"
+const testDatabasePath = "neurobot-test.db"
 
 func init() {
 	// bump DB log level to fatal errors as triggering an error condition is part of the test
