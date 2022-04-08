@@ -15,14 +15,6 @@ type workflowMetaRow struct {
 }
 
 func Workflows(session db.Session) map[string]workflow.Workflow {
-	// Make sure there are no workflows configured elsewhere than these fixtures.
-	// TODO: Currently migrations insert the "QuickStart Demo" workflow in the workflows table.
-	//       Once that is no longer the case, this truncate can be removed.
-	err := session.Collection("workflows").Truncate()
-	if err != nil {
-		log.Fatalf("Failed to truncate workflows table: %s", err)
-	}
-
 	fixtures := map[string]workflow.Workflow{
 		"QuickStart Demo": {
 			ID:          1,
