@@ -4,9 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	wf "neurobot/app/workflow"
-	wfs "neurobot/app/workflowstep"
 	modelWorkflow "neurobot/model/workflow"
-	modelWorkflowStep "neurobot/model/workflowstep"
 	"neurobot/resources/tests/database"
 	"neurobot/resources/tests/fixtures"
 	"os"
@@ -41,7 +39,7 @@ func TestGetConfiguredWorkflows(t *testing.T) {
 		for _, w := range expected {
 			found := false
 			for _, g := range got {
-				if w.Name == g.name {
+				if w.Name == g.Name {
 					found = true
 				}
 			}

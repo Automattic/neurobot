@@ -26,7 +26,7 @@ func TestStdoutWorkflowStep(t *testing.T) {
 	defer func() { out = backup }()
 
 	for _, table := range tables {
-		s := &stdoutWorkflowStep{}
+		s := &stdoutWorkflowStepRunner{}
 		s.run(map[string]string{"Message": table.input})
 
 		got := out.(*bytes.Buffer).String()

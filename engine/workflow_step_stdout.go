@@ -4,23 +4,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	botApp "neurobot/app/bot"
 )
 
 var out io.Writer = os.Stdout
 
-type stdoutWorkflowPayload struct {
-	message string
-}
+type stdoutWorkflowStepRunner struct{}
 
-type stdoutWorkflowStep struct {
-	workflowStep
-}
-
-func (s stdoutWorkflowStep) run(p map[string]string) (map[string]string, error) {
-	if p["Message"] == "" {
-		p["Message"] = "[Empty line]"
+func (runner stdoutWorkflowStepRunner) run(p map[string]string) (map[string]string, error) {
+	msg := p["Message"]
+	if msg == "" {
+		msg = "[Empty line]"
 	}
-	fmt.Fprintln(out, ">>"+p["Message"])
+	fmt.Fprintln(out, ">>"+msg)
 
 	return p, nil
+}
+
+func NewStdOutRunner(meta map[string]string, botRegistry botApp.Registry) *stdoutWorkflowStepRunner {
+	return &stdoutWorkflowStepRunner{}
 }
