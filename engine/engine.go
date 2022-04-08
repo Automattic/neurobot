@@ -113,7 +113,7 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 		if err != nil {
 			// For now, we don't halt the workflow if a workflow step encounters an error
 			logger.WithError(err).WithFields(log.Fields{
-				"workflowID": w.ID,
+				"Identifier": w.Identifier,
 			}).Info("workflow step execution error")
 		}
 	}
