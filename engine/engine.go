@@ -108,10 +108,6 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	logger := log.Log
 	logger.Info("Starting up engine")
 
-	// Initialize maps
-	e.bots = make(map[uint64]MatrixClient)
-	e.workflows = make(map[uint64]*wf.Workflow)
-
 	// Load registered workflows from the database and initialize the right triggers for them
 	logger.Info("Loading data")
 	e.loadData()
@@ -292,6 +288,10 @@ func NewEngine(p RunParams) *engine {
 	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
 	e.workflowStepRepository = p.WorkflowStepRepository
+
+	// initialize maps
+	e.bots = make(map[uint64]MatrixClient)
+	e.workflows = make(map[uint64]*wf.Workflow)
 
 	return &e
 }
