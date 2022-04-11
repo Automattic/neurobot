@@ -165,7 +165,7 @@ func (e *engine) loadData() {
 	logger := log.Log
 
 	// load workflows
-	workflows, err := getConfiguredWorkflows(e.workflowRepository)
+	workflows, err := e.workflowRepository.FindActive()
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to load workflows from database")
 	}
