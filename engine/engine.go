@@ -1,15 +1,11 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	b "neurobot/app/bot"
 	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/apex/log"
 
@@ -112,38 +108,6 @@ func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	logger.Info("Loading data")
 	e.loadData()
 
-	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
-	logger.Info("Starting up Matrix client(s)")
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	// This creates the matrix instance of the main/god bot
-	go func() {
-		defer wg.Done()
-
-		err := e.initMatrixClient(mc, s)
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to init matrix client")
-		}
-		logger.Info("Finished starting primary bot")
-	}()
-
-	// This creates the matrix instances of all other bots
-	go func() {
-		defer wg.Done()
-
-		err := e.wakeUpMatrixBots()
-		if err != nil {
-			logger.WithError(err).Fatal("Failed to wake up bots")
-		}
-		logger.Info("Finished waking up all Matrix bots")
-	}()
-
-	// allow the matrix client(s) to sync and be ready,
-	wg.Wait()
-	logger.Info("Engine's matrix start up finished")
-
 	logger.Info("Finished starting up engine.")
 }
 
@@ -161,118 +125,6 @@ func (e *engine) loadData() {
 		instance := w
 		e.workflows[w.ID] = &instance
 	}
-}
-
-func (e *engine) initMatrixClient(c MatrixClient, s mautrix.Syncer) (err error) {
-	logger := log.Log
-	e.client = c
-
-	start := time.Now()
-	_, err = e.client.Login(&mautrix.ReqLogin{
-		Type:             "m.login.password",
-		Identifier:       mautrix.UserIdentifier{Type: mautrix.IdentifierTypeUser, User: e.matrixusername},
-		Password:         e.matrixpassword,
-		DeviceID:         "NEUROBOT",
-		StoreCredentials: true,
-	})
-	if err != nil {
-		return
-	}
-
-	logger.WithDuration(time.Since(start)).WithFields(log.Fields{
-		"serverName": e.matrixServerName,
-		"username":   e.matrixusername,
-	}).Info("Logged in to homeserver")
-
-	syncer := s.(*mautrix.DefaultSyncer)
-	syncer.OnEventType(mautrixEvent.EventMessage, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
-		logger.WithFields(log.Fields{
-			"sender": evt.Sender,
-			"type":   evt.Type.String(),
-			"body":   evt.Content.AsMessage().Body,
-		}).Info("Matrix event")
-	})
-	syncer.OnEventType(mautrixEvent.StateMember, func(source mautrix.EventSource, evt *mautrixEvent.Event) {
-		logger := log.WithFields(log.Fields{
-			"room": evt.RoomID,
-		})
-
-		if membership, ok := evt.Content.Raw["membership"]; ok {
-			if membership == "invite" {
-				logger.Info("Neurobot was invited to room")
-
-				// ensure the invitation is for a room within our homeserver only
-				matrixHSHost := strings.Split(e.matrixServerName, ":")[0] // remove protocol and port info to get just the hostname
-				if strings.Split(evt.RoomID.String(), ":")[1] == matrixHSHost {
-					// join the room
-					_, err := e.client.JoinRoom(evt.RoomID.String(), "", "")
-					if err != nil {
-						logger.WithError(err).Error("Neurobot could not accept invitation")
-					} else {
-						logger.Info("Neurobot accepted invitation, if it wasn't accepted already")
-					}
-				} else {
-					logger.Warn("Neurobot was invited to a room in another homeserver")
-				}
-			}
-		}
-	})
-
-	// Fire 'sync' in another go routine since its blocking
-	go func() {
-		err := e.client.Sync().Error()
-		logger.WithField("error", err).Error("Sync failed")
-	}()
-
-	return
-}
-
-func (e *engine) wakeUpMatrixBots() (err error) {
-	// load all bots one by one and accept any invitations within our own homeserver
-	modelBots, err := e.botRepository.FindActive()
-	if err != nil {
-		return
-	}
-
-	// Convert model/bot to engine/bot
-	// TODO: Remove once engine/bot has been replaced in favour of model/bot
-	var bots []Bot
-	for _, modelBot := range modelBots {
-		bots = append(bots, MakeBotFromModelBot(modelBot))
-	}
-
-	// use waitgroup to wait for all bots' instances to be ready
-	var wg sync.WaitGroup
-
-	// collect bot IDs who error'd out
-	var failedWakeUps []uint64
-
-	// using go routines here to instantiate in parallel - rate limiting might become a problem with too many bots though
-	for _, b := range bots {
-		wg.Add(1)
-
-		go func(b Bot) {
-			defer wg.Done()
-
-			if err := b.WakeUp(e); err != nil {
-				failedWakeUps = append(failedWakeUps, b.ID)
-			}
-		}(b)
-
-	}
-
-	// wait for all bot instances to wake up
-	wg.Wait()
-
-	if len(failedWakeUps) > 0 {
-		err = errors.New("one or more bots could not wake up")
-		log.WithFields(log.Fields{
-			"failedBots": failedWakeUps,
-		}).Error("Failed to wake up bots")
-		return err
-	}
-
-	return nil
 }
 
 func NewEngine(p RunParams) *engine {
