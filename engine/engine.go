@@ -40,7 +40,6 @@ type WorkflowStepRunner interface {
 type engine struct {
 	debug bool
 
-	isMatrix         bool // Do we mean to run a matrix client?
 	matrixServerName string
 	matrixServerURL  string
 	matrixusername   string
@@ -66,26 +65,10 @@ type RunParams struct {
 	WorkflowStepRepository wfs.Repository
 
 	Debug            bool
-	IsMatrix         bool
 	MatrixServerName string // domain in use, part of identity
 	MatrixServerURL  string // actual URL to connect to, for a particular server
 	MatrixUsername   string
 	MatrixPassword   string
-}
-
-func (e *engine) StartUpLite() {
-	logger := log.Log
-	logger.Info("Starting up engine")
-
-	// Initialize maps
-	e.bots = make(map[uint64]MatrixClient)
-	e.workflows = make(map[uint64]*wf.Workflow)
-
-	// Load registered workflows from the database and initialize the right triggers for them
-	logger.Info("Loading data")
-	e.loadData()
-
-	logger.Info("Finished starting up engine.")
 }
 
 func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
@@ -123,42 +106,45 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 
 func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
 	logger := log.Log
-	e.StartUpLite()
+	logger.Info("Starting up engine")
 
-	// Start Matrix client, if desired
+	// Load registered workflows from the database and initialize the right triggers for them
+	logger.Info("Loading data")
+	e.loadData()
+
 	// Note: Matrix client needs to be initialized early as a trigger can try to run Matrix related tasks
-	if e.isMatrix {
-		logger.Info("Starting up Matrix client(s)")
+	logger.Info("Starting up Matrix client(s)")
 
-		var wg sync.WaitGroup
-		wg.Add(2)
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-		// This creates the matrix instance of the main/god bot
-		go func() {
-			defer wg.Done()
+	// This creates the matrix instance of the main/god bot
+	go func() {
+		defer wg.Done()
 
-			err := e.initMatrixClient(mc, s)
-			if err != nil {
-				logger.WithError(err).Fatal("Failed to init matrix client")
-			}
-			logger.Info("Finished starting primary bot")
-		}()
+		err := e.initMatrixClient(mc, s)
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to init matrix client")
+		}
+		logger.Info("Finished starting primary bot")
+	}()
 
-		// This creates the matrix instances of all other bots
-		go func() {
-			defer wg.Done()
+	// This creates the matrix instances of all other bots
+	go func() {
+		defer wg.Done()
 
-			err := e.wakeUpMatrixBots()
-			if err != nil {
-				logger.WithError(err).Fatal("Failed to wake up bots")
-			}
-			logger.Info("Finished waking up all Matrix bots")
-		}()
+		err := e.wakeUpMatrixBots()
+		if err != nil {
+			logger.WithError(err).Fatal("Failed to wake up bots")
+		}
+		logger.Info("Finished waking up all Matrix bots")
+	}()
 
-		// allow the matrix client(s) to sync and be ready,
-		wg.Wait()
-		logger.Info("Engine's matrix start up finished")
-	}
+	// allow the matrix client(s) to sync and be ready,
+	wg.Wait()
+	logger.Info("Engine's matrix start up finished")
+
+	logger.Info("Finished starting up engine.")
 }
 
 func (e *engine) loadData() {
@@ -294,7 +280,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.isMatrix = p.IsMatrix
 	e.matrixServerName = p.MatrixServerName
 	e.matrixServerURL = p.MatrixServerURL
 	e.matrixusername = p.MatrixUsername
@@ -303,6 +288,10 @@ func NewEngine(p RunParams) *engine {
 	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
 	e.workflowStepRepository = p.WorkflowStepRepository
+
+	// initialize maps
+	e.bots = make(map[uint64]MatrixClient)
+	e.workflows = make(map[uint64]*wf.Workflow)
 
 	return &e
 }

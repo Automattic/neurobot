@@ -2,10 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/apex/log"
-	"github.com/joho/godotenv"
-	"maunium.net/go/mautrix"
 	application "neurobot/app"
 	botApp "neurobot/app/bot"
 	"neurobot/app/workflow"
@@ -20,6 +16,10 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/apex/log"
+	"github.com/joho/godotenv"
+	"maunium.net/go/mautrix"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
@@ -92,12 +92,9 @@ func main() {
 	webhookListenerServer := http.NewServer(webhookListenerPort)
 
 	// if either one matrix related env var is specified, make sure all of them are specified
-	isMatrix := false
 	if serverName != "" || username != "" || password != "" {
 		if serverName == "" || username == "" || password == "" {
 			logger.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
-		} else {
-			isMatrix = true
 		}
 	}
 
@@ -116,7 +113,6 @@ func main() {
 		WorkflowStepRepository: workflowStepsRepository,
 
 		Debug:            debug,
-		IsMatrix:         isMatrix,
 		MatrixServerName: serverName,
 		MatrixServerURL:  serverURL,
 		MatrixUsername:   username,
@@ -125,18 +121,13 @@ func main() {
 
 	e := engine.NewEngine(p)
 
-	if isMatrix {
-		mc, err := mautrix.NewClient(p.MatrixServerURL, "", "")
-		if err != nil {
-			logger.WithError(err).WithFields(log.Fields{
-				"URL": p.MatrixServerURL,
-			}).Fatal("Failed to connect to matrix server")
-		}
-		e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
-	} else {
-		fmt.Println("engine:", "Lite mode")
-		e.StartUpLite()
+	mc, err := mautrix.NewClient(p.MatrixServerURL, "", "")
+	if err != nil {
+		logger.WithError(err).WithFields(log.Fields{
+			"URL": p.MatrixServerURL,
+		}).Fatal("Failed to connect to matrix server")
 	}
+	e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
 
 	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
