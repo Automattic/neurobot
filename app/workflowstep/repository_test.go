@@ -117,6 +117,27 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestFindByWorkflowID(t *testing.T) {
+	database.Test(func(session db.Session) {
+		steps := fixtures.WorkflowSteps(session)
+		repository := NewRepository(session)
+
+		got, err := repository.FindByWorkflowID(1)
+		if err != nil {
+			t.Errorf("failed to get workflow step: %s", err)
+		}
+
+		expected := []model.WorkflowStep{
+			steps["PostMessage1"],
+			steps["PostMessage3"],
+		}
+
+		if !reflect.DeepEqual(got, expected) {
+			t.Errorf("unexpected result active workflows\n%v\n%v", got, expected)
+		}
+	})
+}
+
 func TestRemoveByWorkflowID(t *testing.T) {
 	database.Test(func(session db.Session) {
 		steps := fixtures.WorkflowSteps(session)

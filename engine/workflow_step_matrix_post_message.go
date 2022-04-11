@@ -11,15 +11,14 @@ import (
 	"maunium.net/go/mautrix"
 )
 
-type postMessageMatrixWorkflowStepMeta struct {
+type postMatrixMessageWorkflowStepMeta struct {
 	messagePrefix string // message prefix
 	room          string // Matrix room
 	asBot         string // bot identifier, for matrix session
 }
 
-type postMessageMatrixWorkflowStep struct {
-	workflowStep
-	postMessageMatrixWorkflowStepMeta
+type postMatrixMessageWorkflowStepRunner struct {
+	postMatrixMessageWorkflowStepMeta
 	botRegistry botApp.Registry
 }
 
@@ -32,29 +31,29 @@ var getMatrixClient = func(homeserver string) (MatrixClient, error) {
 	return mc, nil
 }
 
-func (s postMessageMatrixWorkflowStep) getMatrixClient() (mc matrix.Client, err error) {
-	if s.asBot == "" {
+func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.Client, err error) {
+	if runner.asBot == "" {
 		// If no bot was specified, use the primary one.
-		return s.botRegistry.GetPrimaryClient()
+		return runner.botRegistry.GetPrimaryClient()
 	}
 
-	return s.botRegistry.GetClient(s.asBot)
+	return runner.botRegistry.GetClient(runner.asBot)
 }
 
-func (s postMessageMatrixWorkflowStep) run(p map[string]string) (map[string]string, error) {
+func (runner postMatrixMessageWorkflowStepRunner) run(p map[string]string) (map[string]string, error) {
 	msg := p["Message"]
 
 	// Append message specified in definition of this step as a prefix to the payload
-	if s.messagePrefix != "" {
+	if runner.messagePrefix != "" {
 		if p["Message"] != "" {
-			msg = fmt.Sprintf("%s\n%s", s.messagePrefix, p["Message"])
+			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p["Message"])
 		} else {
-			msg = s.messagePrefix
+			msg = runner.messagePrefix
 		}
 	}
 
 	// Override room defined in meta, if provided in payload
-	room := s.room
+	room := runner.room
 	if p["Room"] != "" {
 		room = p["Room"]
 	}
@@ -67,7 +66,7 @@ func (s postMessageMatrixWorkflowStep) run(p map[string]string) (map[string]stri
 		return p, errors.New("no message to post")
 	}
 
-	mc, err := s.getMatrixClient()
+	mc, err := runner.getMatrixClient()
 	if err != nil {
 		return p, err
 	}
@@ -80,4 +79,29 @@ func (s postMessageMatrixWorkflowStep) run(p map[string]string) (map[string]stri
 	err = mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
 
 	return p, err
+}
+
+func NewPostMatrixMessageRunner(meta map[string]string, botRegistry botApp.Registry) *postMatrixMessageWorkflowStepRunner {
+	var stepMeta postMatrixMessageWorkflowStepMeta
+	var ok bool
+
+	stepMeta.asBot, ok = meta["asBot"]
+	if !ok {
+		stepMeta.asBot = ""
+	}
+
+	stepMeta.room, ok = meta["room"]
+	if !ok {
+		stepMeta.room = ""
+	}
+
+	stepMeta.messagePrefix, ok = meta["messagePrefix"]
+	if !ok {
+		stepMeta.messagePrefix = ""
+	}
+
+	return &postMatrixMessageWorkflowStepRunner{
+		postMatrixMessageWorkflowStepMeta: stepMeta,
+		botRegistry:                       botRegistry,
+	}
 }

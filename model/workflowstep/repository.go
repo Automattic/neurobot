@@ -11,6 +11,9 @@ type Repository interface {
 	// FindByID retrieves a workflow step by its ID.
 	FindByID(ID uint64) (WorkflowStep, error)
 
+	// Find all workflow steps by workflow ID
+	FindByWorkflowID(ID uint64) ([]WorkflowStep, error)
+
 	// Removes all workflow steps under a workflow
 	RemoveByWorkflowID(ID uint64) error
 }

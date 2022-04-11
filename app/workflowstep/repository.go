@@ -134,6 +134,20 @@ func (repository *repository) saveMeta(step *model.WorkflowStep) (err error) {
 	return
 }
 
+func (repository *repository) FindByWorkflowID(ID uint64) (steps []model.WorkflowStep, err error) {
+	res := repository.collection.Find(db.Cond{"workflow_id": ID})
+	err = res.All(&steps)
+	if err != nil {
+		return
+	}
+
+	for i := range steps {
+		repository.loadMeta(&steps[i])
+	}
+
+	return
+}
+
 func (repository *repository) RemoveByWorkflowID(ID uint64) (err error) {
 	var steps []model.WorkflowStep
 	res := repository.collection.Find(db.Cond{"workflow_id": ID})
