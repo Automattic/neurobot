@@ -44,7 +44,6 @@ type engine struct {
 	workflowStepRepository wfs.Repository
 
 	workflows map[uint64]*wf.Workflow
-	bots      map[uint64]MatrixClient // All matrix client instances of bots
 
 	client MatrixClient
 }
@@ -129,7 +128,6 @@ func NewEngine(p RunParams) *engine {
 	e.workflowStepRepository = p.WorkflowStepRepository
 
 	// initialize maps
-	e.bots = make(map[uint64]MatrixClient)
 	e.workflows = make(map[uint64]*wf.Workflow)
 
 	return &e
