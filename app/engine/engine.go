@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"neurobot/app/bot"
+	s "neurobot/app/engine/steps"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
 
@@ -40,12 +41,12 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 
 	var runners []WorkflowStepRunner
 
-	for _, s := range steps {
-		switch s.Variety {
+	for _, step := range steps {
+		switch step.Variety {
 		case "postMatrixMessage":
-			runners = append(runners, NewPostMatrixMessageRunner(s.Meta, e.botRegistry))
+			runners = append(runners, NewPostMatrixMessageRunner(step.Meta, e.botRegistry))
 		case "stdOut":
-			runners = append(runners, NewStdOutRunner(s.Meta, e.botRegistry))
+			runners = append(runners, s.NewStdOutRunner(step.Meta, e.botRegistry))
 		}
 	}
 
