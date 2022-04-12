@@ -29,7 +29,7 @@ func NewRegistry(homeserverURL string) Registry {
 }
 
 func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
-	if bot.Primary {
+	if bot.IsPrimary() {
 		r.primaryUsername = bot.Username
 	}
 

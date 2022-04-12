@@ -9,3 +9,7 @@ type Bot struct {
 	Active      bool   `db:"active"`
 	Primary     bool
 }
+
+func (b Bot) IsPrimary() bool {
+	return b.Primary
+}
