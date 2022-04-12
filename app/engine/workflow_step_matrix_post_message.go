@@ -29,7 +29,7 @@ func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.C
 	return runner.botRegistry.GetClient(runner.asBot)
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) run(p map[string]string) (map[string]string, error) {
+func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[string]string, error) {
 	msg := p["Message"]
 
 	// Append message specified in definition of this step as a prefix to the payload

@@ -14,7 +14,7 @@ type Engine interface {
 }
 
 type WorkflowStepRunner interface {
-	run(map[string]string) (map[string]string, error) // accepts payload and returns after modification (if desired)
+	Run(map[string]string) (map[string]string, error) // accepts payload and returns after modification (if desired)
 }
 
 type engine struct {
@@ -50,7 +50,7 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 	}
 
 	for _, r := range runners {
-		payload, err = r.run(payload)
+		payload, err = r.Run(payload)
 		if err != nil {
 			// For now, we don't halt the workflow if a workflow step encounters an error
 			logger.WithError(err).WithFields(log.Fields{

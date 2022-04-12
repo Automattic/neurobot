@@ -12,7 +12,7 @@ var out io.Writer = os.Stdout
 
 type stdoutWorkflowStepRunner struct{}
 
-func (runner stdoutWorkflowStepRunner) run(p map[string]string) (map[string]string, error) {
+func (runner stdoutWorkflowStepRunner) Run(p map[string]string) (map[string]string, error) {
 	msg := p["Message"]
 	if msg == "" {
 		msg = "[Empty line]"
