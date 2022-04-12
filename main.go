@@ -105,13 +105,7 @@ func main() {
 		"serverURL":  serverURL,
 	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
-	p := engine.RunParams{
-		BotRegistry:            botRegistry,
-		WorkflowRepository:     workflowRepository,
-		WorkflowStepRepository: workflowStepsRepository,
-	}
-
-	e := engine.NewEngine(p)
+	e := engine.NewEngine(botRegistry, workflowStepsRepository)
 
 	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {

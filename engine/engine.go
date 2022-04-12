@@ -19,14 +19,14 @@ type WorkflowStepRunner interface {
 
 type engine struct {
 	botRegistry            bot.Registry
-	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
 }
 
-type RunParams struct {
-	BotRegistry            bot.Registry
-	WorkflowRepository     wf.Repository
-	WorkflowStepRepository wfs.Repository
+func NewEngine(botRegistry bot.Registry, workflowStepRepository wfs.Repository) *engine {
+	return &engine{
+		botRegistry:            botRegistry,
+		workflowStepRepository: workflowStepRepository,
+	}
 }
 
 func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
@@ -60,15 +60,4 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 	}
 
 	return nil
-}
-
-func NewEngine(p RunParams) *engine {
-	e := engine{}
-
-	// setting run parameters
-	e.botRegistry = p.BotRegistry
-	e.workflowRepository = p.WorkflowRepository
-	e.workflowStepRepository = p.WorkflowStepRepository
-
-	return &e
 }
