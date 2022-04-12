@@ -16,7 +16,7 @@ import (
 )
 
 type Engine interface {
-	StartUp(MatrixClient, mautrix.Syncer)
+	StartUp()
 	Run(wf.Workflow, map[string]string) error
 }
 
@@ -90,7 +90,7 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 	return nil
 }
 
-func (e *engine) StartUp(mc MatrixClient, s mautrix.Syncer) {
+func (e *engine) StartUp() {
 	logger := log.Log
 	logger.Info("Starting up engine")
 
