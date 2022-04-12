@@ -19,7 +19,6 @@ import (
 
 	"github.com/apex/log"
 	"github.com/joho/godotenv"
-	"maunium.net/go/mautrix"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
@@ -106,28 +105,7 @@ func main() {
 		"serverURL":  serverURL,
 	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
-	p := engine.RunParams{
-		BotRepository:          botRepository,
-		BotRegistry:            botRegistry,
-		WorkflowRepository:     workflowRepository,
-		WorkflowStepRepository: workflowStepsRepository,
-
-		Debug:            debug,
-		MatrixServerName: serverName,
-		MatrixServerURL:  serverURL,
-		MatrixUsername:   username,
-		MatrixPassword:   password,
-	}
-
-	e := engine.NewEngine(p)
-
-	mc, err := mautrix.NewClient(p.MatrixServerURL, "", "")
-	if err != nil {
-		logger.WithError(err).WithFields(log.Fields{
-			"URL": p.MatrixServerURL,
-		}).Fatal("Failed to connect to matrix server")
-	}
-	e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))
+	e := engine.NewEngine(botRegistry, workflowStepsRepository)
 
 	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {

@@ -7,8 +7,6 @@ import (
 	"neurobot/infrastructure/matrix"
 	"neurobot/model/message"
 	r "neurobot/model/room"
-
-	"maunium.net/go/mautrix"
 )
 
 type postMatrixMessageWorkflowStepMeta struct {
@@ -20,15 +18,6 @@ type postMatrixMessageWorkflowStepMeta struct {
 type postMatrixMessageWorkflowStepRunner struct {
 	postMatrixMessageWorkflowStepMeta
 	botRegistry botApp.Registry
-}
-
-var getMatrixClient = func(homeserver string) (MatrixClient, error) {
-	mc, err := mautrix.NewClient(homeserver, "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	return mc, nil
 }
 
 func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.Client, err error) {
