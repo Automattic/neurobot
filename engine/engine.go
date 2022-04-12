@@ -9,23 +9,11 @@ import (
 	"github.com/apex/log"
 
 	"github.com/upper/db/v4"
-	"maunium.net/go/mautrix"
-	mautrixEvent "maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/id"
 )
 
 type Engine interface {
 	StartUp()
 	Run(wf.Workflow, map[string]string) error
-}
-
-type MatrixClient interface {
-	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
-	Sync() error
-	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
-	SendText(roomID id.RoomID, text string) (*mautrix.RespSendEvent, error)
-	SendMessageEvent(roomID id.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
-	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 }
 
 type WorkflowStepRunner interface {
@@ -41,8 +29,6 @@ type engine struct {
 	botRegistry            bot.Registry
 	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
-
-	client MatrixClient
 }
 
 type RunParams struct {
