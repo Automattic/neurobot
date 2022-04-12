@@ -10,7 +10,6 @@ import (
 )
 
 type Engine interface {
-	StartUp()
 	Run(wf.Workflow, map[string]string) error
 }
 
@@ -19,8 +18,6 @@ type WorkflowStepRunner interface {
 }
 
 type engine struct {
-	workflows map[uint64]*wf.Workflow
-
 	botRegistry            bot.Registry
 	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
@@ -65,24 +62,6 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 	return nil
 }
 
-func (e *engine) StartUp() {
-	logger := log.Log
-	logger.Info("Starting up engine")
-
-	workflows, err := e.workflowRepository.FindActive()
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to load workflows from database")
-	}
-	for _, w := range workflows {
-		// copy over the value in a separate variable because we need to store a pointer
-		// w gets assigned a different value with every iteration, which modifies all values if address of w is taken directly
-		instance := w
-		e.workflows[w.ID] = &instance
-	}
-
-	logger.Info("Finished starting up engine.")
-}
-
 func NewEngine(p RunParams) *engine {
 	e := engine{}
 
@@ -90,9 +69,6 @@ func NewEngine(p RunParams) *engine {
 	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
 	e.workflowStepRepository = p.WorkflowStepRepository
-
-	// initialize maps
-	e.workflows = make(map[uint64]*wf.Workflow)
 
 	return &e
 }

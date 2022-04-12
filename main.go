@@ -112,7 +112,6 @@ func main() {
 	}
 
 	e := engine.NewEngine(p)
-	e.StartUp()
 
 	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
 	if err := app.Run(); err != nil {
