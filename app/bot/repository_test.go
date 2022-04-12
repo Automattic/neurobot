@@ -1,12 +1,13 @@
 package bot
 
 import (
-	"github.com/upper/db/v4"
 	model "neurobot/model/bot"
 	"neurobot/resources/tests/database"
 	"neurobot/resources/tests/fixtures"
 	"reflect"
 	"testing"
+
+	"github.com/upper/db/v4"
 )
 
 func TestInsert(t *testing.T) {
@@ -18,7 +19,6 @@ func TestInsert(t *testing.T) {
 			Password:    "password-12345",
 			Description: "foo",
 			Active:      true,
-			Primary:     false,
 		}
 
 		if err := repository.Save(&bot); err != nil {
@@ -47,7 +47,6 @@ func TestUpdate(t *testing.T) {
 		bot.Password = "updated password"
 		bot.Description = "updated description"
 		bot.Active = false
-		bot.Primary = false
 
 		if err := repository.Save(&bot); err != nil {
 			t.Errorf("failed to update bot: %s", err)
