@@ -32,7 +32,7 @@ func NewRepository(session db.Session) model.Repository {
 
 // FindActive returns all active workflow steps from the database
 func (repository *repository) FindActive() (steps []model.WorkflowStep, err error) {
-	result := repository.collection.Find(db.Cond{"active": 1})
+	result := repository.collection.Find(db.Cond{"active": 1}).OrderBy("sort_order")
 	err = result.All(&steps)
 	if err != nil {
 		return
@@ -135,7 +135,7 @@ func (repository *repository) saveMeta(step *model.WorkflowStep) (err error) {
 }
 
 func (repository *repository) FindByWorkflowID(ID uint64) (steps []model.WorkflowStep, err error) {
-	res := repository.collection.Find(db.Cond{"workflow_id": ID})
+	res := repository.collection.Find(db.Cond{"workflow_id": ID}).OrderBy("sort_order")
 	err = res.All(&steps)
 	if err != nil {
 		return
