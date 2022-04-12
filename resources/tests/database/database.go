@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"neurobot/infrastructure/database"
 	"path"
@@ -54,7 +53,7 @@ func MakeTestDatabaseSession() db.Session {
 	currentDirectoryPath := path.Dir(currentFilePath)
 
 	settings := sqlite.ConnectionURL{
-		Database: fmt.Sprintf("%s/tests.db", currentDirectoryPath),
+		Database: path.Join(currentDirectoryPath, "tests.db"),
 	}
 
 	session, err := sqlite.Open(settings)
