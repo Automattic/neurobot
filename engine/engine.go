@@ -2,7 +2,7 @@ package engine
 
 import (
 	"fmt"
-	b "neurobot/app/bot"
+	"neurobot/app/bot"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
 
@@ -38,7 +38,7 @@ type engine struct {
 	db        db.Session
 	workflows map[uint64]*wf.Workflow
 
-	botRegistry            b.Registry
+	botRegistry            bot.Registry
 	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
 
@@ -48,7 +48,7 @@ type engine struct {
 type RunParams struct {
 	Debug bool
 
-	BotRegistry            b.Registry
+	BotRegistry            bot.Registry
 	WorkflowRepository     wf.Repository
 	WorkflowStepRepository wfs.Repository
 }
