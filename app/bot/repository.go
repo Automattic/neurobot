@@ -1,9 +1,9 @@
 package bot
 
 import (
-	"errors"
-	"github.com/upper/db/v4"
 	model "neurobot/model/bot"
+
+	"github.com/upper/db/v4"
 )
 
 type repository struct {
@@ -37,10 +37,6 @@ func (repository *repository) Save(bot *model.Bot) (err error) {
 }
 
 func (repository *repository) update(bot *model.Bot) (err error) {
-	if bot.Primary {
-		return errors.New("cannot make a bot the primary bot")
-	}
-
 	var existing model.Bot
 
 	result := repository.collection.Find(bot.ID)
