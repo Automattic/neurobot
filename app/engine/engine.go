@@ -44,7 +44,7 @@ func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
 	for _, step := range steps {
 		switch step.Variety {
 		case "postMatrixMessage":
-			runners = append(runners, NewPostMatrixMessageRunner(step.Meta, e.botRegistry))
+			runners = append(runners, s.NewPostMatrixMessageRunner(step.Meta, e.botRegistry))
 		case "stdOut":
 			runners = append(runners, s.NewStdOutRunner(step.Meta, e.botRegistry))
 		}
