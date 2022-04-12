@@ -7,8 +7,6 @@ import (
 	wfs "neurobot/model/workflowstep"
 
 	"github.com/apex/log"
-
-	"github.com/upper/db/v4"
 )
 
 type Engine interface {
@@ -23,7 +21,6 @@ type WorkflowStepRunner interface {
 type engine struct {
 	debug bool
 
-	db        db.Session
 	workflows map[uint64]*wf.Workflow
 
 	botRegistry            bot.Registry
