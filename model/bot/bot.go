@@ -7,5 +7,8 @@ type Bot struct {
 	Username    string `db:"username"`
 	Password    string `db:"password"`
 	Active      bool   `db:"active"`
-	Primary     bool
+}
+
+func (b Bot) IsPrimary() bool {
+	return b.ID == 1
 }

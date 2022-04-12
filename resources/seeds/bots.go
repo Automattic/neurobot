@@ -10,6 +10,7 @@ import (
 
 func Bots(repository bot.Repository) {
 	seeds := []bot.Bot{
+		makePrimaryBot("Primary bot"), // MUST be the first to be created so that ID = 1
 		makeBot("afkbot", "Used by afk_notifier and !afk"),
 	}
 
@@ -24,6 +25,25 @@ func Bots(repository bot.Repository) {
 		if err != nil {
 			log.Fatalf("Failed to seed bots: %s", err)
 		}
+	}
+}
+
+func makePrimaryBot(description string) bot.Bot {
+	username, exists := os.LookupEnv("MATRIX_USERNAME")
+	if !exists || username == "" {
+		log.Fatalf("environment variable MATRIX_USERNAME not set")
+	}
+
+	password, exists := os.LookupEnv("MATRIX_PASSWORD")
+	if !exists || password == "" {
+		log.Fatalf("environment variable MATRIX_PASSWORD not set")
+	}
+
+	return bot.Bot{
+		Description: description,
+		Username:    username,
+		Password:    password,
+		Active:      true,
 	}
 }
 

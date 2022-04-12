@@ -124,15 +124,6 @@ func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry
 		return
 	}
 
-	bots = append(bots, b.Bot{
-		ID:          0,
-		Description: "Primary bot",
-		Username:    os.Getenv("MATRIX_USERNAME"),
-		Password:    os.Getenv("MATRIX_PASSWORD"),
-		Active:      true,
-		Primary:     true,
-	})
-
 	registry = botApp.NewRegistry(homeserverURL)
 
 	for _, bot := range bots {
