@@ -107,24 +107,20 @@ func main() {
 	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
 	p := engine.RunParams{
+		Debug: debug,
+
 		BotRepository:          botRepository,
 		BotRegistry:            botRegistry,
 		WorkflowRepository:     workflowRepository,
 		WorkflowStepRepository: workflowStepsRepository,
-
-		Debug:            debug,
-		MatrixServerName: serverName,
-		MatrixServerURL:  serverURL,
-		MatrixUsername:   username,
-		MatrixPassword:   password,
 	}
 
 	e := engine.NewEngine(p)
 
-	mc, err := mautrix.NewClient(p.MatrixServerURL, "", "")
+	mc, err := mautrix.NewClient(serverURL, "", "")
 	if err != nil {
 		logger.WithError(err).WithFields(log.Fields{
-			"URL": p.MatrixServerURL,
+			"URL": serverURL,
 		}).Fatal("Failed to connect to matrix server")
 	}
 	e.StartUp(mc, mc.Syncer.(*mautrix.DefaultSyncer))

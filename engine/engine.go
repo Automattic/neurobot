@@ -36,11 +36,6 @@ type WorkflowStepRunner interface {
 type engine struct {
 	debug bool
 
-	matrixServerName string
-	matrixServerURL  string
-	matrixusername   string
-	matrixpassword   string
-
 	db            db.Session
 	botRepository bot.Repository
 	botRegistry   b.Registry
@@ -55,16 +50,12 @@ type engine struct {
 }
 
 type RunParams struct {
+	Debug bool
+
 	BotRepository          bot.Repository
 	BotRegistry            b.Registry
 	WorkflowRepository     wf.Repository
 	WorkflowStepRepository wfs.Repository
-
-	Debug            bool
-	MatrixServerName string // domain in use, part of identity
-	MatrixServerURL  string // actual URL to connect to, for a particular server
-	MatrixUsername   string
-	MatrixPassword   string
 }
 
 func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
@@ -132,10 +123,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.matrixServerName = p.MatrixServerName
-	e.matrixServerURL = p.MatrixServerURL
-	e.matrixusername = p.MatrixUsername
-	e.matrixpassword = p.MatrixPassword
 	e.botRepository = p.BotRepository
 	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
