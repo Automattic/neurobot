@@ -90,17 +90,6 @@ func (e *engine) StartUp() {
 	logger := log.Log
 	logger.Info("Starting up engine")
 
-	// Load registered workflows from the database and initialize the right triggers for them
-	logger.Info("Loading data")
-	e.loadData()
-
-	logger.Info("Finished starting up engine.")
-}
-
-func (e *engine) loadData() {
-	logger := log.Log
-
-	// load workflows
 	workflows, err := e.workflowRepository.FindActive()
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to load workflows from database")
@@ -111,6 +100,8 @@ func (e *engine) loadData() {
 		instance := w
 		e.workflows[w.ID] = &instance
 	}
+
+	logger.Info("Finished starting up engine.")
 }
 
 func NewEngine(p RunParams) *engine {
