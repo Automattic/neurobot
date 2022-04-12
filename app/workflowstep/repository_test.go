@@ -35,6 +35,55 @@ func TestFindActive(t *testing.T) {
 	})
 }
 
+func TestFindActiveSortOrder(t *testing.T) {
+	database.Test(func(session db.Session) {
+		steps := fixtures.WorkflowSteps(session)
+		repository := NewRepository(session)
+
+		// Test for sort_order now
+		expected := []model.WorkflowStep{
+			steps["PostMessage3"],
+			steps["PostMessage1"],
+		}
+
+		// Setup needed db state
+		// enable PostMessage3 step
+		step, err := repository.FindByID(3)
+		if err != nil {
+			t.Errorf("error setting up state for sort_order test: %s", err)
+		}
+		step.Active = true
+		if err := repository.Save(&step); err != nil {
+			t.Errorf("error setting up state for sort_order test: %s", err)
+		}
+		expected[0] = step
+
+		// change PostMessage1 sort order
+		step, err = repository.FindByID(1)
+		if err != nil {
+			t.Errorf("error setting up state for sort_order test: %s", err)
+		}
+		step.SortOrder = 2
+		if err := repository.Save(&step); err != nil {
+			t.Errorf("error setting up state for sort_order test: %s", err)
+		}
+		expected[1] = step
+
+		got, err := repository.FindActive()
+		if err != nil {
+			t.Errorf("failed to get active workflow steps: %s", err)
+		}
+
+		if len(got) != 2 {
+			t.Errorf("expected 2 workflow steps, got %d", len(got))
+		}
+
+		if !reflect.DeepEqual(got, expected) {
+			t.Errorf("unexpected result active workflows (sort order)\n%+v\n%+v", got, expected)
+		}
+	})
+}
+
 func TestFindByID(t *testing.T) {
 	database.Test(func(session db.Session) {
 		steps := fixtures.WorkflowSteps(session)
