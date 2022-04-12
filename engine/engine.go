@@ -19,8 +19,6 @@ type WorkflowStepRunner interface {
 }
 
 type engine struct {
-	debug bool
-
 	workflows map[uint64]*wf.Workflow
 
 	botRegistry            bot.Registry
@@ -29,8 +27,6 @@ type engine struct {
 }
 
 type RunParams struct {
-	Debug bool
-
 	BotRegistry            bot.Registry
 	WorkflowRepository     wf.Repository
 	WorkflowStepRepository wfs.Repository
@@ -91,7 +87,6 @@ func NewEngine(p RunParams) *engine {
 	e := engine{}
 
 	// setting run parameters
-	e.debug = p.Debug
 	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
 	e.workflowStepRepository = p.WorkflowStepRepository

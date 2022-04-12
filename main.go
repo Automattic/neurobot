@@ -106,8 +106,6 @@ func main() {
 	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
 	p := engine.RunParams{
-		Debug: debug,
-
 		BotRegistry:            botRegistry,
 		WorkflowRepository:     workflowRepository,
 		WorkflowStepRepository: workflowStepsRepository,
