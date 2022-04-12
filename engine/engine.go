@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	b "neurobot/app/bot"
-	"neurobot/model/bot"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
 
@@ -36,14 +35,12 @@ type WorkflowStepRunner interface {
 type engine struct {
 	debug bool
 
-	db            db.Session
-	botRepository bot.Repository
-	botRegistry   b.Registry
+	db        db.Session
+	workflows map[uint64]*wf.Workflow
 
+	botRegistry            b.Registry
 	workflowRepository     wf.Repository
 	workflowStepRepository wfs.Repository
-
-	workflows map[uint64]*wf.Workflow
 
 	client MatrixClient
 }
@@ -51,7 +48,6 @@ type engine struct {
 type RunParams struct {
 	Debug bool
 
-	BotRepository          bot.Repository
 	BotRegistry            b.Registry
 	WorkflowRepository     wf.Repository
 	WorkflowStepRepository wfs.Repository
@@ -122,7 +118,6 @@ func NewEngine(p RunParams) *engine {
 
 	// setting run parameters
 	e.debug = p.Debug
-	e.botRepository = p.BotRepository
 	e.botRegistry = p.BotRegistry
 	e.workflowRepository = p.WorkflowRepository
 	e.workflowStepRepository = p.WorkflowStepRepository
