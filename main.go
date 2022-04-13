@@ -38,8 +38,6 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
-
 	logger.WithField("path", *envFile).Info("Loaded environment variables from .env")
 	logger.Infof("Enabling debug? %t", config.Debug)
 	logger.Infof("Using database file: %s", config.DatabasePath)
@@ -64,10 +62,10 @@ func main() {
 	seeds.Bots(botRepository)
 
 	// import TOML
-	err = toml.Import(workflowsDefTOMLFile, workflowRepository, workflowStepsRepository)
+	err = toml.Import(config.WorkflowsTOMLPath, workflowRepository, workflowStepsRepository)
 	if err != nil {
 		logger.WithError(err).WithFields(log.Fields{
-			"path": workflowsDefTOMLFile,
+			"path": config.WorkflowsTOMLPath,
 		}).Fatal("Failed to import TOML workflows")
 	}
 

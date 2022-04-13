@@ -14,6 +14,7 @@ type config struct {
 	HomeserverName     string
 	PrimaryBotUsername string
 	PrimaryBotPassword string
+	WorkflowsTOMLPath  string
 }
 
 func New(envPath string) (*config, error) {
@@ -29,6 +30,7 @@ func New(envPath string) (*config, error) {
 		HomeserverName:     os.Getenv("MATRIX_SERVER_NAME"),
 		PrimaryBotUsername: os.Getenv("MATRIX_USERNAME"),
 		PrimaryBotPassword: os.Getenv("MATRIX_PASSWORD"),
+		WorkflowsTOMLPath:  os.Getenv("WORKFLOWS_DEF_TOML_FILE"),
 	}
 
 	if err := config.validate(); err != nil {
@@ -53,6 +55,10 @@ func (c config) validate() error {
 
 	if c.PrimaryBotPassword == "" {
 		return errors.New("MATRIX_PASSWORD environment variable must be set and not empty")
+	}
+
+	if c.WorkflowsTOMLPath == "" {
+		return errors.New("WORKFLOWS_DEF_TOML_FILE environment variable must be set and not empty")
 	}
 
 	return nil
