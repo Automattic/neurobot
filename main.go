@@ -29,17 +29,8 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	databaseSession, err := database.MakeDatabaseSession(config.DatabasePath)
-	if err != nil {
-		logger.WithError(err).WithFields(log.Fields{
-			"path": config.DatabasePath,
-		}).Fatal("Failed to connect to database")
-	}
+	databaseSession := database.MakeDatabaseSession(config.DatabasePath)
 	defer databaseSession.Close()
-	err = database.Migrate(databaseSession)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to migrate database")
-	}
 
 	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
@@ -49,7 +40,7 @@ func main() {
 	seeds.Bots(botRepository, config)
 
 	// import TOML
-	err = toml.Import(config.WorkflowsTOMLPath, workflowRepository, workflowStepsRepository)
+	err := toml.Import(config.WorkflowsTOMLPath, workflowRepository, workflowStepsRepository)
 	if err != nil {
 		logger.WithError(err).WithFields(log.Fields{
 			"path": config.WorkflowsTOMLPath,
