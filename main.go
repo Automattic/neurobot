@@ -14,8 +14,6 @@ import (
 	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
 	"neurobot/resources/seeds"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/apex/log"
@@ -74,12 +72,7 @@ func main() {
 		logger.WithError(err).Fatal("Failed to make bot registry")
 	}
 
-	// set default port for running webhook listener server
-	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
-	if err != nil {
-		webhookListenerPort = 8080
-	}
-	webhookListenerServer := http.NewServer(webhookListenerPort)
+	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
 	// resolve .well-known to find our server URL to connect
 	start := time.Now()
@@ -97,7 +90,7 @@ func main() {
 	}
 
 	logger.WithFields(log.Fields{
-		"port": webhookListenerPort,
+		"port": config.WebhookListenerPort,
 	}).Infof("Starting webhook listener")
 	webhookListenerServer.Run() // blocking
 }

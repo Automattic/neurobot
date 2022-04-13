@@ -9,12 +9,13 @@ import (
 )
 
 type config struct {
-	Debug              bool
-	DatabasePath       string
-	HomeserverName     string
-	PrimaryBotUsername string
-	PrimaryBotPassword string
-	WorkflowsTOMLPath  string
+	Debug               bool
+	WebhookListenerPort int
+	DatabasePath        string
+	HomeserverName      string
+	PrimaryBotUsername  string
+	PrimaryBotPassword  string
+	WorkflowsTOMLPath   string
 }
 
 func New(envPath string) (*config, error) {
@@ -24,13 +25,19 @@ func New(envPath string) (*config, error) {
 
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 
+	webhookListenerPort, err := strconv.Atoi(os.Getenv("WEBHOOK_LISTENER_PORT"))
+	if err != nil {
+		webhookListenerPort = 8080
+	}
+
 	config := &config{
-		Debug:              debug,
-		DatabasePath:       os.Getenv("DB_FILE"),
-		HomeserverName:     os.Getenv("MATRIX_SERVER_NAME"),
-		PrimaryBotUsername: os.Getenv("MATRIX_USERNAME"),
-		PrimaryBotPassword: os.Getenv("MATRIX_PASSWORD"),
-		WorkflowsTOMLPath:  os.Getenv("WORKFLOWS_DEF_TOML_FILE"),
+		Debug:               debug,
+		WebhookListenerPort: webhookListenerPort,
+		DatabasePath:        os.Getenv("DB_FILE"),
+		HomeserverName:      os.Getenv("MATRIX_SERVER_NAME"),
+		PrimaryBotUsername:  os.Getenv("MATRIX_USERNAME"),
+		PrimaryBotPassword:  os.Getenv("MATRIX_PASSWORD"),
+		WorkflowsTOMLPath:   os.Getenv("WORKFLOWS_DEF_TOML_FILE"),
 	}
 
 	if err := config.validate(); err != nil {
