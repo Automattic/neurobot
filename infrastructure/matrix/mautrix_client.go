@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maunium.net/go/mautrix"
-	mautrixEvent "maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/format"
-	mautrixId "maunium.net/go/mautrix/id"
 	"net/http"
 	"net/url"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
 	"strings"
 	"time"
+
+	"maunium.net/go/mautrix"
+	mautrixEvent "maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/format"
+	mautrixId "maunium.net/go/mautrix/id"
 )
 
 type mautrixClient interface {
@@ -37,9 +38,11 @@ type client struct {
 	listenersEnabled bool
 }
 
-func DiscoverServerURL(serverName string) (serverURL string) {
+func DiscoverServerURL(serverName string) (homeserverURL *url.URL, err error) {
 	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
 	// Both wellKnown and err can be nil for hosts that have https but are not a matrix server.
+
+	var serverURL string
 
 	if err != nil {
 		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
@@ -55,16 +58,22 @@ func DiscoverServerURL(serverName string) (serverURL string) {
 		}
 	}
 
-	return serverURL
+	homeserverURL, err = url.Parse(serverURL)
+	if err != nil {
+		return
+	}
+
+	if homeserverURL.Scheme == "" {
+		homeserverURL.Scheme = "https"
+	}
+
+	return
 }
 
 func NewMautrixClient(serverName string, enableListeners bool) (*client, error) {
-	homeserverURL, err := url.Parse(DiscoverServerURL(serverName))
+	homeserverURL, err := DiscoverServerURL(serverName)
 	if err != nil {
 		return nil, err
-	}
-	if homeserverURL.Scheme == "" {
-		homeserverURL.Scheme = "https"
 	}
 
 	var syncer *mautrix.DefaultSyncer
