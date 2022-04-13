@@ -47,11 +47,7 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry, err := makeBotRegistry(config.HomeserverName, botRepository)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to make bot registry")
-	}
-
+	botRegistry := makeBotRegistry(config.HomeserverName, botRepository)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
 	e := engine.NewEngine(botRegistry, workflowStepsRepository)
@@ -67,15 +63,15 @@ func main() {
 	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(homeserverName string, botRepository b.Repository) (registry botApp.Registry, err error) {
+func makeBotRegistry(homeserverName string, botRepository b.Repository) (registry botApp.Registry) {
 	homeserverURL, err := matrix.DiscoverServerURL(homeserverName)
 	if err != nil {
-		return nil, err
+		log.WithError(err).Fatal("Failed to discover homeserver URL")
 	}
 
 	bots, err := botRepository.FindActive()
 	if err != nil {
-		return
+		log.WithError(err).Fatal("Failed to find active bots")
 	}
 
 	registry = botApp.NewRegistry(homeserverURL.String())
@@ -84,12 +80,16 @@ func makeBotRegistry(homeserverName string, botRepository b.Repository) (registr
 		var client matrix.Client
 		client, err = matrix.NewMautrixClient(homeserverURL, true)
 		if err != nil {
-			return
+			log.WithError(err).WithFields(log.Fields{
+				"username": bot.Username,
+			}).Fatal("Failed to login as bot")
 		}
 
 		err = registry.Append(bot, client)
 		if err != nil {
-			return
+			log.WithError(err).WithFields(log.Fields{
+				"username": bot.Username,
+			}).Fatal("Failed add bot to registry")
 		}
 	}
 
