@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apex/log"
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
@@ -38,23 +39,23 @@ type client struct {
 	listenersEnabled bool
 }
 
-func DiscoverServerURL(serverName string) (homeserverURL *url.URL, err error) {
-	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
-	// Both wellKnown and err can be nil for hosts that have https but are not a matrix server.
-
+func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error) {
 	var serverURL string
+	start := time.Now()
+	wellKnown, err := mautrix.DiscoverClientAPI(homeserverName)
+	// Both wellKnown and err can be nil for hosts that have https but are not a matrix server.
 
 	if err != nil {
 		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
-			serverURL = "http://" + serverName
+			serverURL = "http://" + homeserverName
 		} else {
-			serverURL = "https://" + serverName
+			serverURL = "https://" + homeserverName
 		}
 	} else {
 		if wellKnown != nil {
 			serverURL = wellKnown.Homeserver.BaseURL
 		} else {
-			serverURL = "https://" + serverName
+			serverURL = "https://" + homeserverName
 		}
 	}
 
@@ -66,6 +67,11 @@ func DiscoverServerURL(serverName string) (homeserverURL *url.URL, err error) {
 	if homeserverURL.Scheme == "" {
 		homeserverURL.Scheme = "https"
 	}
+
+	log.WithDuration(time.Since(start)).WithFields(log.Fields{
+		"homeserverName": homeserverName,
+		"homeserverURL":  homeserverURL.String(),
+	}).Info("Discovered homeserver URL")
 
 	return
 }
