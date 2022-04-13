@@ -42,6 +42,7 @@ type client struct {
 func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error) {
 	var serverURL string
 	start := time.Now()
+
 	wellKnown, err := mautrix.DiscoverClientAPI(homeserverName)
 	// Both wellKnown and err can be nil for hosts that have https but are not a matrix server.
 
@@ -66,6 +67,10 @@ func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error
 
 	if homeserverURL.Scheme == "" {
 		homeserverURL.Scheme = "https"
+	}
+
+	if strings.Contains(homeserverURL.Host, "localhost") {
+		homeserverURL.Scheme = "http"
 	}
 
 	log.WithDuration(time.Since(start)).WithFields(log.Fields{
