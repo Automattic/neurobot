@@ -76,13 +76,18 @@ func main() {
 	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry botApp.Registry, err error) {
+func makeBotRegistry(homeserverName string, botRepository b.Repository) (registry botApp.Registry, err error) {
+	homeserverURL, err := matrix.DiscoverServerURL(homeserverName)
+	if err != nil {
+		return nil, err
+	}
+
 	bots, err := botRepository.FindActive()
 	if err != nil {
 		return
 	}
 
-	registry = botApp.NewRegistry(homeserverURL)
+	registry = botApp.NewRegistry(homeserverURL.String())
 
 	for _, bot := range bots {
 		var client matrix.Client

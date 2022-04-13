@@ -70,12 +70,7 @@ func DiscoverServerURL(serverName string) (homeserverURL *url.URL, err error) {
 	return
 }
 
-func NewMautrixClient(serverName string, enableListeners bool) (*client, error) {
-	homeserverURL, err := DiscoverServerURL(serverName)
-	if err != nil {
-		return nil, err
-	}
-
+func NewMautrixClient(homeserverURL *url.URL, enableListeners bool) (*client, error) {
 	var syncer *mautrix.DefaultSyncer
 	if enableListeners {
 		syncer = mautrix.NewDefaultSyncer()
