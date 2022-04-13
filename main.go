@@ -38,9 +38,6 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	serverName := os.Getenv("MATRIX_SERVER_NAME")
-	username := os.Getenv("MATRIX_USERNAME")
-	password := os.Getenv("MATRIX_PASSWORD")
 	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
 
 	logger.WithField("path", *envFile).Info("Loaded environment variables from .env")
@@ -74,7 +71,7 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry, err := makeBotRegistry(serverName, botRepository)
+	botRegistry, err := makeBotRegistry(config.HomeserverName, botRepository)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to make bot registry")
 	}
@@ -86,18 +83,11 @@ func main() {
 	}
 	webhookListenerServer := http.NewServer(webhookListenerPort)
 
-	// if either one matrix related env var is specified, make sure all of them are specified
-	if serverName != "" || username != "" || password != "" {
-		if serverName == "" || username == "" || password == "" {
-			logger.Fatalf("All matrix related variables need to be supplied if even one of them is supplied")
-		}
-	}
-
 	// resolve .well-known to find our server URL to connect
 	start := time.Now()
-	serverURL := matrix.DiscoverServerURL(serverName)
+	serverURL := matrix.DiscoverServerURL(config.HomeserverName)
 	logger.WithFields(log.Fields{
-		"serverName": serverName,
+		"serverName": config.HomeserverName,
 		"serverURL":  serverURL,
 	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
