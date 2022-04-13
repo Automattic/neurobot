@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/apex/log"
 	"github.com/joho/godotenv"
 )
 
@@ -19,7 +20,25 @@ type config struct {
 	WorkflowsTOMLPath   string
 }
 
-func New(envPath string) (*config, error) {
+func LoadFromEnvFile(envPath string) *config {
+	logger := log.WithFields(log.Fields{
+		"envPath": envPath,
+	})
+
+	config, err := newConfig(envPath)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to load .env file")
+	}
+
+	configAsMap := config.Map()
+	configAsMap["EnvPath"] = envPath
+	configAsMap["PrimaryBotPassword"] = "******"
+	logger.WithFields(log.Fields(configAsMap)).Info("Configuration loaded")
+
+	return config
+}
+
+func newConfig(envPath string) (*config, error) {
 	if err := godotenv.Load(envPath); err != nil {
 		return nil, err
 	}

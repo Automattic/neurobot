@@ -24,18 +24,7 @@ var envFile = flag.String("env", "./.env", ".env file")
 func main() {
 	logger := log.Log
 	flag.Parse()
-
-	config, err := configuration.New(*envFile)
-	if err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"envPath": *envFile,
-		}).Fatal("Failed to load .env file")
-	}
-
-	configAsMap := config.Map()
-	configAsMap["EnvPath"] = *envFile
-	configAsMap["PrimaryBotPassword"] = "******"
-	logger.WithFields(log.Fields(configAsMap)).Info("Configuration loaded")
+	config := configuration.LoadFromEnvFile(*envFile)
 
 	if config.Debug {
 		log.SetLevel(log.DebugLevel)
