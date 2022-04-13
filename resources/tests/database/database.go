@@ -2,13 +2,14 @@ package database
 
 import (
 	"errors"
-	"github.com/upper/db/v4"
-	"github.com/upper/db/v4/adapter/sqlite"
 	"log"
 	"neurobot/infrastructure/database"
-)
+	"path"
+	"runtime"
 
-const testDatabasePath = "neurobot-test.db"
+	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/sqlite"
+)
 
 func init() {
 	// bump DB log level to fatal errors as triggering an error condition is part of the test
@@ -46,7 +47,14 @@ func Test(fn func(session db.Session)) {
 }
 
 func MakeTestDatabaseSession() db.Session {
-	settings := sqlite.ConnectionURL{Database: testDatabasePath}
+	// Discover the full path to the directory containing this file (database.go).
+	// We'll place the database file inside this same directory.
+	_, currentFilePath, _, _ := runtime.Caller(0)
+	currentDirectoryPath := path.Dir(currentFilePath)
+
+	settings := sqlite.ConnectionURL{
+		Database: path.Join(currentDirectoryPath, "tests.db"),
+	}
 
 	session, err := sqlite.Open(settings)
 	if err != nil {

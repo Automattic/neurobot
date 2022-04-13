@@ -1,4 +1,4 @@
 .env
 neurobot
 neurobot.db
-neurobot-test.db
+resources/tests/database/tests.db
