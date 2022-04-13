@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"strconv"
@@ -45,6 +46,13 @@ func New(envPath string) (*config, error) {
 	}
 
 	return config, nil
+}
+
+// Map returns the config as a map.
+func (c config) Map() (values map[string]interface{}) {
+	serialized, _ := json.Marshal(c)
+	_ = json.Unmarshal(serialized, &values)
+	return
 }
 
 func (c config) validate() error {

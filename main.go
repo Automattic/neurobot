@@ -32,13 +32,14 @@ func main() {
 		}).Fatal("Failed to load .env file")
 	}
 
+	configAsMap := config.Map()
+	configAsMap["EnvPath"] = *envFile
+	configAsMap["PrimaryBotPassword"] = "******"
+	logger.WithFields(log.Fields(configAsMap)).Info("Configuration loaded")
+
 	if config.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
-
-	logger.WithField("path", *envFile).Info("Loaded environment variables from .env")
-	logger.Infof("Enabling debug? %t", config.Debug)
-	logger.Infof("Using database file: %s", config.DatabasePath)
 
 	databaseSession, err := database.MakeDatabaseSession(config.DatabasePath)
 	if err != nil {
