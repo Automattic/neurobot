@@ -4,6 +4,7 @@ import (
 	"flag"
 	application "neurobot/app"
 	botApp "neurobot/app/bot"
+	configuration "neurobot/app/config"
 	"neurobot/app/engine"
 	"neurobot/app/workflow"
 	"neurobot/app/workflowstep"
@@ -18,7 +19,6 @@ import (
 	"time"
 
 	"github.com/apex/log"
-	"github.com/joho/godotenv"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
@@ -27,34 +27,30 @@ func main() {
 	logger := log.Log
 	flag.Parse()
 
-	err := godotenv.Load(*envFile)
+	config, err := configuration.New(*envFile)
 	if err != nil {
-		logger.WithError(err).Fatal("Error loading .env file")
+		log.WithError(err).WithFields(log.Fields{
+			"envPath": *envFile,
+		}).Fatal("Failed to load .env file")
 	}
 
-	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
-	if err != nil {
-		debug = false // default
-	}
-
-	if debug {
+	if config.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	dbFile := os.Getenv("DB_FILE")
 	serverName := os.Getenv("MATRIX_SERVER_NAME")
 	username := os.Getenv("MATRIX_USERNAME")
 	password := os.Getenv("MATRIX_PASSWORD")
 	workflowsDefTOMLFile := os.Getenv("WORKFLOWS_DEF_TOML_FILE")
 
 	logger.WithField("path", *envFile).Info("Loaded environment variables from .env")
-	logger.Infof("Enabling debug? %t", debug)
-	logger.Infof("Using database file: %s", dbFile)
+	logger.Infof("Enabling debug? %t", config.Debug)
+	logger.Infof("Using database file: %s", config.DatabasePath)
 
 	databaseSession, err := database.MakeDatabaseSession()
 	if err != nil {
 		logger.WithError(err).WithFields(log.Fields{
-			"path": dbFile,
+			"path": config.DatabasePath,
 		}).Fatal("Failed to connect to database")
 	}
 	defer databaseSession.Close()
