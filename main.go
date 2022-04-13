@@ -40,7 +40,7 @@ func main() {
 	logger.Infof("Enabling debug? %t", config.Debug)
 	logger.Infof("Using database file: %s", config.DatabasePath)
 
-	databaseSession, err := database.MakeDatabaseSession()
+	databaseSession, err := database.MakeDatabaseSession(config.DatabasePath)
 	if err != nil {
 		logger.WithError(err).WithFields(log.Fields{
 			"path": config.DatabasePath,
