@@ -14,7 +14,6 @@ import (
 	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
 	"neurobot/resources/seeds"
-	"time"
 
 	"github.com/apex/log"
 )
@@ -63,14 +62,6 @@ func main() {
 	}
 
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
-
-	// resolve .well-known to find our server URL to connect
-	start := time.Now()
-	serverURL := matrix.DiscoverServerURL(config.HomeserverName)
-	logger.WithFields(log.Fields{
-		"serverName": config.HomeserverName,
-		"serverURL":  serverURL,
-	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
 	e := engine.NewEngine(botRegistry, workflowStepsRepository)
 
