@@ -30,7 +30,7 @@ func LoadFromEnvFile(envPath string) *Config {
 		logger.WithError(err).Fatal("Failed to load .env file")
 	}
 
-	configAsMap := config.Map()
+	configAsMap := config.asMap()
 	configAsMap["EnvPath"] = envPath
 	configAsMap["PrimaryBotPassword"] = "******"
 	logger.WithFields(log.Fields(configAsMap)).Info("Configuration loaded")
@@ -67,8 +67,7 @@ func newConfig(envPath string) (*Config, error) {
 	return config, nil
 }
 
-// Map returns the Config as a map.
-func (c Config) Map() (values map[string]interface{}) {
+func (c Config) asMap() (values map[string]interface{}) {
 	serialized, _ := json.Marshal(c)
 	_ = json.Unmarshal(serialized, &values)
 	return
