@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type config struct {
+type Config struct {
 	Debug               bool
 	WebhookListenerPort int
 	DatabasePath        string
@@ -20,7 +20,7 @@ type config struct {
 	WorkflowsTOMLPath   string
 }
 
-func LoadFromEnvFile(envPath string) *config {
+func LoadFromEnvFile(envPath string) *Config {
 	logger := log.WithFields(log.Fields{
 		"envPath": envPath,
 	})
@@ -38,7 +38,7 @@ func LoadFromEnvFile(envPath string) *config {
 	return config
 }
 
-func newConfig(envPath string) (*config, error) {
+func newConfig(envPath string) (*Config, error) {
 	if err := godotenv.Load(envPath); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func newConfig(envPath string) (*config, error) {
 		webhookListenerPort = 8080
 	}
 
-	config := &config{
+	config := &Config{
 		Debug:               debug,
 		WebhookListenerPort: webhookListenerPort,
 		DatabasePath:        os.Getenv("DB_FILE"),
@@ -67,14 +67,14 @@ func newConfig(envPath string) (*config, error) {
 	return config, nil
 }
 
-// Map returns the config as a map.
-func (c config) Map() (values map[string]interface{}) {
+// Map returns the Config as a map.
+func (c Config) Map() (values map[string]interface{}) {
 	serialized, _ := json.Marshal(c)
 	_ = json.Unmarshal(serialized, &values)
 	return
 }
 
-func (c config) validate() error {
+func (c Config) validate() error {
 	if c.DatabasePath == "" {
 		return errors.New("DB_FILE environment variable must be set and not empty")
 	}
