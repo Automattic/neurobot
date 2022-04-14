@@ -48,7 +48,7 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry := makeBotRegistry(config.HomeserverName, botRepository)
+	botRegistry := makeBotRegistry(config.ServerName, botRepository)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
 	e := engine.NewEngine(botRegistry, workflowStepsRepository)
@@ -64,8 +64,8 @@ func main() {
 	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(homeserverName string, botRepository b.Repository) (registry botApp.Registry) {
-	homeserverURL, err := matrix.DiscoverServerURL(homeserverName)
+func makeBotRegistry(serverName string, botRepository b.Repository) (registry botApp.Registry) {
+	homeserverURL, err := matrix.DiscoverServerURL(serverName)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to discover homeserver URL")
 	}
@@ -75,8 +75,8 @@ func makeBotRegistry(homeserverName string, botRepository b.Repository) (registr
 		log.WithError(err).Fatal("Failed to find active bots")
 	}
 
-	homeserverDomain := strings.Split(homeserverURL.Host, ":")[0]
-	registry = botApp.NewRegistry(homeserverDomain)
+	serverName = strings.Split(homeserverURL.Host, ":")[0]
+	registry = botApp.NewRegistry(serverName)
 
 	for _, bot := range bots {
 		var client matrix.Client

@@ -13,9 +13,9 @@ import (
 type Config struct {
 	Debug               bool
 	WebhookListenerPort int
-	DatabasePath        string
-	HomeserverName      string
-	PrimaryBotUsername  string
+	DatabasePath       string
+	ServerName         string
+	PrimaryBotUsername string
 	PrimaryBotPassword  string
 	WorkflowsTOMLPath   string
 }
@@ -54,7 +54,7 @@ func newConfig(envPath string) (*Config, error) {
 		Debug:               debug,
 		WebhookListenerPort: webhookListenerPort,
 		DatabasePath:        os.Getenv("DB_FILE"),
-		HomeserverName:      os.Getenv("MATRIX_SERVER_NAME"),
+		ServerName:          os.Getenv("MATRIX_SERVER_NAME"),
 		PrimaryBotUsername:  os.Getenv("MATRIX_USERNAME"),
 		PrimaryBotPassword:  os.Getenv("MATRIX_PASSWORD"),
 		WorkflowsTOMLPath:   os.Getenv("WORKFLOWS_DEF_TOML_FILE"),
@@ -78,7 +78,7 @@ func (c Config) validate() error {
 		return errors.New("DB_FILE environment variable must be set and not empty")
 	}
 
-	if c.HomeserverName == "" {
+	if c.ServerName == "" {
 		return errors.New("MATRIX_SERVER_NAME environment variable must be set and not empty")
 	}
 

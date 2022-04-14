@@ -14,15 +14,15 @@ type Registry interface {
 }
 
 type registry struct {
-	homeserverDomain string
-	primaryUsername  string
-	clients          map[string]matrix.Client
+	serverName      string
+	primaryUsername string
+	clients         map[string]matrix.Client
 }
 
-func NewRegistry(homeserverDomain string) Registry {
+func NewRegistry(serverName string) Registry {
 	return &registry{
-		homeserverDomain: homeserverDomain,
-		clients:          make(map[string]matrix.Client),
+		serverName: serverName,
+		clients:    make(map[string]matrix.Client),
 	}
 }
 
@@ -41,7 +41,7 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 
 	err = client.OnRoomInvite(func(roomID room.ID) {
 		// Only accept invitations to rooms in our homeserver
-		if roomID.HomeserverDomain() != r.homeserverDomain {
+		if roomID.ServerName() != r.serverName {
 			fmt.Printf("Ignoring invitation to room in another homeserver: %s", roomID)
 			return
 		}
