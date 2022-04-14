@@ -3,14 +3,15 @@ package seeds
 import (
 	"fmt"
 	"log"
+	configuration "neurobot/app/config"
 	"neurobot/model/bot"
 	"os"
 	"strings"
 )
 
-func Bots(repository bot.Repository) {
+func Bots(repository bot.Repository, config *configuration.Config) {
 	seeds := []bot.Bot{
-		makePrimaryBot("Primary bot"), // MUST be the first to be created so that ID = 1
+		makePrimaryBot("Primary bot", config), // MUST be the first to be created so that ID = 1
 		makeBot("afkbot", "Used by afk_notifier and !afk"),
 	}
 
@@ -28,21 +29,11 @@ func Bots(repository bot.Repository) {
 	}
 }
 
-func makePrimaryBot(description string) bot.Bot {
-	username, exists := os.LookupEnv("MATRIX_USERNAME")
-	if !exists || username == "" {
-		log.Fatalf("environment variable MATRIX_USERNAME not set")
-	}
-
-	password, exists := os.LookupEnv("MATRIX_PASSWORD")
-	if !exists || password == "" {
-		log.Fatalf("environment variable MATRIX_PASSWORD not set")
-	}
-
+func makePrimaryBot(description string, config *configuration.Config) bot.Bot {
 	return bot.Bot{
 		Description: description,
-		Username:    username,
-		Password:    password,
+		Username:    config.PrimaryBotUsername,
+		Password:    config.PrimaryBotPassword,
 		Active:      true,
 	}
 }
