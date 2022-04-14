@@ -27,7 +27,7 @@ func TestStdoutWorkflowStep(t *testing.T) {
 
 	for _, table := range tables {
 		s := &stdoutWorkflowStepRunner{}
-		s.Run(map[string]string{"Message": table.input})
+		s.Run(map[string]string{"message": table.input})
 
 		got := out.(*bytes.Buffer).String()
 		if got != table.output+"\n" {

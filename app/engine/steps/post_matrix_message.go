@@ -30,12 +30,12 @@ func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.C
 }
 
 func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[string]string, error) {
-	msg := p["Message"]
+	msg := p["message"]
 
 	// Append message specified in definition of this step as a prefix to the payload
 	if runner.messagePrefix != "" {
-		if p["Message"] != "" {
-			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p["Message"])
+		if p["message"] != "" {
+			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p["message"])
 		} else {
 			msg = runner.messagePrefix
 		}
@@ -43,8 +43,8 @@ func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[
 
 	// Override room defined in meta, if provided in payload
 	room := runner.room
-	if p["Room"] != "" {
-		room = p["Room"]
+	if p["room"] != "" {
+		room = p["room"]
 	}
 
 	// ensure we have data to work with
