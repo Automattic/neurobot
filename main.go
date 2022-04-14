@@ -47,7 +47,7 @@ func main() {
 	workflowStepsRepository := workflowstep.NewRepository(databaseSession)
 
 	// Seed database.
-	seeds.Bots(botRepository)
+	seeds.Bots(botRepository, config)
 
 	// import TOML
 	err = toml.Import(config.WorkflowsTOMLPath, workflowRepository, workflowStepsRepository)
