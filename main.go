@@ -14,6 +14,7 @@ import (
 	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
 	"neurobot/resources/seeds"
+	"strings"
 
 	"github.com/apex/log"
 )
@@ -74,7 +75,8 @@ func makeBotRegistry(homeserverName string, botRepository b.Repository) (registr
 		log.WithError(err).Fatal("Failed to find active bots")
 	}
 
-	registry = botApp.NewRegistry(homeserverURL.String())
+	homeserverDomain := strings.Split(homeserverURL.Host, ":")[0]
+	registry = botApp.NewRegistry(homeserverDomain)
 
 	for _, bot := range bots {
 		var client matrix.Client

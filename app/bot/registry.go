@@ -5,7 +5,6 @@ import (
 	"neurobot/infrastructure/matrix"
 	model "neurobot/model/bot"
 	"neurobot/model/room"
-	"strings"
 )
 
 type Registry interface {
@@ -20,10 +19,9 @@ type registry struct {
 	clients          map[string]matrix.Client
 }
 
-func NewRegistry(homeserverURL string) Registry {
+func NewRegistry(homeserverDomain string) Registry {
 	return &registry{
-		// Remove port to get just the domain
-		homeserverDomain: strings.Split(homeserverURL, ":")[0],
+		homeserverDomain: homeserverDomain,
 		clients:          make(map[string]matrix.Client),
 	}
 }
