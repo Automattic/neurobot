@@ -75,8 +75,8 @@ func makeBotRegistry(serverName string, botRepository b.Repository) (registry bo
 		log.WithError(err).Fatal("Failed to find active bots")
 	}
 
-	serverName = strings.Split(homeserverURL.Host, ":")[0]
-	registry = botApp.NewRegistry(serverName)
+	serverNameWithoutPort := strings.Split(serverName, ":")[0]
+	registry = botApp.NewRegistry(serverNameWithoutPort)
 
 	for _, bot := range bots {
 		var client matrix.Client
