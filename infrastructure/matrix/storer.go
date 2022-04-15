@@ -28,10 +28,10 @@ type storer struct {
 }
 
 type row struct {
-	botID uint64 `db:"bot_id"`
-	what  string `db:"what"` // possible values are "filter", "batch", "room"
-	id    string `db:"id"`   // would be values for userID or roomID
-	value string `db:"value"`
+	BotID uint64 `db:"bot_id"`
+	What  string `db:"what"` // possible values are "filter", "batch", "room"
+	ID    string `db:"id"`   // would be values for userID or roomID
+	Value string `db:"value"`
 }
 
 func (s *storer) SaveFilterID(userID id.UserID, filterID string) {
@@ -100,10 +100,11 @@ func (s *storer) save(what string, id string, value string) error {
 		exists = true
 	}
 
-	r.value = value
-	r.botID = s.botID
-	r.id = id
-	r.what = what
+	// overwrite values
+	r.Value = value
+	r.BotID = s.botID
+	r.ID = id
+	r.What = what
 
 	if !exists {
 		_, err := s.db.Collection(table).Insert(r)
@@ -120,5 +121,5 @@ func (s *storer) get(what string, id string) (string, error) {
 		return "", err
 	}
 
-	return r.value, nil
+	return r.Value, nil
 }
