@@ -4,25 +4,10 @@ import (
 	"errors"
 	"log"
 	"neurobot/infrastructure/database"
-	"path"
-	"runtime"
 
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
-
-func init() {
-	// bump DB log level to fatal errors as triggering an error condition is part of the test
-	db.LC().SetLevel(db.LogLevelFatal)
-
-	session := MakeTestDatabaseSession()
-	defer session.Close()
-
-	err := database.Migrate(session)
-	if err != nil {
-		log.Fatalf("Failed to migrate database: %s", err)
-	}
-}
 
 // Test is a "wrapper" for tests that interact with the Database.
 // It wraps the test in a transaction, and rolls it back automatically,
@@ -47,19 +32,22 @@ func Test(fn func(session db.Session)) {
 }
 
 func MakeTestDatabaseSession() db.Session {
-	// Discover the full path to the directory containing this file (database.go).
-	// We'll place the database file inside this same directory.
-	_, currentFilePath, _, _ := runtime.Caller(0)
-	currentDirectoryPath := path.Dir(currentFilePath)
-
 	settings := sqlite.ConnectionURL{
-		Database: path.Join(currentDirectoryPath, "tests.db"),
+		Database: ":memory:",
+		Options: map[string]string{
+			"mode":  "memory",
+			"cache": "shared",
+		},
 	}
 
 	session, err := sqlite.Open(settings)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %s", err)
+		log.Fatalf("Failed to connect to test database: %s", err)
 	}
 
+	err = database.Migrate(session)
+	if err != nil {
+		log.Fatalf("Failed to run upgrade/migration scripts on test database: %s", err)
+	}
 	return session
 }
