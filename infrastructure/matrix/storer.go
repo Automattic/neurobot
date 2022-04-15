@@ -91,7 +91,7 @@ func (s *storer) LoadRoom(roomID id.RoomID) *mautrix.Room {
 func (s *storer) save(what string, id string, value string) error {
 	var exists bool
 	var r row
-	result := s.db.Collection(table).Find(db.Cond{"bot_id": s.botID, "id": id, "type": what})
+	result := s.db.Collection(table).Find(db.Cond{"bot_id": s.botID, "id": id, "what": what})
 	if err := result.One(&r); err != nil {
 		if !errors.Is(err, db.ErrNoMoreRows) {
 			return err
@@ -116,7 +116,7 @@ func (s *storer) save(what string, id string, value string) error {
 
 func (s *storer) get(what string, id string) (string, error) {
 	var r row
-	result := s.db.Collection(table).Find(db.Cond{"bot_id": s.botID, "id": id, "type": what})
+	result := s.db.Collection(table).Find(db.Cond{"bot_id": s.botID, "id": id, "what": what})
 	if err := result.One(&r); err != nil {
 		return "", err
 	}
