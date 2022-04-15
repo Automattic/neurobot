@@ -44,7 +44,7 @@ func TestSaveFilterID(t *testing.T) {
 			}
 
 			if scenario.val != got.Value {
-				t.Errorf("did not return expected value, got: %+v expected: %+v", got, scenario.val)
+				t.Errorf("did not return expected value, got: %s expected: %s", got.Value, scenario.val)
 			}
 		}
 	})
@@ -120,7 +120,7 @@ func TestSaveNextBatch(t *testing.T) {
 			}
 
 			if scenario.val != got.Value {
-				t.Errorf("did not return expected value, got: %+v expected: %+v", got, scenario.val)
+				t.Errorf("did not return expected value, got: %s expected: %s", got.Value, scenario.val)
 			}
 		}
 	})
