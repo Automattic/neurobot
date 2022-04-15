@@ -27,10 +27,10 @@ type storer struct {
 }
 
 type row struct {
-	botID uint64 `db:"bot_id,omitempty"`
-	id    string // could be userID or roomID
-	what  string // could be "filter", "batch", "room"
-	value string
+	botID uint64 `db:"bot_id"`
+	what  string `db:"what"` // possible values are "filter", "batch", "room"
+	id    string `db:"id"`   // would be values for userID or roomID
+	value string `db:"value"`
 }
 
 func (s *storer) SaveFilterID(userID id.UserID, filterID string) {
