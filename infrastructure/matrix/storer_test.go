@@ -216,3 +216,47 @@ func TestSaveAndLoadRoom(t *testing.T) {
 		}
 	})
 }
+
+func TestSave(t *testing.T) {
+	database.Test(func(session db.Session) {
+		botID := uint64(1)
+		s := NewStorer(session, botID)
+
+		what := "whatever"
+		userID := "someid"
+		var got row
+
+		// testing save when values once they are inserted, and once they are updated (overwritten)
+		// insert
+		s.(*storer).save(what, userID, "value1")
+
+		result := session.Collection(table).Find(db.Cond{
+			"bot_id": botID,
+			"what":   what,
+			"id":     userID,
+		})
+		if err := result.One(&got); err != nil {
+			t.Errorf("failed to read from database: %s", err)
+		}
+
+		if "value1" != got.Value {
+			t.Errorf("did not return expected value 'value1', got: %s", got.Value)
+		}
+
+		// update
+		s.(*storer).save(what, userID, "value2")
+
+		result = session.Collection(table).Find(db.Cond{
+			"bot_id": botID,
+			"what":   what,
+			"id":     userID,
+		})
+		if err := result.One(&got); err != nil {
+			t.Errorf("failed to read from database: %s", err)
+		}
+
+		if "value2" != got.Value {
+			t.Errorf("did not return expected value 'value2', got: %s", got.Value)
+		}
+	})
+}
