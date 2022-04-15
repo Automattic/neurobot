@@ -3,6 +3,7 @@ package matrix
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 
 	"github.com/apex/log"
 	"github.com/upper/db/v4"
@@ -88,19 +89,21 @@ func (s *storer) LoadRoom(roomID id.RoomID) *mautrix.Room {
 }
 
 func (s *storer) save(what string, id string, value string) error {
+	var exists bool
 	var r row
 	result := s.db.Collection(table).Find(db.Cond{"bot_id": s.botID, "id": id, "type": what})
 	if err := result.One(&r); err != nil {
-		return err
-	}
-
-	exists, err := result.Exists()
-	if err != nil {
-		return err
+		if !errors.Is(err, db.ErrNoMoreRows) {
+			return err
+		}
+	} else {
+		exists = true
 	}
 
 	r.value = value
 	r.botID = s.botID
+	r.id = id
+	r.what = what
 
 	if !exists {
 		_, err := s.db.Collection(table).Insert(r)
