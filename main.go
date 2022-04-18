@@ -19,7 +19,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/joho/godotenv"
-	"maunium.net/go/mautrix"
+	"github.com/upper/db/v4"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
@@ -79,7 +79,7 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry, err := makeBotRegistry(serverName, botRepository)
+	botRegistry, err := makeBotRegistry(serverName, botRepository, databaseSession)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to make bot registry")
 	}
@@ -119,7 +119,7 @@ func main() {
 	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry botApp.Registry, err error) {
+func makeBotRegistry(homeserverURL string, botRepository b.Repository, db db.Session) (registry botApp.Registry, err error) {
 	bots, err := botRepository.FindActive()
 	if err != nil {
 		return
@@ -128,8 +128,9 @@ func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry
 	registry = botApp.NewRegistry(homeserverURL)
 
 	for _, bot := range bots {
+		storer := matrix.NewStorer(db, bot.ID)
 		var client matrix.Client
-		client, err = matrix.NewMautrixClient(homeserverURL, mautrix.NewInMemoryStore(), true)
+		client, err = matrix.NewMautrixClient(homeserverURL, storer, true)
 		if err != nil {
 			return
 		}

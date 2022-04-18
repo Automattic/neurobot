@@ -84,10 +84,7 @@ func NewMautrixClient(serverName string, stateStore mautrix.Storer, enableListen
 		Prefix:        mautrix.URLPath{"_matrix", "client", "r0"},
 		Syncer:        syncer,
 		Logger:        &mautrix.StubLogger{},
-		// By default, use an in-memory store which will never save filter ids / next batch tokens to disk.
-		// The client will work with this storer: it just won't remember across restarts.
-		// In practice, a database backend should be used.
-		Store: stateStore,
+		Store:         stateStore,
 	}
 
 	client := &client{
