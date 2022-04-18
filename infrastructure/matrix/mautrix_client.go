@@ -59,7 +59,7 @@ func DiscoverServerURL(serverName string) (serverURL string) {
 	return serverURL
 }
 
-func NewMautrixClient(serverName string, stateStore mautrix.Storer, enableListeners bool) (*client, error) {
+func NewMautrixClient(serverName string, stateStore mautrix.Storer, enableListeners bool) (Client, error) {
 	homeserverURL, err := url.Parse(DiscoverServerURL(serverName))
 	if err != nil {
 		return nil, err
