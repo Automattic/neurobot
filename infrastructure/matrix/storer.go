@@ -118,7 +118,9 @@ func (s *storer) get(what string, id string) (string, error) {
 	var r row
 	result := s.db.Collection(table).Find(db.Cond{"bot_id": s.botID, "id": id, "what": what})
 	if err := result.One(&r); err != nil {
-		return "", err
+		if !errors.Is(err, db.ErrNoMoreRows) {
+			return "", err
+		}
 	}
 
 	return r.Value, nil
