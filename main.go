@@ -19,6 +19,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/joho/godotenv"
+	"maunium.net/go/mautrix"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
@@ -128,7 +129,7 @@ func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry
 
 	for _, bot := range bots {
 		var client matrix.Client
-		client, err = matrix.NewMautrixClient(homeserverURL, true)
+		client, err = matrix.NewMautrixClient(homeserverURL, mautrix.NewInMemoryStore(), true)
 		if err != nil {
 			return
 		}

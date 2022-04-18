@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maunium.net/go/mautrix"
-	mautrixEvent "maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/format"
-	mautrixId "maunium.net/go/mautrix/id"
 	"net/http"
 	"net/url"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
 	"strings"
 	"time"
+
+	"maunium.net/go/mautrix"
+	mautrixEvent "maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/format"
+	mautrixId "maunium.net/go/mautrix/id"
 )
 
 type mautrixClient interface {
@@ -58,7 +59,7 @@ func DiscoverServerURL(serverName string) (serverURL string) {
 	return serverURL
 }
 
-func NewMautrixClient(serverName string, enableListeners bool) (*client, error) {
+func NewMautrixClient(serverName string, stateStore mautrix.Storer, enableListeners bool) (*client, error) {
 	homeserverURL, err := url.Parse(DiscoverServerURL(serverName))
 	if err != nil {
 		return nil, err
@@ -86,7 +87,7 @@ func NewMautrixClient(serverName string, enableListeners bool) (*client, error) 
 		// By default, use an in-memory store which will never save filter ids / next batch tokens to disk.
 		// The client will work with this storer: it just won't remember across restarts.
 		// In practice, a database backend should be used.
-		Store: mautrix.NewInMemoryStore(),
+		Store: stateStore,
 	}
 
 	client := &client{
