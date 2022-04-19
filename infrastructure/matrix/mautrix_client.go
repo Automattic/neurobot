@@ -81,7 +81,7 @@ func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error
 	return
 }
 
-func NewMautrixClient(homeserverURL *url.URL, enableListeners bool) (*client, error) {
+func NewMautrixClient(homeserverURL *url.URL, stateStore mautrix.Storer, enableListeners bool) (*client, error) {
 	var syncer *mautrix.DefaultSyncer
 	if enableListeners {
 		syncer = mautrix.NewDefaultSyncer()
@@ -101,7 +101,7 @@ func NewMautrixClient(homeserverURL *url.URL, enableListeners bool) (*client, er
 		// By default, use an in-memory store which will never save filter ids / next batch tokens to disk.
 		// The client will work with this storer: it just won't remember across restarts.
 		// In practice, a database backend should be used.
-		Store: mautrix.NewInMemoryStore(),
+		Store: stateStore,
 	}
 
 	client := &client{

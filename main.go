@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/upper/db/v4"
 )
 
 var envFile = flag.String("env", "./.env", ".env file")
@@ -48,7 +49,7 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry := makeBotRegistry(config.ServerName, botRepository)
+	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
 	e := engine.NewEngine(botRegistry, workflowStepsRepository)
@@ -64,7 +65,7 @@ func main() {
 	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(serverName string, botRepository b.Repository) (registry botApp.Registry) {
+func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session) (registry botApp.Registry) {
 	homeserverURL, err := matrix.DiscoverServerURL(serverName)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to discover homeserver URL")
@@ -79,8 +80,9 @@ func makeBotRegistry(serverName string, botRepository b.Repository) (registry bo
 	registry = botApp.NewRegistry(serverNameWithoutPort)
 
 	for _, bot := range bots {
+		storer := matrix.NewStorer(db, bot.ID)
 		var client matrix.Client
-		client, err = matrix.NewMautrixClient(homeserverURL, true)
+		client, err = matrix.NewMautrixClient(homeserverURL, storer, true)
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"username": bot.Username,
