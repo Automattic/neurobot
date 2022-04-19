@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apex/log"
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
@@ -38,36 +39,49 @@ type client struct {
 	listenersEnabled bool
 }
 
-func DiscoverServerURL(serverName string) (serverURL string) {
-	wellKnown, err := mautrix.DiscoverClientAPI(serverName)
+func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error) {
+	var serverURL string
+	start := time.Now()
+
+	wellKnown, err := mautrix.DiscoverClientAPI(homeserverName)
 	// Both wellKnown and err can be nil for hosts that have https but are not a matrix server.
 
 	if err != nil {
 		if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
-			serverURL = "http://" + serverName
+			serverURL = "http://" + homeserverName
 		} else {
-			serverURL = "https://" + serverName
+			serverURL = "https://" + homeserverName
 		}
 	} else {
 		if wellKnown != nil {
 			serverURL = wellKnown.Homeserver.BaseURL
 		} else {
-			serverURL = "https://" + serverName
+			serverURL = "https://" + homeserverName
 		}
 	}
 
-	return serverURL
-}
-
-func NewMautrixClient(serverName string, stateStore mautrix.Storer, enableListeners bool) (Client, error) {
-	homeserverURL, err := url.Parse(DiscoverServerURL(serverName))
+	homeserverURL, err = url.Parse(serverURL)
 	if err != nil {
-		return nil, err
+		return
 	}
+
 	if homeserverURL.Scheme == "" {
 		homeserverURL.Scheme = "https"
 	}
 
+	if strings.Contains(homeserverURL.Host, "localhost") {
+		homeserverURL.Scheme = "http"
+	}
+
+	log.WithDuration(time.Since(start)).WithFields(log.Fields{
+		"homeserverName": homeserverName,
+		"homeserverURL":  homeserverURL.String(),
+	}).Info("Discovered homeserver URL")
+
+	return
+}
+
+func NewMautrixClient(homeserverURL *url.URL, stateStore mautrix.Storer, enableListeners bool) (*client, error) {
 	var syncer *mautrix.DefaultSyncer
 	if enableListeners {
 		syncer = mautrix.NewDefaultSyncer()
@@ -84,7 +98,10 @@ func NewMautrixClient(serverName string, stateStore mautrix.Storer, enableListen
 		Prefix:        mautrix.URLPath{"_matrix", "client", "r0"},
 		Syncer:        syncer,
 		Logger:        &mautrix.StubLogger{},
-		Store:         stateStore,
+		// By default, use an in-memory store which will never save filter ids / next batch tokens to disk.
+		// The client will work with this storer: it just won't remember across restarts.
+		// In practice, a database backend should be used.
+		Store: stateStore,
 	}
 
 	client := &client{

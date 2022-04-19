@@ -5,7 +5,6 @@ import (
 	"neurobot/infrastructure/matrix"
 	model "neurobot/model/bot"
 	"neurobot/model/room"
-	"strings"
 )
 
 type Registry interface {
@@ -15,16 +14,15 @@ type Registry interface {
 }
 
 type registry struct {
-	homeserverDomain string
-	primaryUsername  string
-	clients          map[string]matrix.Client
+	serverName      string
+	primaryUsername string
+	clients         map[string]matrix.Client
 }
 
-func NewRegistry(homeserverURL string) Registry {
+func NewRegistry(serverName string) Registry {
 	return &registry{
-		// Remove port to get just the domain
-		homeserverDomain: strings.Split(homeserverURL, ":")[0],
-		clients:          make(map[string]matrix.Client),
+		serverName: serverName,
+		clients:    make(map[string]matrix.Client),
 	}
 }
 
@@ -43,7 +41,7 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 
 	err = client.OnRoomInvite(func(roomID room.ID) {
 		// Only accept invitations to rooms in our homeserver
-		if roomID.HomeserverDomain() != r.homeserverDomain {
+		if roomID.ServerName() != r.serverName {
 			fmt.Printf("Ignoring invitation to room in another homeserver: %s", roomID)
 			return
 		}

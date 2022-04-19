@@ -10,7 +10,7 @@ import (
 type ID interface {
 	ID() string
 	IsAlias() bool
-	HomeserverDomain() string
+	ServerName() string
 }
 
 type id struct {
@@ -47,6 +47,6 @@ func (id *id) IsAlias() bool {
 	return strings.HasPrefix(id.value, "#")
 }
 
-func (id *id) HomeserverDomain() string {
+func (id *id) ServerName() string {
 	return strings.Split(id.value, ":")[1]
 }
