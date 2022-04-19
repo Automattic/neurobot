@@ -14,7 +14,7 @@ import (
 	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
 	"neurobot/resources/seeds"
-	"time"
+	"strings"
 
 	"github.com/apex/log"
 )
@@ -30,17 +30,8 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	databaseSession, err := database.MakeDatabaseSession(config.DatabasePath)
-	if err != nil {
-		logger.WithError(err).WithFields(log.Fields{
-			"path": config.DatabasePath,
-		}).Fatal("Failed to connect to database")
-	}
+	databaseSession := database.MakeDatabaseSession(config.DatabasePath)
 	defer databaseSession.Close()
-	err = database.Migrate(databaseSession)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to migrate database")
-	}
 
 	botRepository := botApp.NewRepository(databaseSession)
 	workflowRepository := workflow.NewRepository(databaseSession)
@@ -50,27 +41,15 @@ func main() {
 	seeds.Bots(botRepository, config)
 
 	// import TOML
-	err = toml.Import(config.WorkflowsTOMLPath, workflowRepository, workflowStepsRepository)
+	err := toml.Import(config.WorkflowsTOMLPath, workflowRepository, workflowStepsRepository)
 	if err != nil {
 		logger.WithError(err).WithFields(log.Fields{
 			"path": config.WorkflowsTOMLPath,
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry, err := makeBotRegistry(config.HomeserverName, botRepository)
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to make bot registry")
-	}
-
+	botRegistry := makeBotRegistry(config.ServerName, botRepository)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
-
-	// resolve .well-known to find our server URL to connect
-	start := time.Now()
-	serverURL := matrix.DiscoverServerURL(config.HomeserverName)
-	logger.WithFields(log.Fields{
-		"serverName": config.HomeserverName,
-		"serverURL":  serverURL,
-	}).WithDuration(time.Since(start)).Info("Discovered client API")
 
 	e := engine.NewEngine(botRegistry, workflowStepsRepository)
 
@@ -85,24 +64,34 @@ func main() {
 	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(homeserverURL string, botRepository b.Repository) (registry botApp.Registry, err error) {
-	bots, err := botRepository.FindActive()
+func makeBotRegistry(serverName string, botRepository b.Repository) (registry botApp.Registry) {
+	homeserverURL, err := matrix.DiscoverServerURL(serverName)
 	if err != nil {
-		return
+		log.WithError(err).Fatal("Failed to discover homeserver URL")
 	}
 
-	registry = botApp.NewRegistry(homeserverURL)
+	bots, err := botRepository.FindActive()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to find active bots")
+	}
+
+	serverNameWithoutPort := strings.Split(serverName, ":")[0]
+	registry = botApp.NewRegistry(serverNameWithoutPort)
 
 	for _, bot := range bots {
 		var client matrix.Client
 		client, err = matrix.NewMautrixClient(homeserverURL, true)
 		if err != nil {
-			return
+			log.WithError(err).WithFields(log.Fields{
+				"username": bot.Username,
+			}).Fatal("Failed to login as bot")
 		}
 
 		err = registry.Append(bot, client)
 		if err != nil {
-			return
+			log.WithError(err).WithFields(log.Fields{
+				"username": bot.Username,
+			}).Fatal("Failed add bot to registry")
 		}
 	}
 
