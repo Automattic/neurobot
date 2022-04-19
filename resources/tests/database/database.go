@@ -51,6 +51,7 @@ func Test(fn func(session db.Session)) {
 	})
 }
 
+// MakeTestDatabaseSession creates an in-memory SQLite database to use in running tests
 func MakeTestDatabaseSession() db.Session {
 	settings := sqlite.ConnectionURL{
 		Database: ":memory:",
