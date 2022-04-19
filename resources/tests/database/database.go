@@ -2,25 +2,30 @@ package database
 
 import (
 	"errors"
-	"log"
 	"neurobot/infrastructure/database"
-	"path"
-	"runtime"
 
+	"github.com/apex/log"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 func init() {
-	// bump DB log level to fatal errors as triggering an error condition is part of the test
-	db.LC().SetLevel(db.LogLevelFatal)
+	settings := sqlite.ConnectionURL{
+		Database: ":memory:",
+		Options: map[string]string{
+			"mode":  "memory",
+			"cache": "shared",
+		},
+	}
 
-	session := MakeTestDatabaseSession()
-	defer session.Close()
-
-	err := database.Migrate(session)
+	session, err := sqlite.Open(settings)
 	if err != nil {
-		log.Fatalf("Failed to migrate database: %s", err)
+		log.WithError(err).Fatal("Failed to connect to test database")
+	}
+
+	err = database.Migrate(session)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to migrate test database")
 	}
 }
 
@@ -46,19 +51,19 @@ func Test(fn func(session db.Session)) {
 	})
 }
 
+// MakeTestDatabaseSession creates an in-memory SQLite database to use in running tests
 func MakeTestDatabaseSession() db.Session {
-	// Discover the full path to the directory containing this file (database.go).
-	// We'll place the database file inside this same directory.
-	_, currentFilePath, _, _ := runtime.Caller(0)
-	currentDirectoryPath := path.Dir(currentFilePath)
-
 	settings := sqlite.ConnectionURL{
-		Database: path.Join(currentDirectoryPath, "tests.db"),
+		Database: ":memory:",
+		Options: map[string]string{
+			"mode":  "memory",
+			"cache": "shared",
+		},
 	}
 
 	session, err := sqlite.Open(settings)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %s", err)
+		log.WithError(err).Fatal("Failed to connect to test database")
 	}
 
 	return session
