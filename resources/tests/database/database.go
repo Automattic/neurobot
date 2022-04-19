@@ -9,6 +9,26 @@ import (
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
+func init() {
+	settings := sqlite.ConnectionURL{
+		Database: ":memory:",
+		Options: map[string]string{
+			"mode":  "memory",
+			"cache": "shared",
+		},
+	}
+
+	session, err := sqlite.Open(settings)
+	if err != nil {
+		log.Fatalf("Failed to connect to test database: %s", err)
+	}
+
+	err = database.Migrate(session)
+	if err != nil {
+		log.Fatalf("Failed to run upgrade/migration scripts on test database: %s", err)
+	}
+}
+
 // Test is a "wrapper" for tests that interact with the Database.
 // It wraps the test in a transaction, and rolls it back automatically,
 // since in tests, we never want to commit the transaction.
@@ -45,9 +65,5 @@ func MakeTestDatabaseSession() db.Session {
 		log.Fatalf("Failed to connect to test database: %s", err)
 	}
 
-	err = database.Migrate(session)
-	if err != nil {
-		log.Fatalf("Failed to run upgrade/migration scripts on test database: %s", err)
-	}
 	return session
 }
