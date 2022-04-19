@@ -2,9 +2,9 @@ package database
 
 import (
 	"errors"
-	"log"
 	"neurobot/infrastructure/database"
 
+	"github.com/apex/log"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -20,12 +20,12 @@ func init() {
 
 	session, err := sqlite.Open(settings)
 	if err != nil {
-		log.Fatalf("Failed to connect to test database: %s", err)
+		log.WithError(err).Fatal("Failed to connect to test database")
 	}
 
 	err = database.Migrate(session)
 	if err != nil {
-		log.Fatalf("Failed to run upgrade/migration scripts on test database: %s", err)
+		log.WithError(err).Fatal("Failed to migrate test database")
 	}
 }
 
@@ -63,7 +63,7 @@ func MakeTestDatabaseSession() db.Session {
 
 	session, err := sqlite.Open(settings)
 	if err != nil {
-		log.Fatalf("Failed to connect to test database: %s", err)
+		log.WithError(err).Fatal("Failed to connect to test database")
 	}
 
 	return session
