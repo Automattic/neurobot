@@ -12,4 +12,8 @@ type Client interface {
 
 	// OnRoomInvite registers a handler that will be called whenever the currently authenticated user is invited to a room.
 	OnRoomInvite(handler func(roomID room.ID)) error
+
+	// OnMessage registers a handler that will be called whenever a message is sent to a room
+	// the currently authenticated user is a member of.
+	OnMessage(handler func(roomID room.ID, message message.Message)) error
 }
