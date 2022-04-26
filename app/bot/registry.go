@@ -57,10 +57,12 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 		}
 	})
 
-	err = client.OnMessage(func(roomID room.ID, message message.Message) {
-		// log messages received temporarily
-		log.WithFields(log.Fields{"room": roomID, "bot": bot.Username, "message": message.String()}).Info("message received")
-	})
+	if bot.IsPrimary() {
+		err = client.OnMessage(func(roomID room.ID, message message.Message) {
+			// log messages received temporarily
+			log.WithFields(log.Fields{"room": roomID, "bot": bot.Username, "message": message.String()}).Info("message received")
+		})
+	}
 
 	if err != nil {
 		return
