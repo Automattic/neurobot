@@ -58,11 +58,6 @@ func main() {
 	if err := app.Run(); err != nil {
 		logger.WithError(err).Fatal("Failed to run application")
 	}
-
-	logger.WithFields(log.Fields{
-		"port": config.WebhookListenerPort,
-	}).Infof("Starting webhook listener")
-	webhookListenerServer.Run() // blocking
 }
 
 func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session) (registry botApp.Registry) {

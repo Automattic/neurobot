@@ -57,6 +57,11 @@ func (app app) Run() (err error) {
 			}
 		})
 
+	log.WithFields(log.Fields{
+		"port": app.webhookListener.Port(),
+	}).Infof("Starting webhook listener")
+	app.webhookListener.Run() // blocking
+
 	return
 }
 

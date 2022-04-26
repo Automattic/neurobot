@@ -37,6 +37,11 @@ func (s *Server) Run() {
 	}
 }
 
+// Port returns port on which server is configured to run
+func (s *Server) Port() int {
+	return s.port
+}
+
 // RegisterRoute saves the callback func for a particular route
 func (s *Server) RegisterRoute(route string, fn requestHandler) error {
 	if _, ok := s.routes[route]; ok {
