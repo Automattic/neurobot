@@ -226,6 +226,21 @@ func (client *client) resolveRoomAlias(roomID room.ID) (mautrixId.RoomID, error)
 	return mautrixId.RoomID(response.RoomID.String()), nil
 }
 
+func (client *client) IsCommand(message msg.Message) bool {
+	words := strings.Fields(strings.TrimSpace(message.String()))
+
+	// shortest command can be "!s"
+	if len(words) == 0 || len(words[0]) < 2 {
+		return false
+	}
+
+	if strings.HasPrefix(words[0], "!") {
+		return true
+	}
+
+	return false
+}
+
 func (client *client) assertListenersEnabled() error {
 	if !client.listenersEnabled {
 		return errors.New("listeners are not enabled. You can enable listeners through the enableListeners argument of NewMautrixClient()")
