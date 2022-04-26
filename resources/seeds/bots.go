@@ -13,6 +13,7 @@ func Bots(repository bot.Repository, config *configuration.Config) {
 	seeds := []bot.Bot{
 		makePrimaryBot("Primary bot", config), // MUST be the first to be created so that ID = 1
 		makeBot("afkbot", "Used by afk_notifier and !afk"),
+		makeBot("messengerbot", "Used by a8c_matrix()"),
 	}
 
 	for _, seed := range seeds {
