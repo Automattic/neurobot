@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"log"
 	netHttp "net/http"
 	"neurobot/app/bot"
 	"neurobot/app/engine"
@@ -11,6 +10,8 @@ import (
 	"neurobot/infrastructure/http"
 	w "neurobot/model/workflow"
 	"strings"
+
+	"github.com/apex/log"
 )
 
 type app struct {
@@ -49,7 +50,9 @@ func (app app) Run() (err error) {
 			err = app.runWorkflow(workflow, payload)
 			if err != nil {
 				netHttp.Error(response, "something went wrong", netHttp.StatusInternalServerError)
-				log.Printf("Error when attempting to run workflow: %s, payload: %+v", err, payload)
+				log.WithError(err).WithFields(log.Fields{
+					"payload": payload,
+				}).Error("failed to run workflow")
 				return
 			}
 		})
@@ -72,10 +75,15 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 	}
 
 	go func() {
-		log.Printf("Starting workflow with identifier %s, payload: %+v", workflow.Identifier, payload)
+		log.WithFields(log.Fields{
+			"identifier": workflow.Identifier,
+			"payload":    payload,
+		}).Info("starting workflow")
 		err := runner.Run(workflow, payload)
 		if err != nil {
-			log.Printf("Failed to run workflow: %s", err)
+			log.WithError(err).WithFields(log.Fields{
+				"payload": payload,
+			}).Error("failed to run workflow")
 		}
 	}()
 
