@@ -7,16 +7,16 @@ import (
 
 // Command represents a command invoked in a message for a particular bot to react
 type Command struct {
-	command string
-	args    map[string]string
+	Name string
+	Args map[string]string
 }
 
 func (c *Command) String() string {
-	arguments := make([]string, 0, len(c.args))
-	for _, arg := range c.args {
+	arguments := make([]string, 0, len(c.Args))
+	for _, arg := range c.Args {
 		arguments = append(arguments, arg)
 	}
-	return fmt.Sprintf("!%s %s", c.command, strings.Join(arguments, " "))
+	return fmt.Sprintf("!%s %s", c.Name, strings.Join(arguments, " "))
 }
 
 // NewCommand creates an instance of representation of Command (name + arguments)
@@ -30,7 +30,7 @@ func NewCommand(msg string) *Command {
 	}
 
 	return &Command{
-		command: words[0],
-		args:    args,
+		Name: words[0],
+		Args: args,
 	}
 }
