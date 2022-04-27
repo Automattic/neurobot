@@ -9,6 +9,7 @@ import (
 type Command struct {
 	Name string
 	Args map[string]string
+	Meta map[string]string
 }
 
 func (c *Command) String() string {
@@ -30,7 +31,8 @@ func NewCommand(msg string) *Command {
 	}
 
 	return &Command{
-		Name: words[0],
+		Name: strings.TrimLeft(words[0], "!"),
 		Args: args,
+		Meta: make(map[string]string),
 	}
 }
