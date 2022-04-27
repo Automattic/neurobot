@@ -52,9 +52,12 @@ func main() {
 	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
-	e := engine.NewEngine(botRegistry, workflowStepsRepository)
-
-	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
+	app := application.NewApp(
+		engine.NewEngine(botRegistry, workflowStepsRepository),
+		botRegistry,
+		workflowRepository,
+		webhookListenerServer,
+	)
 	if err := app.Run(); err != nil {
 		logger.WithError(err).Fatal("Failed to run application")
 	}
