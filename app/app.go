@@ -80,15 +80,14 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 	}
 
 	go func() {
-		log.WithFields(log.Fields{
+		ctx := log.Fields{
 			"identifier": workflow.Identifier,
 			"payload":    payload,
-		}).Info("starting workflow")
+		}
+		log.WithFields(ctx).Info("starting workflow")
 		err := runner.Run(workflow, payload)
 		if err != nil {
-			log.WithError(err).WithFields(log.Fields{
-				"payload": payload,
-			}).Error("failed to run workflow")
+			log.WithError(err).WithFields(ctx).Error("failed to run workflow")
 		}
 	}()
 
