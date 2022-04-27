@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"neurobot/infrastructure/matrix"
 	model "neurobot/model/bot"
+	"neurobot/model/command"
 	"neurobot/model/message"
 	"neurobot/model/room"
 
@@ -20,12 +21,14 @@ type registry struct {
 	serverName      string
 	primaryUsername string
 	clients         map[string]matrix.Client
+	commandChannel  chan<- *command.Command
 }
 
-func NewRegistry(serverName string) Registry {
+func NewRegistry(serverName string, commandChannel chan<- *command.Command) Registry {
 	return &registry{
-		serverName: serverName,
-		clients:    make(map[string]matrix.Client),
+		serverName:     serverName,
+		clients:        make(map[string]matrix.Client),
+		commandChannel: commandChannel,
 	}
 }
 
@@ -61,6 +64,13 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 		err = client.OnMessage(func(roomID room.ID, message message.Message) {
 			// log messages received temporarily
 			log.WithFields(log.Fields{"room": roomID, "bot": bot.Username, "message": message.String()}).Info("message received")
+
+			// command invoked?
+			if client.IsCommand(message) {
+				comm := command.NewCommand(message.String())
+				comm.Meta["room"] = roomID.ID()
+				r.commandChannel <- comm
+			}
 		})
 	}
 
