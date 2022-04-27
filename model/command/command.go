@@ -25,7 +25,7 @@ func NewCommand(msg string) *Command {
 
 	args := make(map[string]string)
 	for index, word := range words[1:] {
-		argName := fmt.Sprintf("arg%d", index)
+		argName := fmt.Sprintf("arg%d", index+1)
 		args[argName] = word
 	}
 
