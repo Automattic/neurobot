@@ -52,6 +52,8 @@ func (e *engine) Run(eid string, w wf.Workflow, payload payload.Payload) error {
 			runners = append(runners, s.NewFetchDataExternalRunner(eid, step.Meta))
 		case "formatMessage":
 			runners = append(runners, s.NewFormatMessageRunner(eid, step.Meta))
+		case "filterOnlineUsers":
+			runners = append(runners, s.NewFilterOnlineUsers(eid, step.Meta, e.botRegistry))
 		}
 	}
 
