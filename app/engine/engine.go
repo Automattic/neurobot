@@ -48,10 +48,12 @@ func (e *engine) Run(w wf.Workflow, payload payload.Payload) error {
 			runners = append(runners, s.NewPostMatrixMessageRunner(step.Meta, e.botRegistry))
 		case "stdOut":
 			runners = append(runners, s.NewStdOutRunner(step.Meta, e.botRegistry))
+		case "fetchDataExternal":
+			runners = append(runners, s.NewFetchDataExternalRunner(step.Meta, e.botRegistry))
 		}
 	}
 
-	for _, r := range runners {
+	for index, r := range runners {
 		err = r.Run(&payload)
 		if err != nil {
 			// For now, we don't halt the workflow if a workflow step encounters an error
@@ -59,6 +61,10 @@ func (e *engine) Run(w wf.Workflow, payload payload.Payload) error {
 				"Identifier": w.Identifier,
 			}).Info("workflow step execution error")
 		}
+		logger.WithFields(log.Fields{
+			"index":   index,
+			"payload": payload,
+		}).Info("payload after step execution")
 	}
 
 	return nil
