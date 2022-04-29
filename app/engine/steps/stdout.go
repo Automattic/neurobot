@@ -6,14 +6,15 @@ import (
 	"os"
 
 	botApp "neurobot/app/bot"
+	"neurobot/model/payload"
 )
 
 var out io.Writer = os.Stdout
 
 type stdoutWorkflowStepRunner struct{}
 
-func (runner stdoutWorkflowStepRunner) Run(p map[string]string) (map[string]string, error) {
-	msg := p["message"]
+func (runner stdoutWorkflowStepRunner) Run(p payload.Payload) (payload.Payload, error) {
+	msg := p.Message
 	if msg == "" {
 		msg = "[Empty line]"
 	}

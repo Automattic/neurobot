@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"neurobot/app/bot"
 	s "neurobot/app/engine/steps"
+	"neurobot/model/payload"
 	wf "neurobot/model/workflow"
 	wfs "neurobot/model/workflowstep"
 
@@ -11,11 +12,11 @@ import (
 )
 
 type Engine interface {
-	Run(wf.Workflow, map[string]string) error
+	Run(wf.Workflow, payload.Payload) error
 }
 
 type WorkflowStepRunner interface {
-	Run(map[string]string) (map[string]string, error) // accepts payload and returns after modification (if desired)
+	Run(payload.Payload) (payload.Payload, error) // accepts payload and returns after modification (if desired)
 }
 
 type engine struct {
@@ -30,7 +31,7 @@ func NewEngine(botRegistry bot.Registry, workflowStepRepository wfs.Repository) 
 	}
 }
 
-func (e *engine) Run(w wf.Workflow, payload map[string]string) error {
+func (e *engine) Run(w wf.Workflow, payload payload.Payload) error {
 	logger := log.Log
 
 	// loop through all the steps inside of the workflow

@@ -2,15 +2,16 @@ package commands
 
 import (
 	"neurobot/model/command"
+	"neurobot/model/payload"
 	"strings"
 )
 
 type echo struct {
-	payload map[string]string
+	payload payload.Payload
 }
 
 func (e *echo) Valid() bool {
-	if len(e.payload["message"]) == 0 {
+	if len(e.payload.Message) == 0 {
 		return false
 	}
 
@@ -21,13 +22,13 @@ func (e *echo) UsageHints() string {
 	return "Usage: `!echo some text`"
 }
 
-func (e *echo) WorkflowPayload() map[string]string {
+func (e *echo) WorkflowPayload() payload.Payload {
 	return e.payload
 }
 
 // NewEcho returns an instance of ECHO command that handles its validation and set defaults for payload
 func NewEcho(comm *command.Command) Command {
-	payload := make(map[string]string)
+	var payload payload.Payload
 
 	// convert args map into an args slice
 	args := make([]string, 0, len(comm.Args))
@@ -35,8 +36,8 @@ func NewEcho(comm *command.Command) Command {
 		args = append(args, v)
 	}
 
-	payload["message"] = strings.TrimSpace(strings.Join(args, " "))
-	payload["room"] = comm.Meta["room"]
+	payload.Message = strings.TrimSpace(strings.Join(args, " "))
+	payload.Room = comm.Meta["room"]
 
 	return &echo{
 		payload: payload,

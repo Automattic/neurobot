@@ -6,6 +6,7 @@ import (
 	botApp "neurobot/app/bot"
 	"neurobot/infrastructure/matrix"
 	"neurobot/model/message"
+	"neurobot/model/payload"
 	r "neurobot/model/room"
 )
 
@@ -29,13 +30,13 @@ func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.C
 	return runner.botRegistry.GetClient(runner.asBot)
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[string]string, error) {
-	msg := p["message"]
+func (runner postMatrixMessageWorkflowStepRunner) Run(p payload.Payload) (payload.Payload, error) {
+	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
 	if runner.messagePrefix != "" {
-		if p["message"] != "" {
-			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p["message"])
+		if p.Message != "" {
+			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p.Message)
 		} else {
 			msg = runner.messagePrefix
 		}
@@ -43,8 +44,8 @@ func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[
 
 	// Override room defined in meta, if provided in payload
 	room := runner.room
-	if p["room"] != "" {
-		room = p["room"]
+	if p.Room != "" {
+		room = p.Room
 	}
 
 	// ensure we have data to work with

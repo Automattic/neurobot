@@ -11,6 +11,7 @@ import (
 	"neurobot/infrastructure/http"
 	"neurobot/model/command"
 	"neurobot/model/message"
+	"neurobot/model/payload"
 	"neurobot/model/room"
 	w "neurobot/model/workflow"
 	"strings"
@@ -46,7 +47,7 @@ func NewApp(
 func (app app) Run() (err error) {
 	err = app.webhookListener.RegisterRoute(
 		"/",
-		func(response netHttp.ResponseWriter, request *netHttp.Request, payload map[string]string) {
+		func(response netHttp.ResponseWriter, request *netHttp.Request, payload payload.Payload) {
 			workflowIdentifier := strings.TrimPrefix(request.URL.Path, "/")
 			workflow, err := app.workflowRepository.FindByIdentifier(workflowIdentifier)
 			if err != nil {
@@ -85,7 +86,7 @@ func (app app) Run() (err error) {
 	return
 }
 
-func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error {
+func (app app) runWorkflow(workflow w.Workflow, payload payload.Payload) error {
 	var runner r.Runner
 
 	switch workflow.Identifier {
@@ -129,7 +130,7 @@ func (app app) runCommand(comm *command.Command) {
 	payload := command.WorkflowPayload() // need payload to access room, even if command is not valid
 
 	if !command.Valid() {
-		payload["message"] = command.UsageHints()
+		payload.Message = command.UsageHints()
 
 		mc, err := app.botRegistry.GetPrimaryClient()
 		if err != nil {
@@ -139,7 +140,7 @@ func (app app) runCommand(comm *command.Command) {
 			return
 		}
 
-		roomID, _ := room.NewID(payload["room"]) // no need to check for error, is picked up from an event and not a user input
+		roomID, _ := room.NewID(payload.Room) // no need to check for error, is picked up from an event and not a user input
 
 		if err := mc.SendMessage(
 			roomID,

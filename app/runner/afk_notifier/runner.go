@@ -4,6 +4,7 @@ import (
 	r "neurobot/app/runner"
 	"neurobot/infrastructure/matrix"
 	m "neurobot/model/message"
+	"neurobot/model/payload"
 	"neurobot/model/room"
 	"neurobot/model/workflow"
 )
@@ -16,13 +17,13 @@ func NewRunner(matrixClient matrix.Client) r.Runner {
 	return &runner{matrixClient: matrixClient}
 }
 
-func (r *runner) Run(workflow workflow.Workflow, payload map[string]string) error {
-	roomID, err := room.NewID(payload["room"])
+func (r *runner) Run(workflow workflow.Workflow, payload payload.Payload) error {
+	roomID, err := room.NewID(payload.Room)
 	if err != nil {
 		return err
 	}
 
-	message := m.NewMarkdownMessage(payload["message"])
+	message := m.NewMarkdownMessage(payload.Message)
 
 	return r.matrixClient.SendMessage(roomID, message)
 }
