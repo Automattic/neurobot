@@ -17,6 +17,9 @@ type Client interface {
 	// the currently authenticated user is a member of.
 	OnMessage(handler func(roomID room.ID, message message.Message)) error
 
+	// GetPresence fetches the presence state of the specified user, defaulting to offline
+	GetPresence(userID string) string
+
 	// IsCommand returns true if the message passed is an invokation of command
 	IsCommand(message message.Message) bool
 }

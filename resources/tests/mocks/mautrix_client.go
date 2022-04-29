@@ -18,6 +18,7 @@ type MautrixClientMock interface {
 	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 	WasRoomJoined(roomIDorAlias string) bool
 	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
+	GetPresence(userID id.UserID) (resp *mautrix.RespPresence, err error)
 	SyncWithContextWasCalled() bool
 	SyncWithContext(ctx context.Context) error
 }
@@ -100,6 +101,13 @@ func (m *mautrixClientMock) WasRoomJoined(roomIDorAlias string) bool {
 	}
 
 	return false
+}
+
+func (m *mautrixClientMock) GetPresence(userID id.UserID) (resp *mautrix.RespPresence, err error) {
+	if strings.Contains(string(userID), "online") {
+		return &mautrix.RespPresence{Presence: "online"}, nil
+	}
+	return &mautrix.RespPresence{Presence: "offline"}, nil
 }
 
 func (m *mautrixClientMock) ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error) {
