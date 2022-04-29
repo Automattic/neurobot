@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	botApp "neurobot/app/bot"
 	"time"
 
 	"neurobot/model/payload"
@@ -16,7 +15,6 @@ type fetchDataExternalMeta struct {
 
 type fetchDataExternalWorkflowStepRunner struct {
 	fetchDataExternalMeta
-	botRegistry botApp.Registry
 }
 
 func (runner *fetchDataExternalWorkflowStepRunner) Run(p *payload.Payload) error {
@@ -50,13 +48,8 @@ func (runner *fetchDataExternalWorkflowStepRunner) Run(p *payload.Payload) error
 }
 
 // NewFetchDataExternalRunner returns an instance of worklow step for fetching data from an external source
-func NewFetchDataExternalRunner(meta map[string]string, botRegistry botApp.Registry) *fetchDataExternalWorkflowStepRunner {
+func NewFetchDataExternalRunner(meta map[string]string) *fetchDataExternalWorkflowStepRunner {
 	var stepMeta fetchDataExternalMeta
-
 	stepMeta.url, _ = meta["url"]
-
-	return &fetchDataExternalWorkflowStepRunner{
-		fetchDataExternalMeta: stepMeta,
-		botRegistry:           botRegistry,
-	}
+	return &fetchDataExternalWorkflowStepRunner{stepMeta}
 }

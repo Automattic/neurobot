@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	botApp "neurobot/app/bot"
 	"neurobot/model/payload"
 )
 
@@ -23,6 +22,6 @@ func (runner *stdoutWorkflowStepRunner) Run(p *payload.Payload) error {
 	return nil
 }
 
-func NewStdOutRunner(meta map[string]string, botRegistry botApp.Registry) *stdoutWorkflowStepRunner {
+func NewStdOutRunner(meta map[string]string) *stdoutWorkflowStepRunner {
 	return &stdoutWorkflowStepRunner{}
 }

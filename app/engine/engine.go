@@ -47,9 +47,9 @@ func (e *engine) Run(w wf.Workflow, payload payload.Payload) error {
 		case "postMatrixMessage":
 			runners = append(runners, s.NewPostMatrixMessageRunner(step.Meta, e.botRegistry))
 		case "stdOut":
-			runners = append(runners, s.NewStdOutRunner(step.Meta, e.botRegistry))
+			runners = append(runners, s.NewStdOutRunner(step.Meta))
 		case "fetchDataExternal":
-			runners = append(runners, s.NewFetchDataExternalRunner(step.Meta, e.botRegistry))
+			runners = append(runners, s.NewFetchDataExternalRunner(step.Meta))
 		}
 	}
 
