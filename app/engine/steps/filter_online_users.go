@@ -36,7 +36,7 @@ func (runner *filterOnlineUsersRunner) Run(p *payload.Payload) error {
 	return nil
 }
 
-func NewFilterOnlineUsers(eid string, meta map[string]string, botRegistry botApp.Registry) *filterOnlineUsersRunner {
+func NewFilterOnlineUsers(eid string, botRegistry botApp.Registry) *filterOnlineUsersRunner {
 	return &filterOnlineUsersRunner{
 		eid:         eid,
 		botRegistry: botRegistry,

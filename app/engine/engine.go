@@ -47,13 +47,13 @@ func (e *engine) Run(eid string, w wf.Workflow, payload payload.Payload) error {
 		case "postMatrixMessage":
 			runners = append(runners, s.NewPostMatrixMessageRunner(eid, step.Meta, e.botRegistry))
 		case "stdOut":
-			runners = append(runners, s.NewStdOutRunner(eid, step.Meta))
+			runners = append(runners, s.NewStdOutRunner(eid))
 		case "fetchDataExternal":
 			runners = append(runners, s.NewFetchDataExternalRunner(eid, step.Meta))
 		case "formatMessage":
 			runners = append(runners, s.NewFormatMessageRunner(eid, step.Meta))
 		case "filterOnlineUsers":
-			runners = append(runners, s.NewFilterOnlineUsers(eid, step.Meta, e.botRegistry))
+			runners = append(runners, s.NewFilterOnlineUsers(eid, e.botRegistry))
 		}
 	}
 
