@@ -7,5 +7,5 @@ import (
 
 // Runner runs a Workflow with an incoming payload.
 type Runner interface {
-	Run(workflow workflow.Workflow, payload payload.Payload) error
+	Run(eid string, workflow workflow.Workflow, payload payload.Payload) error
 }

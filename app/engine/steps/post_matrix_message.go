@@ -8,6 +8,8 @@ import (
 	"neurobot/model/message"
 	"neurobot/model/payload"
 	r "neurobot/model/room"
+
+	"github.com/apex/log"
 )
 
 type postMatrixMessageWorkflowStepMeta struct {
@@ -17,6 +19,7 @@ type postMatrixMessageWorkflowStepMeta struct {
 }
 
 type postMatrixMessageWorkflowStepRunner struct {
+	eid string
 	postMatrixMessageWorkflowStepMeta
 	botRegistry botApp.Registry
 }
@@ -31,6 +34,11 @@ func (runner *postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.
 }
 
 func (runner *postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error {
+	log.Log.WithFields(log.Fields{
+		"executionID":  runner.eid,
+		"workflowStep": "postMatrixMessage",
+	}).Info("running workflow step")
+
 	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
@@ -69,7 +77,7 @@ func (runner *postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error
 	return mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
 }
 
-func NewPostMatrixMessageRunner(meta map[string]string, botRegistry botApp.Registry) *postMatrixMessageWorkflowStepRunner {
+func NewPostMatrixMessageRunner(eid string, meta map[string]string, botRegistry botApp.Registry) *postMatrixMessageWorkflowStepRunner {
 	var stepMeta postMatrixMessageWorkflowStepMeta
 	var ok bool
 
@@ -89,6 +97,7 @@ func NewPostMatrixMessageRunner(meta map[string]string, botRegistry botApp.Regis
 	}
 
 	return &postMatrixMessageWorkflowStepRunner{
+		eid:                               eid,
 		postMatrixMessageWorkflowStepMeta: stepMeta,
 		botRegistry:                       botRegistry,
 	}

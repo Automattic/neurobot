@@ -17,7 +17,7 @@ func NewRunner(matrixClient matrix.Client) r.Runner {
 	return &runner{matrixClient: matrixClient}
 }
 
-func (r *runner) Run(workflow workflow.Workflow, payload payload.Payload) error {
+func (r *runner) Run(eid string, workflow workflow.Workflow, payload payload.Payload) error {
 	roomID, err := room.NewID(payload.Room)
 	if err != nil {
 		return err
