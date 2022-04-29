@@ -29,7 +29,7 @@ func TestStdoutWorkflowStep(t *testing.T) {
 	for _, table := range tables {
 		s := &stdoutWorkflowStepRunner{}
 
-		s.Run(payload.Payload{
+		s.Run(&payload.Payload{
 			Message: table.input,
 		})
 

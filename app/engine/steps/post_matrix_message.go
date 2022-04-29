@@ -30,7 +30,7 @@ func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.C
 	return runner.botRegistry.GetClient(runner.asBot)
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) Run(p payload.Payload) (payload.Payload, error) {
+func (runner postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error {
 	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
@@ -50,25 +50,25 @@ func (runner postMatrixMessageWorkflowStepRunner) Run(p payload.Payload) (payloa
 
 	// ensure we have data to work with
 	if room == "" {
-		return p, errors.New("no room to post")
+		return errors.New("no room to post")
 	}
 	if msg == "" {
-		return p, errors.New("no message to post")
+		return errors.New("no message to post")
 	}
 
 	mc, err := runner.getMatrixClient()
 	if err != nil {
-		return p, err
+		return err
 	}
 
 	roomID, err := r.NewID(room)
 	if err != nil {
-		return p, err
+		return err
 	}
 
 	err = mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
 
-	return p, err
+	return err
 }
 
 func NewPostMatrixMessageRunner(meta map[string]string, botRegistry botApp.Registry) *postMatrixMessageWorkflowStepRunner {
