@@ -50,6 +50,8 @@ func (e *engine) Run(w wf.Workflow, payload payload.Payload) error {
 			runners = append(runners, s.NewStdOutRunner(step.Meta))
 		case "fetchDataExternal":
 			runners = append(runners, s.NewFetchDataExternalRunner(step.Meta))
+		case "formatMessage":
+			runners = append(runners, s.NewFormatMessageRunner(step.Meta))
 		}
 	}
 
