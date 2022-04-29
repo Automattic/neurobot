@@ -21,7 +21,7 @@ type postMatrixMessageWorkflowStepRunner struct {
 	botRegistry botApp.Registry
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.Client, err error) {
+func (runner *postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.Client, err error) {
 	if runner.asBot == "" {
 		// If no bot was specified, use the primary one.
 		return runner.botRegistry.GetPrimaryClient()
@@ -30,7 +30,7 @@ func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.C
 	return runner.botRegistry.GetClient(runner.asBot)
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error {
+func (runner *postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error {
 	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload

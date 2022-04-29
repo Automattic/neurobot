@@ -19,7 +19,7 @@ type fetchDataExternalWorkflowStepRunner struct {
 	botRegistry botApp.Registry
 }
 
-func (runner fetchDataExternalWorkflowStepRunner) Run(p *payload.Payload) error {
+func (runner *fetchDataExternalWorkflowStepRunner) Run(p *payload.Payload) error {
 	j, err := json.Marshal(&p)
 	if err != nil {
 		return err
