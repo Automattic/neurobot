@@ -66,9 +66,7 @@ func (runner *postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error
 		return err
 	}
 
-	err = mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
-
-	return err
+	return mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
 }
 
 func NewPostMatrixMessageRunner(meta map[string]string, botRegistry botApp.Registry) *postMatrixMessageWorkflowStepRunner {
