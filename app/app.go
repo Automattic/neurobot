@@ -125,6 +125,8 @@ func (app app) runCommand(comm *command.Command) {
 		command = commands.NewUnrecognized(comm)
 	case "ECHO":
 		command = commands.NewEcho(comm)
+	case "POLYGLOTS":
+		command = commands.NewPolyglots(comm)
 	}
 
 	payload := command.WorkflowPayload() // need payload to access room, even if command is not valid
