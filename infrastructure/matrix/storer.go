@@ -21,8 +21,16 @@ type membershipTableRow struct {
 	RoomID string `db:"room_id"`
 }
 
+// Store is an interface that embeds both mautrix.Storer and (mautrix/crypto).StateStore
+// mautrix.Storer is for general state events for bot without the context of encryption
+// (mautrix/crypto).StateStore is specifically for encryption context
+type Store interface {
+	mautrix.Storer
+	mautrixCrypto.StateStore
+}
+
 // NewStorer implements the Storer interface required by Mautrix client to store sync state persistently
-func NewStorer(db db.Session, botID uint64) mautrix.Storer {
+func NewStorer(db db.Session, botID uint64) Store {
 	return &storer{
 		db:    db,
 		botID: botID,

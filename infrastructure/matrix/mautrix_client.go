@@ -2,6 +2,7 @@ package matrix
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,7 +14,11 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/upper/db/v4"
 	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/crypto"
+	mautrixCrypto "maunium.net/go/mautrix/crypto"
+	"maunium.net/go/mautrix/event"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
 	"maunium.net/go/mautrix/id"
@@ -23,6 +28,7 @@ import (
 type mautrixClient interface {
 	Login(*mautrix.ReqLogin) (*mautrix.RespLogin, error)
 	JoinRoom(roomIDorAlias, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
+	JoinedMembers(roomID id.RoomID) (resp *mautrix.RespJoinedMembers, err error)
 	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID mautrixId.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	GetPresence(userID id.UserID) (resp *mautrix.RespPresence, err error)
@@ -37,9 +43,30 @@ type mautrixSyncer interface {
 
 type client struct {
 	homeserverURL    string
+	db               db.Session
 	mautrix          mautrixClient
+	store            Store // state store
+	olmMachine       *mautrixCrypto.OlmMachine
 	syncer           mautrixSyncer
 	listenersEnabled bool
+}
+
+// NewSQLCryptoStore returns a pointer to struct which stores the crypto state
+func NewSQLCryptoStore(db db.Session, accountID string, pickleKey []byte) *mautrixCrypto.SQLCryptoStore {
+	store := mautrixCrypto.NewSQLCryptoStore(
+		db.Driver().(*sql.DB),
+		"sqlite3",
+		accountID,
+		id.DeviceID("NEUROBOT"),
+		pickleKey,
+		NewApexLogger(),
+	)
+
+	if err := store.CreateTables(); err != nil {
+		log.WithError(err).WithField("bot", accountID).Fatal("crypto store db migration error")
+	}
+
+	return store
 }
 
 func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error) {
@@ -84,7 +111,8 @@ func DiscoverServerURL(homeserverName string) (homeserverURL *url.URL, err error
 	return
 }
 
-func NewMautrixClient(homeserverURL *url.URL, stateStore mautrix.Storer, enableListeners bool) (*client, error) {
+// NewMautrixClient retuns an instance of mautrix client that satisfies Client interface we have defined for a matrix client
+func NewMautrixClient(homeserverURL *url.URL, db db.Session, s Store, cryptoStore mautrixCrypto.Store, enableListeners bool) (Client, error) {
 	var syncer *mautrix.DefaultSyncer
 	if enableListeners {
 		syncer = mautrix.NewDefaultSyncer()
@@ -104,12 +132,31 @@ func NewMautrixClient(homeserverURL *url.URL, stateStore mautrix.Storer, enableL
 		// By default, use an in-memory store which will never save filter ids / next batch tokens to disk.
 		// The client will work with this storer: it just won't remember across restarts.
 		// In practice, a database backend should be used.
-		Store: stateStore,
+		Store: s,
 	}
+
+	mach := crypto.NewOlmMachine(mautrixClient, NewApexLogger(), cryptoStore, s)
+	// Load data from the crypto store
+	err := mach.Load()
+	if err != nil {
+		log.WithError(err).Error("olm machine load error")
+		return nil, err
+	}
+
+	syncer.OnEventType(mautrixEvent.StateMember, func(source mautrix.EventSource, event *mautrixEvent.Event) {
+		mach.HandleMemberEvent(event)
+	})
+	syncer.OnSync(func(resp *mautrix.RespSync, since string) bool {
+		mach.ProcessSyncResponse(resp, since)
+		return true
+	})
 
 	client := &client{
 		homeserverURL:    homeserverURL.String(),
+		db:               db,
 		mautrix:          mautrixClient,
+		store:            s,
+		olmMachine:       mach,
 		syncer:           syncer,
 		listenersEnabled: enableListeners,
 	}
@@ -188,6 +235,26 @@ func (client *client) OnMessage(handler func(roomID room.ID, message message.Mes
 		handler(roomID, msg.NewPlainTextMessage(message))
 	})
 
+	client.syncer.OnEventType(event.EventEncrypted, func(source mautrix.EventSource, event *mautrixEvent.Event) {
+		decrypted, err := client.olmMachine.DecryptMegolmEvent(event)
+		if err != nil {
+			log.WithError(err).Error("failed to decrypt")
+		} else {
+			log.WithField("content", decrypted.Content.Raw).Info("received encrypted event")
+			message, isMessage := decrypted.Content.Parsed.(*mautrixEvent.MessageEventContent)
+			if isMessage && message.Body == "ping" {
+				// sendEncrypted(mach, cli, decrypted.RoomID, "Pong!")
+			}
+
+			roomID, err := room.NewID(event.RoomID.String())
+			if err != nil {
+				fmt.Printf("Invalid roomID: %s", err)
+				return
+			}
+			handler(roomID, msg.NewPlainTextMessage(message.Body))
+		}
+	})
+
 	return nil
 }
 
@@ -212,6 +279,11 @@ func (client *client) SendMessage(roomID room.ID, message msg.Message) error {
 		return err
 	}
 
+	// temporarily short-circuit check
+	if true || client.store.IsEncrypted(resolvedRoomID) {
+		return client.SendEncrypted(roomID, message)
+	}
+
 	switch message.ContentType() {
 	case msg.Markdown:
 		rendered := format.RenderMarkdown(message.String(), true, false)
@@ -222,6 +294,92 @@ func (client *client) SendMessage(roomID room.ID, message msg.Message) error {
 	}
 
 	return err
+}
+
+func (client *client) SendEncrypted(roomID room.ID, message msg.Message) error {
+	resolvedRoomID, err := client.resolveRoomAlias(roomID)
+	if err != nil {
+		return err
+	}
+
+	var content event.MessageEventContent
+	switch message.ContentType() {
+	case msg.Markdown:
+		content = format.RenderMarkdown(message.String(), true, false)
+	case msg.PlainText:
+		content = event.MessageEventContent{
+			MsgType: "m.text",
+			Body:    message.String(),
+		}
+	}
+
+	encrypted, err := client.olmMachine.EncryptMegolmEvent(resolvedRoomID, event.EventMessage, content)
+	// These three errors mean we have to make a new Megolm session
+	if err == crypto.SessionExpired || err == crypto.SessionNotShared || err == crypto.NoGroupSession {
+		err = client.olmMachine.ShareGroupSession(resolvedRoomID, client.getRoomMembers(resolvedRoomID))
+		if err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"roomID": roomID.ID(),
+			}).Error("olm machine error with sharing group session")
+			return err
+		}
+		encrypted, err = client.olmMachine.EncryptMegolmEvent(resolvedRoomID, event.EventMessage, content)
+	}
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"roomID": roomID.ID(),
+		}).Error("olm machine error with sharing group session")
+		return err
+	}
+
+	_, err = client.mautrix.SendMessageEvent(resolvedRoomID, event.EventEncrypted, encrypted)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"roomID": roomID.ID(),
+		}).Error("error sending encrypted event")
+	}
+
+	return err
+}
+
+func (client *client) getRoomMembers(roomID mautrixId.RoomID) []mautrixId.UserID {
+	var rows []membershipTableRow
+	result := client.db.Collection(membershipTable).Find(db.Cond{"room_id": roomID})
+	err := result.All(&rows)
+	if err != nil {
+		if !errors.Is(err, db.ErrNoMoreRows) {
+			log.WithError(err).WithField("roomID", roomID).Error("error fetching room members")
+		}
+		return []id.UserID{}
+	}
+
+	users := make([]mautrixId.UserID, len(rows))
+	for _, row := range rows {
+		users = append(users, mautrixId.UserID(row.UserID))
+	}
+
+	// if database has no records for this room, lets fetch and populate it to give an initial state and then events can keep up with membership changes
+	if len(users) == 0 {
+		resp, err := client.mautrix.JoinedMembers(roomID)
+		if err != nil {
+			log.WithError(err).WithField("roomID", roomID).Error("error fetching joined members")
+			return users
+		}
+
+		var row membershipTableRow
+		for userID := range resp.Joined {
+			row.RoomID = roomID.String()
+			row.UserID = userID.String()
+			_, err := client.db.Collection(membershipTable).Insert(row)
+			if err != nil {
+				log.WithError(err).WithField("roomID", roomID).Error("error inserting member info")
+			}
+
+			users = append(users, userID)
+		}
+	}
+
+	return users
 }
 
 func (client *client) resolveRoomAlias(roomID room.ID) (mautrixId.RoomID, error) {

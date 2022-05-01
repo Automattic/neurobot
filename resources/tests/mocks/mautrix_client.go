@@ -16,6 +16,7 @@ type MautrixClientMock interface {
 	SendMessageEvent(roomID id.RoomID, eventType event.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
 	WasMessageSent(text string) bool
 	JoinRoom(roomIDorAlias string, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
+	JoinedMembers(roomID id.RoomID) (resp *mautrix.RespJoinedMembers, err error)
 	WasRoomJoined(roomIDorAlias string) bool
 	ResolveAlias(alias id.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 	GetPresence(userID id.UserID) (resp *mautrix.RespPresence, err error)
@@ -101,6 +102,39 @@ func (m *mautrixClientMock) WasRoomJoined(roomIDorAlias string) bool {
 	}
 
 	return false
+}
+
+func (m *mautrixClientMock) JoinedMembers(roomID id.RoomID) (resp *mautrix.RespJoinedMembers, err error) {
+	// hardcoded data implementation, just to satisfy the interface, for now
+	hardcodedMembers := []struct {
+		userID string
+		name   string
+		avatar string
+	}{
+		{
+			userID: "someone@matrix.test",
+			name:   "Someone",
+			avatar: "",
+		},
+		{
+			userID: "someother@matrix.test",
+			name:   "Someother",
+			avatar: "",
+		},
+	}
+
+	var members mautrix.RespJoinedMembers
+	var s struct {
+		DisplayName *string `json:"display_name"`
+		AvatarURL   *string `json:"avatar_url"`
+	}
+	for _, hcm := range hardcodedMembers {
+		s.DisplayName = &hcm.name
+		s.AvatarURL = &hcm.avatar
+		members.Joined[id.UserID(hcm.userID)] = s
+	}
+
+	return &members, nil
 }
 
 func (m *mautrixClientMock) GetPresence(userID id.UserID) (resp *mautrix.RespPresence, err error) {

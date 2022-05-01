@@ -53,7 +53,7 @@ func main() {
 	// channel for handling command invokations
 	commandChannel := make(chan *command.Command)
 
-	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession, commandChannel)
+	botRegistry := makeBotRegistry(config.ServerName, config.Salt, botRepository, databaseSession, commandChannel)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
 	app := application.NewApp(
@@ -68,7 +68,7 @@ func main() {
 	}
 }
 
-func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session, commandChan chan<- *command.Command) (registry botApp.Registry) {
+func makeBotRegistry(serverName string, salt string, botRepository b.Repository, db db.Session, commandChan chan<- *command.Command) (registry botApp.Registry) {
 	homeserverURL, err := matrix.DiscoverServerURL(serverName)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to discover homeserver URL")
@@ -82,10 +82,17 @@ func makeBotRegistry(serverName string, botRepository b.Repository, db db.Sessio
 	serverNameWithoutPort := strings.Split(serverName, ":")[0]
 	registry = botApp.NewRegistry(serverNameWithoutPort, commandChan)
 
+	// Note: Be cautious of simply running the following loop in go routines
+	// matrix.NewSQLCryptoStore() runs db migrations of its own and we don't want go routines racing for that
 	for _, bot := range bots {
-		storer := matrix.NewStorer(db, bot.ID)
 		var client matrix.Client
-		client, err = matrix.NewMautrixClient(homeserverURL, storer, true)
+		client, err = matrix.NewMautrixClient(
+			homeserverURL,
+			db,
+			matrix.NewStorer(db, bot.ID),
+			matrix.NewSQLCryptoStore(db, bot.Username, []byte(bot.Username+salt)),
+			true,
+		)
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"username": bot.Username,
