@@ -13,11 +13,12 @@ import (
 type Config struct {
 	Debug               bool
 	WebhookListenerPort int
-	DatabasePath       string
-	ServerName         string
-	PrimaryBotUsername string
+	DatabasePath        string
+	ServerName          string
+	PrimaryBotUsername  string
 	PrimaryBotPassword  string
 	WorkflowsTOMLPath   string
+	Salt                string
 }
 
 func LoadFromEnvFile(envPath string) *Config {
@@ -58,6 +59,7 @@ func newConfig(envPath string) (*Config, error) {
 		PrimaryBotUsername:  os.Getenv("MATRIX_USERNAME"),
 		PrimaryBotPassword:  os.Getenv("MATRIX_PASSWORD"),
 		WorkflowsTOMLPath:   os.Getenv("WORKFLOWS_DEF_TOML_FILE"),
+		Salt:                os.Getenv("SALT"),
 	}
 
 	if err := config.validate(); err != nil {
@@ -92,6 +94,14 @@ func (c Config) validate() error {
 
 	if c.WorkflowsTOMLPath == "" {
 		return errors.New("WORKFLOWS_DEF_TOML_FILE environment variable must be set and not empty")
+	}
+
+	if c.Salt == "" {
+		return errors.New("SALT environment variable must be set and not empty")
+	}
+
+	if len(c.Salt) < 32 {
+		return errors.New("SALT environment variable must be random and greater than 32 characters")
 	}
 
 	return nil
