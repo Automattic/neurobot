@@ -7,11 +7,21 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef
 	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/google/uuid v1.3.0
 	github.com/upper/db/v4 v4.5.2
 	maunium.net/go/mautrix v0.10.12
 )
 
-require github.com/google/uuid v1.3.0 // indirect
+require (
+	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/tidwall/gjson v1.14.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/sjson v1.2.4 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+	maunium.net/go/maulogger/v2 v2.3.2 // indirect
+)
 
 require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect

@@ -33,8 +33,8 @@ func TestSaveFilterID(t *testing.T) {
 		for _, scenario := range scenarios {
 			storer.SaveFilterID(id.UserID(scenario.id), scenario.val)
 
-			var got row
-			result := session.Collection(table).Find(db.Cond{
+			var got stateTableRow
+			result := session.Collection(stateTable).Find(db.Cond{
 				"bot_id": botID,
 				"what":   "filter",
 				"id":     scenario.id,
@@ -70,7 +70,7 @@ func TestLoadFilterID(t *testing.T) {
 		}
 
 		for _, scenario := range scenarios {
-			if _, err := session.Collection(table).Insert(row{
+			if _, err := session.Collection(stateTable).Insert(stateTableRow{
 				BotID: botID,
 				What:  "filter",
 				ID:    scenario.id,
@@ -109,8 +109,8 @@ func TestSaveNextBatch(t *testing.T) {
 		for _, scenario := range scenarios {
 			storer.SaveNextBatch(id.UserID(scenario.id), scenario.val)
 
-			var got row
-			result := session.Collection(table).Find(db.Cond{
+			var got stateTableRow
+			result := session.Collection(stateTable).Find(db.Cond{
 				"bot_id": botID,
 				"what":   "batch",
 				"id":     scenario.id,
@@ -146,7 +146,7 @@ func TestLoadNextBatch(t *testing.T) {
 		}
 
 		for _, scenario := range scenarios {
-			if _, err := session.Collection(table).Insert(row{
+			if _, err := session.Collection(stateTable).Insert(stateTableRow{
 				BotID: botID,
 				What:  "batch",
 				ID:    scenario.id,
@@ -224,13 +224,13 @@ func TestSave(t *testing.T) {
 
 		what := "whatever"
 		userID := "someid"
-		var got row
+		var got stateTableRow
 
 		// testing save when values once they are inserted, and once they are updated (overwritten)
 		// insert
 		s.(*storer).save(what, userID, "value1")
 
-		result := session.Collection(table).Find(db.Cond{
+		result := session.Collection(stateTable).Find(db.Cond{
 			"bot_id": botID,
 			"what":   what,
 			"id":     userID,
@@ -246,7 +246,7 @@ func TestSave(t *testing.T) {
 		// update
 		s.(*storer).save(what, userID, "value2")
 
-		result = session.Collection(table).Find(db.Cond{
+		result = session.Collection(stateTable).Find(db.Cond{
 			"bot_id": botID,
 			"what":   what,
 			"id":     userID,
