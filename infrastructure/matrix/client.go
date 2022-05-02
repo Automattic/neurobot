@@ -10,6 +10,9 @@ type Client interface {
 	JoinRoom(id room.ID) error
 	SendMessage(roomID room.ID, message message.Message) error
 
+	// SendEncrypted sends an encrypted event to the room (think encrypted message among other things)
+	SendEncrypted(roomID room.ID, message message.Message) error
+
 	// OnRoomInvite registers a handler that will be called whenever the currently authenticated user is invited to a room.
 	OnRoomInvite(handler func(roomID room.ID)) error
 
