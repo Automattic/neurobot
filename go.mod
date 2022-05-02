@@ -11,6 +11,8 @@ require (
 	maunium.net/go/mautrix v0.10.12
 )
 
+require github.com/google/uuid v1.3.0 // indirect
+
 require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

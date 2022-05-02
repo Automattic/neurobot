@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/apex/log"
+	"github.com/google/uuid"
 )
 
 type app struct {
@@ -101,15 +102,19 @@ func (app app) runWorkflow(workflow w.Workflow, payload payload.Payload) error {
 	}
 
 	go func() {
+		// generate a UUID for this execution of the workflow
+		eid := uuid.New()
 		ctx := log.Fields{
-			"identifier": workflow.Identifier,
-			"payload":    payload,
+			"executionID": eid.String(),
+			"identifier":  workflow.Identifier,
+			"payload":     payload,
 		}
 		log.WithFields(ctx).Info("starting workflow")
-		err := runner.Run(workflow, payload)
+		err := runner.Run(eid.String(), workflow, payload)
 		if err != nil {
 			log.WithError(err).WithFields(ctx).Error("failed to run workflow")
 		}
+		log.WithFields(ctx).Info("finished workflow")
 	}()
 
 	return nil

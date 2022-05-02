@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"neurobot/model/payload"
+
+	"github.com/apex/log"
 )
 
 type fetchDataExternalMeta struct {
@@ -14,10 +16,16 @@ type fetchDataExternalMeta struct {
 }
 
 type fetchDataExternalWorkflowStepRunner struct {
+	eid string
 	fetchDataExternalMeta
 }
 
 func (runner *fetchDataExternalWorkflowStepRunner) Run(p *payload.Payload) error {
+	log.Log.WithFields(log.Fields{
+		"executionID":  runner.eid,
+		"workflowStep": "fetchDataExternal",
+	}).Info("running workflow step")
+
 	j, err := json.Marshal(&p)
 	if err != nil {
 		return err
@@ -48,8 +56,11 @@ func (runner *fetchDataExternalWorkflowStepRunner) Run(p *payload.Payload) error
 }
 
 // NewFetchDataExternalRunner returns an instance of worklow step for fetching data from an external source
-func NewFetchDataExternalRunner(meta map[string]string) *fetchDataExternalWorkflowStepRunner {
+func NewFetchDataExternalRunner(eid string, meta map[string]string) *fetchDataExternalWorkflowStepRunner {
 	var stepMeta fetchDataExternalMeta
 	stepMeta.url, _ = meta["url"]
-	return &fetchDataExternalWorkflowStepRunner{stepMeta}
+	return &fetchDataExternalWorkflowStepRunner{
+		eid:                   eid,
+		fetchDataExternalMeta: stepMeta,
+	}
 }

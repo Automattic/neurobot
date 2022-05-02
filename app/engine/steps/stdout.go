@@ -6,13 +6,22 @@ import (
 	"os"
 
 	"neurobot/model/payload"
+
+	"github.com/apex/log"
 )
 
 var out io.Writer = os.Stdout
 
-type stdoutWorkflowStepRunner struct{}
+type stdoutWorkflowStepRunner struct {
+	eid string
+}
 
 func (runner *stdoutWorkflowStepRunner) Run(p *payload.Payload) error {
+	log.Log.WithFields(log.Fields{
+		"executionID":  runner.eid,
+		"workflowStep": "stdout",
+	}).Info("running workflow step")
+
 	msg := p.Message
 	if msg == "" {
 		msg = "[Empty line]"
@@ -22,6 +31,8 @@ func (runner *stdoutWorkflowStepRunner) Run(p *payload.Payload) error {
 	return nil
 }
 
-func NewStdOutRunner(meta map[string]string) *stdoutWorkflowStepRunner {
-	return &stdoutWorkflowStepRunner{}
+func NewStdOutRunner(eid string, meta map[string]string) *stdoutWorkflowStepRunner {
+	return &stdoutWorkflowStepRunner{
+		eid: eid,
+	}
 }
