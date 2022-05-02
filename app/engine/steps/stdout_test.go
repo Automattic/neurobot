@@ -2,6 +2,7 @@ package steps
 
 import (
 	"bytes"
+	"neurobot/model/payload"
 	"testing"
 )
 
@@ -27,7 +28,10 @@ func TestStdoutWorkflowStep(t *testing.T) {
 
 	for _, table := range tables {
 		s := &stdoutWorkflowStepRunner{}
-		s.Run(map[string]string{"message": table.input})
+
+		s.Run(&payload.Payload{
+			Message: table.input,
+		})
 
 		got := out.(*bytes.Buffer).String()
 		if got != table.output+"\n" {

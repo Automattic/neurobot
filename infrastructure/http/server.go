@@ -6,9 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"neurobot/model/payload"
 )
 
-type requestHandler func(w http.ResponseWriter, r *http.Request, val map[string]string)
+type requestHandler func(w http.ResponseWriter, r *http.Request, val payload.Payload)
 
 type httpError struct {
 	StatusCode int
@@ -65,8 +66,8 @@ func (s *Server) RegisterRoute(route string, fn requestHandler) error {
 	return nil
 }
 
-func (s Server) parseRequest(r *http.Request) (values map[string]string, err *httpError) {
-	values = make(map[string]string)
+func (s Server) parseRequest(r *http.Request) (p payload.Payload, err *httpError) {
+	values := make(map[string]string)
 	switch r.Method {
 	case "GET":
 		q := r.URL.Query()
@@ -79,14 +80,14 @@ func (s Server) parseRequest(r *http.Request) (values map[string]string, err *ht
 			var jsonResult map[string]interface{}
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				return nil, &httpError{
+				return p, &httpError{
 					StatusCode: http.StatusBadRequest,
 					Message:    "Failed to parse JSON request body",
 					Error:      err,
 				}
 			}
 			if err := json.Unmarshal(body, &jsonResult); err != nil {
-				return nil, &httpError{
+				return p, &httpError{
 					StatusCode: http.StatusInternalServerError,
 					Message:    "Failed to parse JSON request body",
 					Error:      err,
@@ -95,7 +96,7 @@ func (s Server) parseRequest(r *http.Request) (values map[string]string, err *ht
 		case "application/x-www-form-urlencoded":
 			err := r.ParseForm()
 			if err != nil {
-				return nil, &httpError{
+				return p, &httpError{
 					StatusCode: http.StatusBadRequest,
 					Message:    "Failed to parse request body",
 					Error:      err,
@@ -106,6 +107,14 @@ func (s Server) parseRequest(r *http.Request) (values map[string]string, err *ht
 				values[i] = v[0]
 			}
 		}
+	}
+
+	// convert map[string]string values to payload type
+	if value, ok := values["message"]; ok {
+		p.Message = value
+	}
+	if value, ok := values["room"]; ok {
+		p.Room = value
 	}
 
 	return

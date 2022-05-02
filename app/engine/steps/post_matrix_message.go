@@ -6,6 +6,7 @@ import (
 	botApp "neurobot/app/bot"
 	"neurobot/infrastructure/matrix"
 	"neurobot/model/message"
+	"neurobot/model/payload"
 	r "neurobot/model/room"
 )
 
@@ -20,7 +21,7 @@ type postMatrixMessageWorkflowStepRunner struct {
 	botRegistry botApp.Registry
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.Client, err error) {
+func (runner *postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.Client, err error) {
 	if runner.asBot == "" {
 		// If no bot was specified, use the primary one.
 		return runner.botRegistry.GetPrimaryClient()
@@ -29,13 +30,13 @@ func (runner postMatrixMessageWorkflowStepRunner) getMatrixClient() (mc matrix.C
 	return runner.botRegistry.GetClient(runner.asBot)
 }
 
-func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[string]string, error) {
-	msg := p["message"]
+func (runner *postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error {
+	msg := p.Message
 
 	// Append message specified in definition of this step as a prefix to the payload
 	if runner.messagePrefix != "" {
-		if p["message"] != "" {
-			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p["message"])
+		if p.Message != "" {
+			msg = fmt.Sprintf("%s %s", runner.messagePrefix, p.Message)
 		} else {
 			msg = runner.messagePrefix
 		}
@@ -43,31 +44,29 @@ func (runner postMatrixMessageWorkflowStepRunner) Run(p map[string]string) (map[
 
 	// Override room defined in meta, if provided in payload
 	room := runner.room
-	if p["room"] != "" {
-		room = p["room"]
+	if p.Room != "" {
+		room = p.Room
 	}
 
 	// ensure we have data to work with
 	if room == "" {
-		return p, errors.New("no room to post")
+		return errors.New("no room to post")
 	}
 	if msg == "" {
-		return p, errors.New("no message to post")
+		return errors.New("no message to post")
 	}
 
 	mc, err := runner.getMatrixClient()
 	if err != nil {
-		return p, err
+		return err
 	}
 
 	roomID, err := r.NewID(room)
 	if err != nil {
-		return p, err
+		return err
 	}
 
-	err = mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
-
-	return p, err
+	return mc.SendMessage(roomID, message.NewMarkdownMessage(msg))
 }
 
 func NewPostMatrixMessageRunner(meta map[string]string, botRegistry botApp.Registry) *postMatrixMessageWorkflowStepRunner {
