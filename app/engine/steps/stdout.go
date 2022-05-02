@@ -31,7 +31,7 @@ func (runner *stdoutWorkflowStepRunner) Run(p *payload.Payload) error {
 	return nil
 }
 
-func NewStdOutRunner(eid string, meta map[string]string) *stdoutWorkflowStepRunner {
+func NewStdOutRunner(eid string) *stdoutWorkflowStepRunner {
 	return &stdoutWorkflowStepRunner{
 		eid: eid,
 	}

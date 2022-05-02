@@ -16,6 +16,7 @@ import (
 	"maunium.net/go/mautrix"
 	mautrixEvent "maunium.net/go/mautrix/event"
 	"maunium.net/go/mautrix/format"
+	"maunium.net/go/mautrix/id"
 	mautrixId "maunium.net/go/mautrix/id"
 )
 
@@ -24,6 +25,7 @@ type mautrixClient interface {
 	JoinRoom(roomIDorAlias, serverName string, content interface{}) (resp *mautrix.RespJoinRoom, err error)
 	SendText(roomID mautrixId.RoomID, text string) (*mautrix.RespSendEvent, error)
 	SendMessageEvent(roomID mautrixId.RoomID, eventType mautrixEvent.Type, contentJSON interface{}, extra ...mautrix.ReqSendEvent) (resp *mautrix.RespSendEvent, err error)
+	GetPresence(userID id.UserID) (resp *mautrix.RespPresence, err error)
 	ResolveAlias(alias mautrixId.RoomAlias) (resp *mautrix.RespAliasResolve, err error)
 	SyncWithContext(ctx context.Context) error
 }
@@ -187,6 +189,15 @@ func (client *client) OnMessage(handler func(roomID room.ID, message message.Mes
 	})
 
 	return nil
+}
+
+func (client *client) GetPresence(userID string) string {
+	respPresence, err := client.mautrix.GetPresence(id.UserID(userID))
+	if err != nil {
+		fmt.Printf("error getting presence: %s", err)
+		return "unknown"
+	}
+	return string(respPresence.Presence) // this detection can be improved further if we want to take last_active_ago in account and not rely on presence status alone
 }
 
 func (client *client) JoinRoom(id room.ID) (err error) {
