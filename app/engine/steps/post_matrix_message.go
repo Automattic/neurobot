@@ -14,7 +14,7 @@ import (
 
 type postMatrixMessageWorkflowStepMeta struct {
 	messagePrefix string // message prefix
-	room          string // Matrix room
+	matrixRoom    string // Matrix room
 	asBot         string // bot identifier, for matrix session
 }
 
@@ -51,7 +51,7 @@ func (runner *postMatrixMessageWorkflowStepRunner) Run(p *payload.Payload) error
 	}
 
 	// Override room defined in meta, if provided in payload
-	room := runner.room
+	room := runner.matrixRoom
 	if p.Room != "" {
 		room = p.Room
 	}
@@ -86,9 +86,9 @@ func NewPostMatrixMessageRunner(eid string, meta map[string]string, botRegistry 
 		stepMeta.asBot = ""
 	}
 
-	stepMeta.room, ok = meta["room"]
+	stepMeta.matrixRoom, ok = meta["matrixRoom"]
 	if !ok {
-		stepMeta.room = ""
+		stepMeta.matrixRoom = ""
 	}
 
 	stepMeta.messagePrefix, ok = meta["messagePrefix"]
