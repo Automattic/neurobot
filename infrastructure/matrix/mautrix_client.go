@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"neurobot/model/message"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
 	"strings"
@@ -159,6 +160,30 @@ func (client *client) OnRoomInvite(handler func(roomID room.ID)) error {
 		}
 
 		handler(roomID)
+	})
+
+	return nil
+}
+
+func (client *client) OnMessage(handler func(roomID room.ID, message message.Message)) error {
+	if err := client.assertListenersEnabled(); err != nil {
+		return err
+	}
+
+	client.syncer.OnEventType(mautrixEvent.EventMessage, func(source mautrix.EventSource, event *mautrixEvent.Event) {
+		var message string
+		switch event.Content.AsMessage().MsgType {
+		case mautrixEvent.MsgText:
+			message = event.Content.AsMessage().Body
+		}
+
+		roomID, err := room.NewID(event.RoomID.String())
+		if err != nil {
+			fmt.Printf("Invalid roomID: %s", err)
+			return
+		}
+
+		handler(roomID, msg.NewPlainTextMessage(message))
 	})
 
 	return nil

@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"neurobot/infrastructure/matrix"
 	model "neurobot/model/bot"
+	"neurobot/model/message"
 	"neurobot/model/room"
+
+	"github.com/apex/log"
 )
 
 type Registry interface {
@@ -27,6 +30,8 @@ func NewRegistry(serverName string) Registry {
 }
 
 func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
+	log.WithFields(log.Fields{"bot": bot.Username}).Info("adding bot to registry")
+
 	if bot.IsPrimary() {
 		r.primaryUsername = bot.Username
 	}
@@ -50,6 +55,11 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 			fmt.Printf("Failed to join room %s", roomID)
 			return
 		}
+	})
+
+	err = client.OnMessage(func(roomID room.ID, message message.Message) {
+		// log messages received temporarily
+		log.WithFields(log.Fields{"room": roomID, "bot": bot.Username, "message": message.String()}).Info("message received")
 	})
 
 	if err != nil {
