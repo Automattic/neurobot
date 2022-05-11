@@ -66,7 +66,7 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 			log.WithFields(log.Fields{"room": roomID, "bot": bot.Username, "message": message.String()}).Info("message received")
 
 			// command invoked?
-			if client.IsCommand(message) {
+			if message.IsCommand() {
 				comm := command.NewCommand(message.String())
 				comm.Meta["room"] = roomID.ID()
 				r.commandChannel <- comm

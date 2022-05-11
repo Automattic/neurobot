@@ -1,7 +1,6 @@
 package matrix
 
 import (
-	"neurobot/model/message"
 	msg "neurobot/model/message"
 	"neurobot/model/room"
 	"neurobot/resources/tests/mocks"
@@ -64,58 +63,4 @@ func TestJoinRoom(t *testing.T) {
 	if !mautrixMock.WasRoomJoined("!foo:matrix.test") {
 		t.Errorf("room wasn't joined")
 	}
-}
-
-func TestIsCommand(t *testing.T) {
-	client, _, _ := makeClient()
-
-	tables := []struct {
-		description string
-		msg         string
-		isCommand   bool
-	}{
-		{
-			description: "empty message",
-			msg:         "",
-			isCommand:   false,
-		},
-		{
-			description: "regular message",
-			msg:         "hello john",
-			isCommand:   false,
-		},
-		{
-			description: "command with no arguments",
-			msg:         "!echo",
-			isCommand:   true,
-		},
-		{
-			description: "command with 1 argument",
-			msg:         "!echo sound",
-			isCommand:   true,
-		},
-		{
-			description: "command with arguments",
-			msg:         "!echo sound everywhere",
-			isCommand:   true,
-		},
-		{
-			description: "broken command - missing command name",
-			msg:         "!",
-			isCommand:   false,
-		},
-		{
-			description: "broken command - missing command name but with arguments",
-			msg:         "! sound everywhere",
-			isCommand:   false,
-		},
-	}
-
-	for _, table := range tables {
-		output := client.IsCommand(message.NewPlainTextMessage(table.msg))
-		if table.isCommand != output {
-			t.Errorf("mismatch for [%s] should be %t but is %t", table.description, table.isCommand, output)
-		}
-	}
-
 }

@@ -1,5 +1,7 @@
 package message
 
+import "strings"
+
 type ContentType int64
 
 const (
@@ -10,6 +12,7 @@ const (
 type Message interface {
 	ContentType() ContentType
 	String() string
+	IsCommand() bool
 }
 
 type message struct {
@@ -37,4 +40,19 @@ func (message message) ContentType() ContentType {
 
 func (message message) String() string {
 	return message.content
+}
+
+func (message message) IsCommand() bool {
+	words := strings.Fields(strings.TrimSpace(message.content))
+
+	// shortest command can be "!s"
+	if len(words) == 0 || len(words[0]) < 2 {
+		return false
+	}
+
+	if strings.HasPrefix(words[0], "!") {
+		return true
+	}
+
+	return false
 }
