@@ -13,6 +13,7 @@ import (
 	"neurobot/infrastructure/matrix"
 	"neurobot/infrastructure/toml"
 	b "neurobot/model/bot"
+	"neurobot/model/command"
 	"neurobot/resources/seeds"
 	"strings"
 
@@ -49,23 +50,25 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession)
+	// channel for handling command invokations
+	commandChannel := make(chan *command.Command)
+
+	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession, commandChannel)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
-	e := engine.NewEngine(botRegistry, workflowStepsRepository)
-
-	app := application.NewApp(e, botRegistry, workflowRepository, webhookListenerServer)
+	app := application.NewApp(
+		engine.NewEngine(botRegistry, workflowStepsRepository),
+		botRegistry,
+		workflowRepository,
+		webhookListenerServer,
+		commandChannel,
+	)
 	if err := app.Run(); err != nil {
 		logger.WithError(err).Fatal("Failed to run application")
 	}
-
-	logger.WithFields(log.Fields{
-		"port": config.WebhookListenerPort,
-	}).Infof("Starting webhook listener")
-	webhookListenerServer.Run() // blocking
 }
 
-func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session) (registry botApp.Registry) {
+func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session, commandChan chan<- *command.Command) (registry botApp.Registry) {
 	homeserverURL, err := matrix.DiscoverServerURL(serverName)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to discover homeserver URL")
@@ -77,7 +80,7 @@ func makeBotRegistry(serverName string, botRepository b.Repository, db db.Sessio
 	}
 
 	serverNameWithoutPort := strings.Split(serverName, ":")[0]
-	registry = botApp.NewRegistry(serverNameWithoutPort)
+	registry = botApp.NewRegistry(serverNameWithoutPort, commandChan)
 
 	for _, bot := range bots {
 		storer := matrix.NewStorer(db, bot.ID)

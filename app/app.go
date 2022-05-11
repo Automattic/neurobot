@@ -2,15 +2,20 @@ package app
 
 import (
 	"fmt"
-	"log"
 	netHttp "net/http"
 	"neurobot/app/bot"
+	"neurobot/app/commands"
 	"neurobot/app/engine"
 	r "neurobot/app/runner"
 	"neurobot/app/runner/afk_notifier"
 	"neurobot/infrastructure/http"
+	"neurobot/model/command"
+	"neurobot/model/message"
+	"neurobot/model/room"
 	w "neurobot/model/workflow"
 	"strings"
+
+	"github.com/apex/log"
 )
 
 type app struct {
@@ -18,19 +23,23 @@ type app struct {
 	botRegistry        bot.Registry
 	workflowRepository w.Repository
 	webhookListener    *http.Server
+	commandChannel     <-chan *command.Command
 }
 
+// NewApp returns the instance to run the entire program
 func NewApp(
 	engine engine.Engine,
 	botRegistry bot.Registry,
 	workflowRepository w.Repository,
 	webhookListener *http.Server,
+	commandChannel <-chan *command.Command,
 ) *app {
 	return &app{
 		engine:             engine,
 		botRegistry:        botRegistry,
 		workflowRepository: workflowRepository,
 		webhookListener:    webhookListener,
+		commandChannel:     commandChannel,
 	}
 }
 
@@ -49,10 +58,29 @@ func (app app) Run() (err error) {
 			err = app.runWorkflow(workflow, payload)
 			if err != nil {
 				netHttp.Error(response, "something went wrong", netHttp.StatusInternalServerError)
-				log.Printf("Error when attempting to run workflow: %s, payload: %+v", err, payload)
+				log.WithError(err).WithFields(log.Fields{
+					"payload": payload,
+				}).Error("failed to run workflow")
 				return
 			}
-		})
+		},
+	)
+
+	go func() {
+		log.WithFields(log.Fields{"port": app.webhookListener.Port()}).Info("Starting webhook listener")
+		app.webhookListener.Run() // blocking
+	}()
+
+	// loop over commands as they are invoked and run each of them (blocking since we are looping over a channel)
+	for c := range app.commandChannel {
+		log.WithFields(log.Fields{
+			"command": c.Name,
+			"args":    c.Args,
+			"room":    c.Meta["room"],
+		}).Info("command received")
+
+		go app.runCommand(c)
+	}
 
 	return
 }
@@ -72,12 +100,71 @@ func (app app) runWorkflow(workflow w.Workflow, payload map[string]string) error
 	}
 
 	go func() {
-		log.Printf("Starting workflow with identifier %s, payload: %+v", workflow.Identifier, payload)
+		ctx := log.Fields{
+			"identifier": workflow.Identifier,
+			"payload":    payload,
+		}
+		log.WithFields(ctx).Info("starting workflow")
 		err := runner.Run(workflow, payload)
 		if err != nil {
-			log.Printf("Failed to run workflow: %s", err)
+			log.WithError(err).WithFields(ctx).Error("failed to run workflow")
 		}
 	}()
 
 	return nil
+}
+
+func (app app) runCommand(comm *command.Command) {
+	identifier := "COMMAND_" + strings.ToUpper(comm.Name)
+
+	// create an instance of the command interface
+	var command commands.Command
+	switch strings.ToUpper(comm.Name) {
+	default:
+		command = commands.NewUnrecognized(comm)
+	case "ECHO":
+		command = commands.NewEcho(comm)
+	}
+
+	payload := command.WorkflowPayload() // need payload to access room, even if command is not valid
+
+	if !command.Valid() {
+		payload["message"] = command.UsageHints()
+
+		mc, err := app.botRegistry.GetPrimaryClient()
+		if err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"identifier": identifier,
+			}).Error("responding to invalid command failed")
+			return
+		}
+
+		roomID, _ := room.NewID(payload["room"]) // no need to check for error, is picked up from an event and not a user input
+
+		if err := mc.SendMessage(
+			roomID,
+			message.NewMarkdownMessage(command.UsageHints()),
+		); err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"identifier": identifier,
+			}).Error("responding to invalid command failed")
+			return
+		}
+	}
+
+	// find workflow associated with this command
+	workflow, err := app.workflowRepository.FindByIdentifier(identifier)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{"identifier": identifier}).Error("no workflow found")
+		return
+	}
+
+	// run workflow
+	err = app.runWorkflow(workflow, payload)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"identifier": identifier,
+			"payload":    payload,
+		}).Error("failed to run workflow")
+	}
 }
