@@ -21,14 +21,14 @@ type registry struct {
 	serverName      string
 	primaryUsername string
 	clients         map[string]matrix.Client
-	commandChannel  chan<- *command.Command
+	commandsHandler command.CommandsHandler
 }
 
-func NewRegistry(serverName string, commandChannel chan<- *command.Command) Registry {
+func NewRegistry(serverName string, ch command.CommandsHandler) Registry {
 	return &registry{
-		serverName:     serverName,
-		clients:        make(map[string]matrix.Client),
-		commandChannel: commandChannel,
+		serverName:      serverName,
+		clients:         make(map[string]matrix.Client),
+		commandsHandler: ch,
 	}
 }
 
@@ -69,7 +69,7 @@ func (r *registry) Append(bot model.Bot, client matrix.Client) (err error) {
 			if message.IsCommand() {
 				comm := command.NewCommand(message.String())
 				comm.Meta["room"] = roomID.ID()
-				r.commandChannel <- comm
+				r.commandsHandler.Send(comm)
 			}
 		})
 	}

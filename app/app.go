@@ -23,7 +23,7 @@ type app struct {
 	botRegistry        bot.Registry
 	workflowRepository w.Repository
 	webhookListener    *http.Server
-	commandChannel     <-chan *command.Command
+	commandsHandler    command.CommandsHandler
 }
 
 // NewApp returns the instance to run the entire program
@@ -32,14 +32,14 @@ func NewApp(
 	botRegistry bot.Registry,
 	workflowRepository w.Repository,
 	webhookListener *http.Server,
-	commandChannel <-chan *command.Command,
+	ch command.CommandsHandler,
 ) *app {
 	return &app{
 		engine:             engine,
 		botRegistry:        botRegistry,
 		workflowRepository: workflowRepository,
 		webhookListener:    webhookListener,
-		commandChannel:     commandChannel,
+		commandsHandler:    ch,
 	}
 }
 
@@ -72,7 +72,7 @@ func (app app) Run() (err error) {
 	}()
 
 	// loop over commands as they are invoked and run each of them (blocking since we are looping over a channel)
-	for c := range app.commandChannel {
+	for c := range app.commandsHandler.Run() {
 		log.WithFields(log.Fields{
 			"command": c.Name,
 			"args":    c.Args,

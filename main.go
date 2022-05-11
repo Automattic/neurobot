@@ -50,10 +50,8 @@ func main() {
 		}).Fatal("Failed to import TOML workflows")
 	}
 
-	// channel for handling command invokations
-	commandChannel := make(chan *command.Command)
-
-	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession, commandChannel)
+	commandsHandler := command.NewCommandsHandler()
+	botRegistry := makeBotRegistry(config.ServerName, botRepository, databaseSession, commandsHandler)
 	webhookListenerServer := http.NewServer(config.WebhookListenerPort)
 
 	app := application.NewApp(
@@ -61,14 +59,14 @@ func main() {
 		botRegistry,
 		workflowRepository,
 		webhookListenerServer,
-		commandChannel,
+		commandsHandler,
 	)
 	if err := app.Run(); err != nil {
 		logger.WithError(err).Fatal("Failed to run application")
 	}
 }
 
-func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session, commandChan chan<- *command.Command) (registry botApp.Registry) {
+func makeBotRegistry(serverName string, botRepository b.Repository, db db.Session, ch command.CommandsHandler) (registry botApp.Registry) {
 	homeserverURL, err := matrix.DiscoverServerURL(serverName)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to discover homeserver URL")
@@ -80,7 +78,7 @@ func makeBotRegistry(serverName string, botRepository b.Repository, db db.Sessio
 	}
 
 	serverNameWithoutPort := strings.Split(serverName, ":")[0]
-	registry = botApp.NewRegistry(serverNameWithoutPort, commandChan)
+	registry = botApp.NewRegistry(serverNameWithoutPort, ch)
 
 	for _, bot := range bots {
 		storer := matrix.NewStorer(db, bot.ID)
